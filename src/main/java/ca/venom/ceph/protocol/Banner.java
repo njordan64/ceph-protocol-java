@@ -3,52 +3,47 @@ package ca.venom.ceph.protocol;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.BitSet;
 
-public class Banner implements Payload {
-    private final BitSet featuresSupported = new BitSet(64);
-    private final BitSet featuresRequired = new BitSet(64);
+public class Banner implements Message {
+    private boolean revision1Supported;
+    private boolean compressionSupported;
+    private boolean revision1Required;
+    private boolean compressionRequired;
 
     private static final String BANNER_TEXT = "ceph v2\n";
+    private static final int EXPECTED_SIZE = 26;
 
     public Banner() {
     }
 
-    public void writeToStream(OutputStream ostream) throws IOException {
-        ostream.write(BANNER_TEXT.getBytes(), 0, BANNER_TEXT.length());
-        ostream.write(16);
-        ostream.write(0);
+    public void encode(OutputStream stream) throws IOException {
+        stream.write(BANNER_TEXT.getBytes(), 0, BANNER_TEXT.length());
+        stream.write(16);
+        stream.write(0);
 
-        for (int i = 0; i < 8; i++) {
-            byte b = 0;
-            for (int j = 0; j < 8; j++) {
-                if (featuresSupported.get(i * 8 + j)) {
-                    b += 1 << j;
-                }
-            }
+        byte[] flagBytes = new byte[8];
+        flagBytes[0] |= (revision1Supported ? 1 : 0) | (compressionSupported ? 2 : 0);
+        stream.write(flagBytes);
 
-            ostream.write(b);
-        }
-
-        for (int i = 0; i < 8; i++) {
-            byte b = 0;
-            for (int j = 0; j < 8; j++) {
-                if (featuresRequired.get(i * 8 + j)) {
-                    b += 1 << j;
-                }
-            }
-
-            ostream.write(b);
-        }
+        flagBytes[0] = 0;
+        flagBytes[0] |= (revision1Required ? 1 : 0) | (compressionRequired ? 2 : 0);
+        stream.write(flagBytes);
     }
 
-    public void readFromStream(InputStream istream) throws IOException {
+    public void decode(InputStream stream) throws IOException {
+        byte[] bytes = new byte[EXPECTED_SIZE];
+        int offset = 0;
+        while (offset < EXPECTED_SIZE) {
+            int bytesRead = stream.read(bytes, offset, EXPECTED_SIZE - offset);
+            if (bytesRead == -1) {
+                throw new IOException("Unable to read message");
+            }
+            offset += bytesRead;
+        }
+
         final byte[] expectedBytes = BANNER_TEXT.getBytes();
         final byte[] bannerTextBytes = new byte[expectedBytes.length];
-        int bytesRead = istream.read(bannerTextBytes);
-        if (bytesRead != expectedBytes.length) {
-            throw new IOException("Unknown prefix");
-        }
+        System.arraycopy(bytes, 0, bannerTextBytes, 0, expectedBytes.length);
 
         for (int i = 0; i < expectedBytes.length; i++) {
             if (expectedBytes[i] != bannerTextBytes[i]) {
@@ -56,31 +51,41 @@ public class Banner implements Payload {
             }
         }
 
-        final byte[] featureBytes = new byte[8];
-        bytesRead = istream.read(featureBytes);
-        if (bytesRead != 8) {
-            throw new IOException("Banner message too short");
-        }
-
-        for (int i = 0; i < 64; i++) {
-            featuresSupported.set(i, (featureBytes[i / 8] & (1 << (i % 8))) > 0);
-        }
-
-        bytesRead = istream.read(featureBytes);
-        if (bytesRead != 8) {
-            throw new IOException("Banner message too short");
-        }
-
-        for (int i = 0; i < 64; i++) {
-            featuresRequired.set(i, (featureBytes[i / 8] & (1 << (i % 8))) > 0);
-        }
+        revision1Supported = (bytes[10] & 0x01) > 0;
+        compressionSupported = (bytes[10] & 0x02) > 0;
+        revision1Required = (bytes[18] & 0x01) > 0;
+        compressionRequired = (bytes[18] & 0x02) > 0;
     }
 
-    public BitSet getFeaturesSupported() {
-        return featuresSupported;
+    public boolean isRevision1Supported() {
+        return revision1Supported;
     }
 
-    public BitSet getFeaturesRequired() {
-        return featuresRequired;
+    public void setRevision1Supported(boolean revision1Supported) {
+        this.revision1Supported = revision1Supported;
+    }
+
+    public boolean isCompressionSupported() {
+        return compressionSupported;
+    }
+
+    public void setCompressionSupported(boolean compressionSupported) {
+        this.compressionSupported = compressionSupported;
+    }
+
+    public boolean isRevision1Required() {
+        return revision1Required;
+    }
+
+    public void setRevision1Required(boolean revision1Required) {
+        this.revision1Required = revision1Required;
+    }
+
+    public boolean isCompressionRequired() {
+        return compressionRequired;
+    }
+
+    public void setCompressionRequired(boolean compressionRequired) {
+        this.compressionRequired = compressionRequired;
     }
 }
