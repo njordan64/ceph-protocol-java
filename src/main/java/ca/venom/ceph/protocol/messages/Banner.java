@@ -1,8 +1,10 @@
-package ca.venom.ceph.protocol;
+package ca.venom.ceph.protocol.messages;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import ca.venom.ceph.protocol.Message;
 
 public class Banner implements Message {
     private boolean revision1Supported;

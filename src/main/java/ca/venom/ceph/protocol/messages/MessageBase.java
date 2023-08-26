@@ -1,7 +1,8 @@
-package ca.venom.ceph.protocol;
+package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.types.UInt8;
 import ca.venom.ceph.CephCRC32C;
+import ca.venom.ceph.protocol.Message;
 import ca.venom.ceph.protocol.types.UInt16;
 import ca.venom.ceph.protocol.types.UInt32;
 

@@ -1,6 +1,7 @@
-package ca.venom.ceph.protocol;
+package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.types.UInt8;
+import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt32;
 
 import java.io.IOException;

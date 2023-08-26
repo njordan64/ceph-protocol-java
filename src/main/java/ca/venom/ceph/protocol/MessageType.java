@@ -1,5 +1,7 @@
 package ca.venom.ceph.protocol;
 
+import ca.venom.ceph.protocol.messages.HelloMessage;
+import ca.venom.ceph.protocol.messages.MessageBase;
 import ca.venom.ceph.protocol.types.UInt8;
 
 public enum MessageType {

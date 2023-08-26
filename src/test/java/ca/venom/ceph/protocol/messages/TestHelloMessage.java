@@ -1,4 +1,4 @@
-package ca.venom.ceph.protocol;
+package ca.venom.ceph.protocol.messages;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -10,7 +10,6 @@ import ca.venom.ceph.protocol.types.UInt8;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.Collections;
 
 import static org.junit.Assert.*;
 

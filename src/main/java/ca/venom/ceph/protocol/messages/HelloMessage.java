@@ -1,17 +1,12 @@
-package ca.venom.ceph.protocol;
+package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.types.UInt8;
-import ca.venom.ceph.CephCRC32C;
 import ca.venom.ceph.NodeType;
-import ca.venom.ceph.protocol.types.UInt16;
+import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt32;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 public class HelloMessage extends MessageBase {
     public static final int ADDR4 = 2;
