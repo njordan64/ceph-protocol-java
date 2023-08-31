@@ -1,17 +1,13 @@
 package ca.venom.ceph.protocol.types;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 public class UInt64 {
     private final ByteBuffer value;
 
-    public UInt64(ByteBuffer byteBuffer) {
-        value = byteBuffer.slice(byteBuffer.position(), 8);
-        byteBuffer.position(byteBuffer.position() + 8);
-    }
-
-    public static UInt64 fromValue(BigInteger value) {
+    public UInt64(BigInteger value) {
         byte[] bytesFromValue = value.toByteArray();
         byte[] bytes = new byte[8];
 
@@ -19,7 +15,17 @@ public class UInt64 {
             bytes[i] = bytesFromValue[bytesFromValue.length - 1 - i];
         }
 
-        return new UInt64(ByteBuffer.wrap(bytes));
+        this.value = ByteBuffer.wrap(bytes);
+    }
+
+    private UInt64(ByteBuffer value) {
+        this.value = value;
+    }
+
+    public static UInt64 read(ByteBuffer byteBuffer) {
+        UInt64 uint64 = new UInt64(byteBuffer.slice(byteBuffer.position(), 8));
+        byteBuffer.position(byteBuffer.position() + 8);
+        return uint64;
     }
 
     public BigInteger getValue() {
@@ -33,6 +39,10 @@ public class UInt64 {
 
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value.array(), value.arrayOffset(), 8);
+    }
+
+    public void encode(ByteArrayOutputStream outputStream) {
+        outputStream.write(value.array(), value.arrayOffset(), 8);
     }
 
     public boolean equals(Object obj) {

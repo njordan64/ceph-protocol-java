@@ -34,7 +34,7 @@ public class TestUInt64 {
                            BigInteger value) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {byte1, byte2, byte3, byte4,
                                                             byte5, byte6, byte7, byte8});
-        UInt64 uint64 = new UInt64(byteBuffer);
+        UInt64 uint64 = UInt64.read(byteBuffer);
         assertEquals(value, uint64.getValue());
     }
 
@@ -62,7 +62,7 @@ public class TestUInt64 {
     private void encodeTest(BigInteger value,
                             byte byte1, byte byte2, byte byte3, byte byte4,
                             byte byte5, byte byte6, byte byte7, byte byte8) {
-        UInt64 uint64 = UInt64.fromValue(value);
+        UInt64 uint64 = new UInt64(value);
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(10);
         uint64.encode(byteBuffer);

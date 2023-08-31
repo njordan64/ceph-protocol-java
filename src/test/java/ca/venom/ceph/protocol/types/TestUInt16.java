@@ -24,7 +24,7 @@ public class TestUInt16 {
 
     private void valueTest(byte byte1, byte byte2, int value) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {byte1, byte2});
-        UInt16 uint16 = new UInt16(byteBuffer);
+        UInt16 uint16 = UInt16.read(byteBuffer);
         assertEquals(value, uint16.getValue());
     }
 
@@ -44,7 +44,7 @@ public class TestUInt16 {
     }
 
     private void encodeTest(int value, byte byte1, byte byte2) {
-        UInt16 uint16 = UInt16.fromValue(value);
+        UInt16 uint16 = new UInt16(value);
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(10);
         uint16.encode(byteBuffer);

@@ -32,7 +32,7 @@ public enum MessageType {
     private final Class<? extends MessageBase> clazz;
 
     private MessageType(int tagNum, Class<? extends MessageBase> clazz) {
-        this.tagNum = UInt8.fromValue(tagNum);
+        this.tagNum = new UInt8(tagNum);
         this.clazz = clazz;
     }
 

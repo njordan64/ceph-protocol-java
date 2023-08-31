@@ -1,54 +1,266 @@
 package ca.venom.ceph.protocol.messages;
 
-import ca.venom.ceph.protocol.types.UInt8;
 import ca.venom.ceph.CephCRC32C;
-import ca.venom.ceph.protocol.Message;
+import ca.venom.ceph.protocol.HexFunctions;
+import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt16;
 import ca.venom.ceph.protocol.types.UInt32;
+import ca.venom.ceph.protocol.types.UInt8;
 
-import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.BitSet;
 
-public abstract class MessageBase implements Message {
-    protected static class SectionMetadata {
-        private final int length;
-        private final int alignment;
-
-        public SectionMetadata(int length, int alignment) {
-            this.length = length;
-            this.alignment = alignment;
-        }
-
-        public int getLength() {
-            return length;
-        }
-
-        public int getAlignment() {
-            return alignment;
-        }
+public abstract class MessageBase {
+    private static class SegmentMetadata {
+        public int size;
+        public int alignment;
     }
 
-    private UInt8 flags;
+    private BitSet flags = new BitSet(8);
+    private BitSet lateStatus = new BitSet(8);
 
-    public UInt8 getFlags() {
+    protected abstract Segment getSegment1();
+
+    protected Segment getSegment2() {
+        return null;
+    }
+
+    protected Segment getSegment3() {
+        return null;
+    }
+
+    protected Segment getSegment4() {
+        return null;
+    }
+
+    public abstract MessageType getTag();
+
+    public BitSet getFlags() {
         return flags;
     }
 
-    public void setFlags(UInt8 flags) {
-        this.flags = flags;
+    public BitSet getLateStatus() {
+        return lateStatus;
     }
 
-    protected abstract UInt8 getTag();
+    public byte[] encode() throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        SegmentMetadata[] segmentMetadatas = new SegmentMetadata[4];
+        writeHeaderPlaceholder(outputStream);
 
-    protected abstract SectionMetadata[] getSectionMetadatas();
+        byte[] bytes = new byte[4];
+        segmentMetadatas[0] = encodeSegment(getSegment1(), outputStream);
+        outputStream.write(bytes); // placeholder for segment 1 CRC32C
+        segmentMetadatas[1] = encodeSegment(getSegment2(), outputStream);
+        segmentMetadatas[2] = encodeSegment(getSegment3(), outputStream);
+        segmentMetadatas[3] = encodeSegment(getSegment4(), outputStream);
 
-    protected abstract void encodeSection(int section, ByteBuffer byteBuffer) throws IOException;
+        int segmentsCount = 0;
+        for (int i = 0; i < 4; i++) {
+            if (segmentMetadatas[i].size > 0) {
+                segmentsCount++;
+            }
+        }
 
-    protected abstract void decodeSection(int section, ByteBuffer byteBuffer) throws IOException;
+        if (segmentsCount > 1) {
+            outputStream.write(bitSetToByte(lateStatus));
+            for (int i = 1; i < 4; i++) {
+                if (segmentMetadatas[i].size > 0) {
+                    outputStream.write(bytes); // placeholder for segment i CRC32C
+                }
+            }
+        }
+
+        bytes = outputStream.toByteArray();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+
+        updateHeader(segmentMetadatas, bytes, byteBuffer);
+        updateSegmentCrcs(segmentMetadatas, bytes, byteBuffer);
+
+        return bytes;
+    }
+
+    public void decode(InputStream inputStream) throws IOException {
+        byte[] headerBytes = new byte[32];
+        headerBytes[0] = (byte) getTag().getTagNum().getValue();
+        readBytes(inputStream, headerBytes, 1, 31);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(headerBytes);
+
+        byteBuffer.position(1); // Skip over tag
+        int segmentsCount = UInt8.read(byteBuffer).getValue();
+
+        SegmentMetadata[] segmentMetadatas = new SegmentMetadata[4];
+        for (int i = 0; i < 4; i++) {
+            segmentMetadatas[i] = new SegmentMetadata();
+            segmentMetadatas[i].size = (int) UInt32.read(byteBuffer).getValue();
+            segmentMetadatas[i].alignment = UInt16.read(byteBuffer).getValue();
+        }
+
+        flags = BitSet.valueOf(new byte[] {byteBuffer.get()});
+        byteBuffer.get(); // Skip over reserved byte
+
+        UInt32 crc32 = UInt32.read(byteBuffer);
+        CephCRC32C cephCRC32C = new CephCRC32C();
+        cephCRC32C.update(headerBytes, 0, 28);
+        if (cephCRC32C.getValue() != crc32.getValue()) {
+            throw new IOException("Header checksum validation failed");
+        }
+
+        int bodyLength = 4;
+        for (int i = 0; i < 4; i++) {
+            bodyLength += segmentMetadatas[i].size;
+        }
+        int epilogueIndex = bodyLength;
+
+        if (segmentsCount > 1) {
+            bodyLength += 1 + 4 * (segmentsCount - 1);
+        }
+
+        byte[] bodyBytes = readBytes(inputStream, bodyLength);
+        ByteBuffer bodyByteBuffer = ByteBuffer.wrap(bodyBytes);
+
+        bodyByteBuffer.position(segmentMetadatas[0].size);
+        crc32 = UInt32.read(bodyByteBuffer);
+        cephCRC32C.reset(-1L);
+        cephCRC32C.update(bodyBytes, 0, segmentMetadatas[0].size);
+        if (cephCRC32C.getValue() != crc32.getValue()) {
+            throw new IOException("Segment 1 checksum validation failed");
+        }
+
+        int crcIndex = epilogueIndex + 1;
+        int segmentIndex = segmentMetadatas[0].size;
+        for (int i = 1; i < 4; i++) {
+            if (segmentMetadatas[i].size > 0) {
+                bodyByteBuffer.position(crcIndex);
+                crc32 = UInt32.read(bodyByteBuffer);
+                cephCRC32C.reset(-1L);
+                cephCRC32C.update(bodyBytes, segmentIndex, segmentMetadatas[i].size);
+                if (cephCRC32C.getValue() != crc32.getValue()) {
+                    throw new IOException("Segment " + (i + 1) + " checksum validation failed");
+                }
+
+                crcIndex += 4;
+                segmentIndex += segmentMetadatas[i].size;
+            }
+        }
+
+        bodyByteBuffer.position(0);
+        Segment segment = getSegment1();
+        if (segment != null) {
+            segment.decode(bodyByteBuffer);
+        }
+        bodyByteBuffer.position(bodyByteBuffer.position() + 4); // Skip over CRC32
+
+        segment = getSegment2();
+        if (segment != null) {
+            segment.decode(bodyByteBuffer);
+        }
+
+        segment = getSegment3();
+        if (segment != null) {
+            segment.decode(bodyByteBuffer);
+        }
+
+        segment = getSegment4();
+        if (segment != null) {
+            segment.decode(bodyByteBuffer);
+        }
+
+        if (segmentsCount > 1) {
+            lateStatus = BitSet.valueOf(new byte[] {bodyBytes[epilogueIndex]});
+        }
+    }
+
+    private void writeHeaderPlaceholder(ByteArrayOutputStream outputStream) {
+        getTag().getTagNum().encode(outputStream);
+        outputStream.write(0); // placeholder for number of sections
+
+        byte[] bytes = new byte[6];
+        SegmentMetadata[] segmentMetadatas = new SegmentMetadata[4];
+        outputStream.writeBytes(bytes); // placeholder for segment 1 size and alignment
+        outputStream.writeBytes(bytes); // placeholder for segment 2 size and alignment
+        outputStream.writeBytes(bytes); // placeholder for segment 3 size and alignment
+        outputStream.writeBytes(bytes); // placeholder for segment 4 size and alignment
+
+        outputStream.write(bitSetToByte(flags));
+        outputStream.write((byte) 0); // reserved
+
+        bytes = new byte[4];
+        outputStream.writeBytes(bytes); // placeholder for CRC32C
+    }
+
+    private void updateHeader(SegmentMetadata[] segmentMetadatas, byte[] bytes, ByteBuffer byteBuffer) {
+        byteBuffer.position(1);
+        int segmentsCount = 0;
+        for (int i = 0; i < 4; i++) {
+            if (segmentMetadatas[i].size > 0) {
+                segmentsCount++;
+            }
+        }
+        new UInt8(segmentsCount).encode(byteBuffer);
+
+        for (int i = 0; i < 4; i++) {
+            new UInt32(segmentMetadatas[i].size).encode(byteBuffer);
+            new UInt16(segmentMetadatas[i].alignment).encode(byteBuffer);
+        }
+
+        byteBuffer.position(28);
+        CephCRC32C cephCRC32C = new CephCRC32C();
+        cephCRC32C.update(bytes, 0, 28);
+        new UInt32(cephCRC32C.getValue()).encode(byteBuffer);
+    }
+
+    private void updateSegmentCrcs(SegmentMetadata[] segmentMetadatas, byte[] bytes, ByteBuffer byteBuffer) {
+        byteBuffer.position(32 + segmentMetadatas[0].size);
+        CephCRC32C cephCRC32C = new CephCRC32C(-1L);
+        cephCRC32C.update(bytes, 32, segmentMetadatas[0].size);
+        new UInt32(cephCRC32C.getValue()).encode(byteBuffer);
+
+        int segmentOffset = 36 + segmentMetadatas[0].size;
+        int crcOffset = segmentOffset;
+        for (int i = 1; i < 4; i++) {
+            crcOffset += segmentMetadatas[i].size;
+        }
+
+        for (int i = 1; i < 4; i++) {
+            if (segmentMetadatas[i].size > 0) {
+                byteBuffer.position(crcOffset);
+                cephCRC32C.reset(-1L);
+                cephCRC32C.update(bytes, segmentOffset, segmentMetadatas[i].size);
+                new UInt32(cephCRC32C.getValue()).encode(byteBuffer);
+                segmentOffset += segmentMetadatas[i].size;
+            }
+        }
+    }
+
+    private SegmentMetadata encodeSegment(Segment segment, ByteArrayOutputStream outputStream) throws IOException {
+        if (segment == null) {
+            return new SegmentMetadata();
+        }
+
+        int position = outputStream.size();
+        segment.encode(outputStream);
+
+        SegmentMetadata metadata = new SegmentMetadata();
+        metadata.size = outputStream.size() - position;
+        if (metadata.size > 0) {
+            metadata.alignment = segment.getAlignment();
+        }
+
+        return metadata;
+    }
+
+    private byte bitSetToByte(BitSet bitSet) {
+        byte[] bytes = bitSet.toByteArray();
+        if (bytes.length == 0) {
+            return (byte) 0;
+        } else {
+            return bytes[0];
+        }
+    }
 
     protected byte[] readBytes(InputStream stream, int count) throws IOException {
         byte[] bytes = new byte[count];
@@ -64,143 +276,15 @@ public abstract class MessageBase implements Message {
         return bytes;
     }
 
-    public void decode(InputStream stream) throws IOException {
-        byte[] bytes = readBytes(stream, 31);
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-        
-        byteBuffer.get(); // Num segments
-
-        int[] segmentsLengths = new int[4];
-        for (int i = 0; i < 4; i++) {
-            segmentsLengths[i] = (int) new UInt32(byteBuffer).getValue();
-            byteBuffer.get();
-            byteBuffer.get();
-        }
-
-        flags = new UInt8(byteBuffer);
-        byteBuffer.get();
-
-        UInt32 crc = new UInt32(byteBuffer);
-        byte[] fullBytes = new byte[28];
-        fullBytes[0] = (byte) getTag().getValue();
-        System.arraycopy(bytes, 0, fullBytes, 1, 27);
-        CephCRC32C crc32cGenerator = new CephCRC32C();
-        crc32cGenerator.update(fullBytes);
-        if (!crc.equals(UInt32.fromValue(crc32cGenerator.getValue()))) {
-            throw new IOException("Header checksum validation failed");
-        }
-
-        List<UInt32> sectionCrcs = new ArrayList<>();
-        for (int i = 0; i < segmentsLengths.length; i++) {
-            byte[] segmentBytes;
-            if (segmentsLengths[i] > 0) {
-                segmentBytes = readBytes(stream, segmentsLengths[i]);
-                decodeSection(i, ByteBuffer.wrap(segmentBytes));
-            } else {
-                continue;
+    protected void readBytes(InputStream stream, byte[] bytes, int offset, int count) throws IOException {
+        int position = offset;
+        while (count > 0) {
+            int bytesRead = stream.read(bytes, position, count);
+            if (bytesRead == -1) {
+                throw new IOException("Unable to read message");
             }
-
-            byte[] crcBytes = readBytes(stream, 4);
-            crc = new UInt32(ByteBuffer.wrap(crcBytes));
-            crc32cGenerator.reset(-1L);
-            crc32cGenerator.update(segmentBytes);
-
-            if (i == 0) {
-                if (!crc.equals(UInt32.fromValue(crc32cGenerator.getValue()))) {
-                    throw new IOException("Section 1 checksum validation failed");
-                }
-            } else {
-                sectionCrcs.add(crc);
-            }
+            position += bytesRead;
+            count -= bytesRead;
         }
-
-        byte lateStatus = (byte) stream.read();
-        byte[] crcBytes = readBytes(stream, 4 * sectionCrcs.size());
-        ByteBuffer crcByteBuffer = ByteBuffer.wrap(crcBytes);
-
-        int sectionNum = 2;
-        for (UInt32 sectionCrc : sectionCrcs) {
-            UInt32 receivedCrc = new UInt32(crcByteBuffer);
-            if (!receivedCrc.equals(sectionCrc)) {
-                throw new IOException("Section " + sectionNum + " checksum validation failed");
-            }
-            sectionNum++;
-        }
-    }
-
-    public void encode(OutputStream stream) throws IOException {
-        int length = 32;
-
-        SectionMetadata[] sectionMetadatas = getSectionMetadatas();
-        int sectionsCount = 0;
-        for (SectionMetadata sectionMetadata : sectionMetadatas) {
-            if (sectionMetadata.length > 0) {
-                sectionsCount++;
-                length += sectionMetadata.length + 4;
-            }
-        }
-
-        if (sectionsCount > 1) {
-            length++; // late status
-        }
-
-        byte[] msgBytes = new byte[length];
-        ByteBuffer byteBuffer = ByteBuffer.wrap(msgBytes);
-        getTag().encode(byteBuffer);
-        byteBuffer.put((byte) sectionsCount);
-
-        for (SectionMetadata sectionMetadata : sectionMetadatas) {
-            UInt32.fromValue(sectionMetadata.length).encode(byteBuffer);
-            if (sectionMetadata.length > 0) {
-                UInt16.fromValue(sectionMetadata.alignment).encode(byteBuffer);
-            } else {
-                byteBuffer.put((byte) 0);
-                byteBuffer.put((byte) 0);
-            }
-        }
-
-        flags.encode(byteBuffer);
-        byteBuffer.put((byte) 0);
-
-        CephCRC32C crc32c = new CephCRC32C();
-        crc32c.update(msgBytes, 0, 28);
-        UInt32.fromValue(crc32c.getValue()).encode(byteBuffer);
-
-        for (int i = 0; i < sectionMetadatas.length; i++) {
-            if (sectionMetadatas[i].length > 0) {
-                encodeSection(i, byteBuffer);
-            }
-
-            if (i == 0) {
-                // Insert hole for CRC32 checksum
-                byteBuffer.put(new byte[4]);
-            }
-        }
-
-        int epiloguePosition = byteBuffer.position();
-
-        // First section checksum
-        crc32c.reset(-1L);
-        crc32c.update(msgBytes, 32, sectionMetadatas[0].length);
-        byteBuffer.position(32 + sectionMetadatas[0].length);
-        UInt32.fromValue(crc32c.getValue()).encode(byteBuffer);
-
-        if (sectionsCount > 1) {
-            // Late status
-            byteBuffer.put((byte) 0);
-
-            byteBuffer.position(epiloguePosition);
-            int offset = 36 + sectionMetadatas[0].length;
-            for (int i = 1; i < 4; i++) {
-                if (sectionMetadatas[i].length > 0) {
-                    crc32c.reset(-1L);
-                    crc32c.update(msgBytes, offset, sectionMetadatas[i].length);
-                    UInt32.fromValue(crc32c.getValue()).encode(byteBuffer);
-                    offset += sectionMetadatas[i].length;
-                }
-            }
-        }
-
-        stream.write(msgBytes);
     }
 }

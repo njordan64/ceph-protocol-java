@@ -1,10 +1,11 @@
 package ca.venom.ceph.protocol.messages;
 
-import ca.venom.ceph.protocol.types.UInt8;
 import ca.venom.ceph.NodeType;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt32;
+import ca.venom.ceph.protocol.types.UInt8;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -12,12 +13,12 @@ public class HelloMessage extends MessageBase {
     public static final int ADDR4 = 2;
     public static final int ADDR6 = 10;
 
-    public static interface Addr {
-        public int getSize();
+    public interface Addr {
+        int getSize();
 
         void decode(ByteBuffer byteBuffer);
 
-        void encode(ByteBuffer byteBuffer);
+        void encode(ByteArrayOutputStream outputStream);
     }
 
     public static class AddrIPv4 implements Addr {
@@ -26,7 +27,7 @@ public class HelloMessage extends MessageBase {
 
         public int getPort() {
             return ((port[0] & 255) << 8) |
-                   (port[1] & 255);
+                    (port[1] & 255);
         }
 
         public void setPort(int portInt) {
@@ -57,20 +58,20 @@ public class HelloMessage extends MessageBase {
             port[0] = byteBuffer.get();
             port[1] = byteBuffer.get();
             addrBytes = new byte[] {
-                byteBuffer.get(),
-                byteBuffer.get(),
-                byteBuffer.get(),
-                byteBuffer.get()
+                    byteBuffer.get(),
+                    byteBuffer.get(),
+                    byteBuffer.get(),
+                    byteBuffer.get()
             };
         }
 
-        public void encode(ByteBuffer byteBuffer) {
-            byteBuffer.put((byte) 2);
-            byteBuffer.put((byte) 0);
-            byteBuffer.put(port[0]);
-            byteBuffer.put(port[1]);
-            byteBuffer.put(addrBytes);
-            byteBuffer.put(new byte[8]);
+        public void encode(ByteArrayOutputStream outputStream) {
+            outputStream.write((byte) 2);
+            outputStream.write((byte) 0);
+            outputStream.write(port[0]);
+            outputStream.write(port[1]);
+            outputStream.writeBytes(addrBytes);
+            outputStream.writeBytes(new byte[8]);
         }
     }
 
@@ -82,7 +83,7 @@ public class HelloMessage extends MessageBase {
 
         public int getPort() {
             return ((port[0] & 255) << 8) |
-                   (port[0] & 255);
+                    (port[0] & 255);
         }
 
         public void setPort(int portInt) {
@@ -128,126 +129,119 @@ public class HelloMessage extends MessageBase {
             port = new byte[2];
             port[0] = byteBuffer.get();
             port[1] = byteBuffer.get();
-            flowInfo = new UInt32(byteBuffer);
+            flowInfo = UInt32.read(byteBuffer);
             addrBytes = new byte[16];
             byteBuffer.get(addrBytes);
-            scopeId = new UInt32(byteBuffer);
+            scopeId = UInt32.read(byteBuffer);
         }
 
-        public void encode(ByteBuffer byteBuffer) {
-            byteBuffer.put((byte) 10);
-            byteBuffer.put((byte) 0);
-            byteBuffer.put(port[0]);
-            byteBuffer.put(port[1]);
-            flowInfo.encode(byteBuffer);
-            byteBuffer.put(addrBytes);
-            scopeId.encode(byteBuffer);
+        public void encode(ByteArrayOutputStream outputStream) {
+            outputStream.write((byte) 10);
+            outputStream.write((byte) 0);
+            outputStream.write(port[0]);
+            outputStream.write(port[1]);
+            flowInfo.encode(outputStream);
+            outputStream.writeBytes(addrBytes);
+            scopeId.encode(outputStream);
         }
     }
 
-    private NodeType nodeType;
-    private boolean msgAddr2;
-    private UInt32 type;
-    private UInt32 nonce;
-    private Addr addr;
+    public static class Segment1 implements Segment {
+        private NodeType nodeType;
+        private boolean msgAddr2;
+        private UInt32 type;
+        private UInt32 nonce;
+        private Addr addr;
 
-    @Override
-    protected UInt8 getTag() {
-        return MessageType.HELLO.getTagNum();
-    }
-
-    public NodeType getNodeType() {
-        return nodeType;
-    }
-
-    public void setNodeType(NodeType nodeType) {
-        this.nodeType = nodeType;
-    }
-
-    public boolean isMsgAddr2() {
-        return msgAddr2;
-    }
-
-    public void setMsgAddr2(boolean msgAddr2) {
-        this.msgAddr2 = msgAddr2;
-    }
-
-    public UInt32 getType() {
-        return type;
-    }
-
-    public void setType(UInt32 type) {
-        this.type = type;
-    }
-
-    public UInt32 getNonce() {
-        return nonce;
-    }
-
-    public void setNonce(UInt32 nonce) {
-        this.nonce = nonce;
-    }
-
-    public Addr getAddr() {
-        return addr;
-    }
-
-    public void setAddr(Addr addr) {
-        this.addr = addr;
-    }
-
-    @Override
-    protected SectionMetadata[] getSectionMetadatas() {
-        return new SectionMetadata[] {
-            new SectionMetadata(20 + addr.getSize(), 8),
-            new SectionMetadata(0, 0),
-            new SectionMetadata(0, 0),
-            new SectionMetadata(0, 0)
-        };
-    }
-
-    @Override
-    protected void encodeSection(int section, ByteBuffer byteBuffer) throws IOException {
-        if (section > 0) {
-            return;
+        public NodeType getNodeType() {
+            return nodeType;
         }
 
-        UInt8.fromValue(nodeType.getTypeNum()).encode(byteBuffer);
-        byteBuffer.put(msgAddr2 ? (byte) 1 : (byte) 0);
-        
-        // Constants???
-        byteBuffer.put((byte) 1);
-        byteBuffer.put((byte) 1);
+        public void setNodeType(NodeType nodeType) {
+            this.nodeType = nodeType;
+        }
 
-        UInt32.fromValue(12 + addr.getSize()).encode(byteBuffer);
-        type.encode(byteBuffer);
-        nonce.encode(byteBuffer);
-        UInt32.fromValue(addr.getSize()).encode(byteBuffer);
-        addr.encode(byteBuffer);
+        public boolean isMsgAddr2() {
+            return msgAddr2;
+        }
+
+        public void setMsgAddr2(boolean msgAddr2) {
+            this.msgAddr2 = msgAddr2;
+        }
+
+        public UInt32 getType() {
+            return type;
+        }
+
+        public void setType(UInt32 type) {
+            this.type = type;
+        }
+
+        public UInt32 getNonce() {
+            return nonce;
+        }
+
+        public void setNonce(UInt32 nonce) {
+            this.nonce = nonce;
+        }
+
+        public Addr getAddr() {
+            return addr;
+        }
+
+        public void setAddr(Addr addr) {
+            this.addr = addr;
+        }
+
+        @Override
+        public int getAlignment() {
+            return 8;
+        }
+
+        @Override
+        public void encode(ByteArrayOutputStream outputStream) throws IOException {
+            new UInt8(nodeType.getTypeNum()).encode(outputStream);
+            outputStream.write(msgAddr2 ? 1 : 0);
+            outputStream.write(1);
+            outputStream.write(1);
+
+            new UInt32(12 + addr.getSize()).encode(outputStream);
+            type.encode(outputStream);
+            nonce.encode(outputStream);
+            new UInt32(addr.getSize()).encode(outputStream);
+            addr.encode(outputStream);
+        }
+
+        @Override
+        public void decode(ByteBuffer byteBuffer) {
+            nodeType = NodeType.getFromTypeNum(byteBuffer.get());
+            msgAddr2 = byteBuffer.get() > 0;
+
+            byteBuffer.position(byteBuffer.position() + 6);
+
+            type = UInt32.read(byteBuffer);
+            nonce = UInt32.read(byteBuffer);
+            byteBuffer.position(byteBuffer.position() + 4);
+
+            if (type.getValue() == 2) {
+                addr = new AddrIPv4();
+                addr.decode(byteBuffer);
+            } else if (type.getValue() == 10) {
+                addr = new AddrIPV6();
+                addr.decode(byteBuffer);
+            }
+        }
+    }
+
+    private Segment1 segment1 = new Segment1();
+
+    @Override
+    public MessageType getTag() {
+        return MessageType.HELLO;
     }
 
     @Override
-    protected void decodeSection(int section, ByteBuffer byteBuffer) throws IOException {
-        nodeType = NodeType.getFromTypeNum(byteBuffer.get() & 255);
-        msgAddr2 = new UInt8(byteBuffer).getValue() > 0;
-
-        // Skip constants
-        byteBuffer.get();
-        byteBuffer.get();
-
-        // Skip first size field
-        new UInt32(byteBuffer);
-
-        type = new UInt32(byteBuffer);
-        nonce = new UInt32(byteBuffer);
-        byteBuffer.position(byteBuffer.position() + 4);
-
-        if (type.getValue() == 2) {
-            addr = new AddrIPv4();
-            addr.decode(byteBuffer);
-        } else if (type.getValue() == 10) {
-            addr = new AddrIPV6();
-            addr.decode(byteBuffer);
-        }
+    protected Segment getSegment1() {
+        return segment1;
     }
 }

@@ -24,7 +24,7 @@ public class TestUInt32 {
 
     private void valueTest(byte byte1, byte byte2, byte byte3, byte byte4, long value) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {byte1, byte2, byte3, byte4});
-        UInt32 uint32 = new UInt32(byteBuffer);
+        UInt32 uint32 = UInt32.read(byteBuffer);
         assertEquals(value, uint32.getValue());
     }
 
@@ -44,7 +44,7 @@ public class TestUInt32 {
     }
 
     private void encodeTest(long value, byte byte1, byte byte2, byte byte3, byte byte4) {
-        UInt32 uint32 = UInt32.fromValue(value);
+        UInt32 uint32 = new UInt32(value);
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(10);
         uint32.encode(byteBuffer);
