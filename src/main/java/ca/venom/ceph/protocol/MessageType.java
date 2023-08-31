@@ -1,12 +1,13 @@
 package ca.venom.ceph.protocol;
 
+import ca.venom.ceph.protocol.messages.AuthRequestMessage;
 import ca.venom.ceph.protocol.messages.HelloMessage;
 import ca.venom.ceph.protocol.messages.MessageBase;
 import ca.venom.ceph.protocol.types.UInt8;
 
 public enum MessageType {
     HELLO(1, HelloMessage.class),
-    AUTH_REQUEST(2, null),
+    AUTH_REQUEST(2, AuthRequestMessage.class),
     AUTH_BAD_METHOD(3, null),
     AUTH_REPLY_MORE(4, null),
     AUTH_REQUEST_MORE(5, null),

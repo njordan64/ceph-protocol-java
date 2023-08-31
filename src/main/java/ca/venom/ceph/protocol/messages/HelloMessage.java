@@ -146,53 +146,7 @@ public class HelloMessage extends MessageBase {
         }
     }
 
-    public static class Segment1 implements Segment {
-        private NodeType nodeType;
-        private boolean msgAddr2;
-        private UInt32 type;
-        private UInt32 nonce;
-        private Addr addr;
-
-        public NodeType getNodeType() {
-            return nodeType;
-        }
-
-        public void setNodeType(NodeType nodeType) {
-            this.nodeType = nodeType;
-        }
-
-        public boolean isMsgAddr2() {
-            return msgAddr2;
-        }
-
-        public void setMsgAddr2(boolean msgAddr2) {
-            this.msgAddr2 = msgAddr2;
-        }
-
-        public UInt32 getType() {
-            return type;
-        }
-
-        public void setType(UInt32 type) {
-            this.type = type;
-        }
-
-        public UInt32 getNonce() {
-            return nonce;
-        }
-
-        public void setNonce(UInt32 nonce) {
-            this.nonce = nonce;
-        }
-
-        public Addr getAddr() {
-            return addr;
-        }
-
-        public void setAddr(Addr addr) {
-            this.addr = addr;
-        }
-
+    public class Segment1 implements Segment {
         @Override
         public int getAlignment() {
             return 8;
@@ -233,7 +187,53 @@ public class HelloMessage extends MessageBase {
         }
     }
 
-    private Segment1 segment1 = new Segment1();
+    private NodeType nodeType;
+    private boolean msgAddr2;
+    private UInt32 type;
+    private UInt32 nonce;
+    private Addr addr;
+
+    public NodeType getNodeType() {
+        return nodeType;
+    }
+
+    public void setNodeType(NodeType nodeType) {
+        this.nodeType = nodeType;
+    }
+
+    public boolean isMsgAddr2() {
+        return msgAddr2;
+    }
+
+    public void setMsgAddr2(boolean msgAddr2) {
+        this.msgAddr2 = msgAddr2;
+    }
+
+    public UInt32 getType() {
+        return type;
+    }
+
+    public void setType(UInt32 type) {
+        this.type = type;
+    }
+
+    public UInt32 getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(UInt32 nonce) {
+        this.nonce = nonce;
+    }
+
+    public Addr getAddr() {
+        return addr;
+    }
+
+    public void setAddr(Addr addr) {
+        this.addr = addr;
+    }
+
+    private final Segment1 segment1 = new Segment1();
 
     @Override
     public MessageType getTag() {
