@@ -1,6 +1,5 @@
 package ca.venom.ceph.protocol.messages;
 
-import ca.venom.ceph.NodeType;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt32;
 import org.junit.Before;
@@ -14,13 +13,13 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class TestAuthRequestMessage {
+public class TestAuthRequest {
     private static final String MESSAGE1_PATH = "authrequest1.bin";
     private byte[] message1Bytes;
 
     @Before
     public void setup() throws Exception {
-        InputStream inputStream = TestAuthRequestMessage.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
+        InputStream inputStream = TestAuthRequest.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         byte[] buffer = new byte[4096];
@@ -37,7 +36,7 @@ public class TestAuthRequestMessage {
 
     @Test
     public void testDecodeMessage1() throws Exception {
-        AuthRequestMessage parsedMessage = new AuthRequestMessage();
+        AuthRequest parsedMessage = new AuthRequest();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
         parsedMessage.decode(inputStream);
 
@@ -57,19 +56,19 @@ public class TestAuthRequestMessage {
 
     @Test
     public void testEncodeMessage1() throws Exception {
-        AuthRequestMessage authRequestMessage = new AuthRequestMessage();
+        AuthRequest authRequest = new AuthRequest();
 
-        authRequestMessage.setAuthMethod(new UInt32(2));
+        authRequest.setAuthMethod(new UInt32(2));
 
         List<UInt32> preferredModes = new ArrayList<>();
         preferredModes.add(new UInt32(2));
         preferredModes.add(new UInt32(1));
-        authRequestMessage.setPreferredModes(preferredModes);
+        authRequest.setPreferredModes(preferredModes);
 
         byte[] authPayload = new byte[22];
         System.arraycopy(message1Bytes, 52, authPayload, 0, 22);
-        authRequestMessage.setAuthPayload(authPayload);
+        authRequest.setAuthPayload(authPayload);
 
-        assertArrayEquals(message1Bytes, authRequestMessage.encode());
+        assertArrayEquals(message1Bytes, authRequest.encode());
     }
 }

@@ -1,13 +1,13 @@
 package ca.venom.ceph.protocol;
 
-import ca.venom.ceph.protocol.messages.AuthRequestMessage;
-import ca.venom.ceph.protocol.messages.HelloMessage;
-import ca.venom.ceph.protocol.messages.MessageBase;
+import ca.venom.ceph.protocol.messages.AuthRequest;
+import ca.venom.ceph.protocol.messages.Hello;
+import ca.venom.ceph.protocol.messages.ControlFrame;
 import ca.venom.ceph.protocol.types.UInt8;
 
 public enum MessageType {
-    HELLO(1, HelloMessage.class),
-    AUTH_REQUEST(2, AuthRequestMessage.class),
+    HELLO(1, Hello.class),
+    AUTH_REQUEST(2, AuthRequest.class),
     AUTH_BAD_METHOD(3, null),
     AUTH_REPLY_MORE(4, null),
     AUTH_REQUEST_MORE(5, null),
@@ -30,9 +30,9 @@ public enum MessageType {
     COMPRESSION_DONE(22, null);
 
     private final UInt8 tagNum;
-    private final Class<? extends MessageBase> clazz;
+    private final Class<? extends ControlFrame> clazz;
 
-    private MessageType(int tagNum, Class<? extends MessageBase> clazz) {
+    private MessageType(int tagNum, Class<? extends ControlFrame> clazz) {
         this.tagNum = new UInt8(tagNum);
         this.clazz = clazz;
     }
@@ -51,7 +51,7 @@ public enum MessageType {
         return tagNum;
     }
 
-    public MessageBase getInstance() {
+    public ControlFrame getInstance() {
         if (clazz == null) {
             return null;
         }

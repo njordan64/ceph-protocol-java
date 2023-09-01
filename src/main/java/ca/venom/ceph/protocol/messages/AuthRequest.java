@@ -6,10 +6,9 @@ import ca.venom.ceph.protocol.types.UInt32;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
-public class AuthRequestMessage extends MessageBase {
+public class AuthRequest extends ControlFrame {
     public class Segment1 implements Segment {
         @Override
         public int getAlignment() {
@@ -18,32 +17,23 @@ public class AuthRequestMessage extends MessageBase {
 
         @Override
         public void encode(ByteArrayOutputStream stream) throws IOException {
-            authMethod.encode(stream);
+            write(authMethod, stream);
 
             if (preferredModes != null) {
-                new UInt32(preferredModes.size()).encode(stream);
-                preferredModes.forEach(pm -> pm.encode(stream));
+                write(new UInt32(preferredModes.size()), stream);
+                preferredModes.forEach(pm -> write(pm, stream));
             } else {
                 stream.writeBytes(new byte[4]);
             }
 
-            new UInt32(authPayload.length).encode(stream);
-            stream.write(authPayload);
+            write(authPayload, stream);
         }
 
         @Override
         public void decode(ByteBuffer byteBuffer) {
-            authMethod = UInt32.read(byteBuffer);
-
-            int preferredModesCount = (int) UInt32.read(byteBuffer).getValue();
-            preferredModes = new ArrayList<>(preferredModesCount);
-            for (int i = 0; i < preferredModesCount; i++) {
-                preferredModes.add(UInt32.read(byteBuffer));
-            }
-
-            int authPayloadSize = (int) UInt32.read(byteBuffer).getValue();
-            authPayload = new byte[authPayloadSize];
-            byteBuffer.get(authPayload);
+            authMethod = readUInt32(byteBuffer);
+            preferredModes = readList(byteBuffer, UInt32.class);
+            authPayload = readByteArray(byteBuffer);
         }
     }
 
@@ -78,8 +68,12 @@ public class AuthRequestMessage extends MessageBase {
     }
 
     @Override
-    protected Segment getSegment1() {
-        return segment1;
+    protected Segment getSegment(int index) {
+        if (index == 0) {
+            return segment1;
+        } else {
+            return null;
+        }
     }
 
     @Override

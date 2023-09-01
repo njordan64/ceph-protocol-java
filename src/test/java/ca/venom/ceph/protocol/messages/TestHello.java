@@ -12,13 +12,13 @@ import java.io.InputStream;
 
 import static org.junit.Assert.*;
 
-public class TestHelloMessage {
+public class TestHello {
     private static final String MESSAGE1_PATH = "hello1.bin";
     private byte[] message1Bytes;
 
     @Before
     public void setup() throws Exception {
-        InputStream inputStream = TestHelloMessage.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
+        InputStream inputStream = TestHello.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         byte[] buffer = new byte[4096];
@@ -35,7 +35,7 @@ public class TestHelloMessage {
 
     @Test
     public void testDecodeMessage1() throws Exception {
-        HelloMessage parsedMessage = new HelloMessage();
+        Hello parsedMessage = new Hello();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
         parsedMessage.decode(inputStream);
 
@@ -47,7 +47,7 @@ public class TestHelloMessage {
         assertEquals(2, parsedMessage.getType().getValue());
         assertEquals(0, parsedMessage.getNonce().getValue());
 
-        HelloMessage.AddrIPv4 addr = (HelloMessage.AddrIPv4) parsedMessage.getAddr();
+        Hello.AddrIPv4 addr = (Hello.AddrIPv4) parsedMessage.getAddr();
         assertEquals(50504, addr.getPort());
         assertEquals((byte) 192, addr.getAddrBytes()[0]);
         assertEquals((byte) 168, addr.getAddrBytes()[1]);
@@ -57,20 +57,20 @@ public class TestHelloMessage {
 
     @Test
     public void testEncodeMessage1() throws Exception {
-        HelloMessage helloMessage = new HelloMessage();
+        Hello hello = new Hello();
 
-        helloMessage.setNodeType(NodeType.MON);
-        helloMessage.setMsgAddr2(true);
+        hello.setNodeType(NodeType.MON);
+        hello.setMsgAddr2(true);
 
-        HelloMessage.AddrIPv4 addr = new HelloMessage.AddrIPv4();
+        Hello.AddrIPv4 addr = new Hello.AddrIPv4();
         addr.setPort(50504);
         byte[] addrBytes = new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227};
         addr.setAddrBytes(addrBytes);
 
-        helloMessage.setAddr(addr);
-        helloMessage.setType(new UInt32(2));
-        helloMessage.setNonce(new UInt32(0));
+        hello.setAddr(addr);
+        hello.setType(new UInt32(2));
+        hello.setNonce(new UInt32(0));
 
-        assertArrayEquals(message1Bytes, helloMessage.encode());
+        assertArrayEquals(message1Bytes, hello.encode());
     }
 }

@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class HelloMessage extends MessageBase {
+public class Hello extends ControlFrame {
     public static final int ADDR4 = 2;
     public static final int ADDR6 = 10;
 
@@ -154,15 +154,15 @@ public class HelloMessage extends MessageBase {
 
         @Override
         public void encode(ByteArrayOutputStream outputStream) throws IOException {
-            new UInt8(nodeType.getTypeNum()).encode(outputStream);
-            outputStream.write(msgAddr2 ? 1 : 0);
-            outputStream.write(1);
-            outputStream.write(1);
+            write(new UInt8(nodeType.getTypeNum()), outputStream);
+            write(msgAddr2 ? (byte) 1 : (byte) 0, outputStream);
+            write((byte) 1, outputStream);
+            write((byte) 1, outputStream);
 
-            new UInt32(12 + addr.getSize()).encode(outputStream);
-            type.encode(outputStream);
-            nonce.encode(outputStream);
-            new UInt32(addr.getSize()).encode(outputStream);
+            write(new UInt32(12 + addr.getSize()), outputStream);
+            write(type, outputStream);
+            write(nonce, outputStream);
+            write(new UInt32(addr.getSize()), outputStream);
             addr.encode(outputStream);
         }
 
@@ -173,8 +173,8 @@ public class HelloMessage extends MessageBase {
 
             byteBuffer.position(byteBuffer.position() + 6);
 
-            type = UInt32.read(byteBuffer);
-            nonce = UInt32.read(byteBuffer);
+            type = readUInt32(byteBuffer);
+            nonce = readUInt32(byteBuffer);
             byteBuffer.position(byteBuffer.position() + 4);
 
             if (type.getValue() == 2) {
@@ -241,7 +241,11 @@ public class HelloMessage extends MessageBase {
     }
 
     @Override
-    protected Segment getSegment1() {
-        return segment1;
+    protected Segment getSegment(int index) {
+        if (index == 0) {
+            return segment1;
+        } else {
+            return null;
+        }
     }
 }
