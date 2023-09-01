@@ -1,19 +1,16 @@
 package ca.venom.ceph.protocol;
 
-import ca.venom.ceph.protocol.messages.AuthBadMethod;
-import ca.venom.ceph.protocol.messages.AuthRequest;
-import ca.venom.ceph.protocol.messages.Hello;
-import ca.venom.ceph.protocol.messages.ControlFrame;
+import ca.venom.ceph.protocol.messages.*;
 import ca.venom.ceph.protocol.types.UInt8;
 
 public enum MessageType {
     HELLO(1, Hello.class),
     AUTH_REQUEST(2, AuthRequest.class),
     AUTH_BAD_METHOD(3, AuthBadMethod.class),
-    AUTH_REPLY_MORE(4, null),
-    AUTH_REQUEST_MORE(5, null),
-    AUTH_DONE(6, null),
-    AUTH_SIGNATURE(7, null),
+    AUTH_REPLY_MORE(4, AuthReplyMore.class),
+    AUTH_REQUEST_MORE(5, AuthRequestMore.class),
+    AUTH_DONE(6, AuthDone.class),
+    AUTH_SIGNATURE(7, AuthSignature.class),
     CLIENT_IDENT(8, null),
     SERVER_IDENT(9, null),
     IDENT_MISSING_FEATURES(10, null),
