@@ -6,7 +6,6 @@ import ca.venom.ceph.protocol.types.UInt32;
 import ca.venom.ceph.protocol.types.UInt8;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class Hello extends ControlFrame {
@@ -146,47 +145,6 @@ public class Hello extends ControlFrame {
         }
     }
 
-    public class Segment1 implements Segment {
-        @Override
-        public int getAlignment() {
-            return 8;
-        }
-
-        @Override
-        public void encode(ByteArrayOutputStream outputStream) throws IOException {
-            write(new UInt8(nodeType.getTypeNum()), outputStream);
-            write(msgAddr2 ? (byte) 1 : (byte) 0, outputStream);
-            write((byte) 1, outputStream);
-            write((byte) 1, outputStream);
-
-            write(new UInt32(12 + addr.getSize()), outputStream);
-            write(type, outputStream);
-            write(nonce, outputStream);
-            write(new UInt32(addr.getSize()), outputStream);
-            addr.encode(outputStream);
-        }
-
-        @Override
-        public void decode(ByteBuffer byteBuffer) {
-            nodeType = NodeType.getFromTypeNum(byteBuffer.get());
-            msgAddr2 = byteBuffer.get() > 0;
-
-            byteBuffer.position(byteBuffer.position() + 6);
-
-            type = readUInt32(byteBuffer);
-            nonce = readUInt32(byteBuffer);
-            byteBuffer.position(byteBuffer.position() + 4);
-
-            if (type.getValue() == 2) {
-                addr = new AddrIPv4();
-                addr.decode(byteBuffer);
-            } else if (type.getValue() == 10) {
-                addr = new AddrIPV6();
-                addr.decode(byteBuffer);
-            }
-        }
-    }
-
     private NodeType nodeType;
     private boolean msgAddr2;
     private UInt32 type;
@@ -233,7 +191,6 @@ public class Hello extends ControlFrame {
         this.addr = addr;
     }
 
-    private final Segment1 segment1 = new Segment1();
 
     @Override
     public MessageType getTag() {
@@ -241,11 +198,44 @@ public class Hello extends ControlFrame {
     }
 
     @Override
-    protected Segment getSegment(int index) {
-        if (index == 0) {
-            return segment1;
+    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
+        if (segmentIndex == 0) {
+            write(new UInt8(nodeType.getTypeNum()), outputStream);
+            write(msgAddr2 ? (byte) 1 : (byte) 0, outputStream);
+            write((byte) 1, outputStream);
+            write((byte) 1, outputStream);
+
+            write(new UInt32(12 + addr.getSize()), outputStream);
+            write(type, outputStream);
+            write(nonce, outputStream);
+            write(new UInt32(addr.getSize()), outputStream);
+            addr.encode(outputStream);
+
+            return 8;
         } else {
-            return null;
+            return 0;
+        }
+    }
+
+    @Override
+    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
+        if (segmentIndex == 0) {
+            nodeType = NodeType.getFromTypeNum(byteBuffer.get());
+            msgAddr2 = byteBuffer.get() > 0;
+
+            byteBuffer.position(byteBuffer.position() + 6);
+
+            type = readUInt32(byteBuffer);
+            nonce = readUInt32(byteBuffer);
+            byteBuffer.position(byteBuffer.position() + 4);
+
+            if (type.getValue() == 2) {
+                addr = new AddrIPv4();
+                addr.decode(byteBuffer);
+            } else if (type.getValue() == 10) {
+                addr = new AddrIPV6();
+                addr.decode(byteBuffer);
+            }
         }
     }
 }

@@ -27,7 +27,9 @@ public abstract class ControlFrame {
     private BitSet flags = new BitSet(8);
     private BitSet lateStatus = new BitSet(8);
 
-    protected abstract Segment getSegment(int index);
+    protected abstract int encodeSegmentBody(int index, ByteArrayOutputStream outputStream);
+
+    protected abstract void decodeSegmentBody(int index, ByteBuffer byteBuffer, int alignment);
 
     public abstract MessageType getTag();
 
@@ -45,11 +47,11 @@ public abstract class ControlFrame {
         writeHeaderPlaceholder(outputStream);
 
         byte[] bytes = new byte[4];
-        segmentMetadatas[0] = encodeSegment(getSegment(0), outputStream);
+        segmentMetadatas[0] = encodeSegment(0, outputStream);
         outputStream.write(bytes); // placeholder for segment 1 CRC32C
 
         for (int i = 1; i < MAX_SEGMENTS; i++) {
-            segmentMetadatas[i] = encodeSegment(getSegment(i), outputStream);
+            segmentMetadatas[i] = encodeSegment(i, outputStream);
         }
 
         int segmentsCount = 0;
@@ -115,17 +117,11 @@ public abstract class ControlFrame {
         }
 
         bodyByteBuffer.position(0);
-        Segment segment = getSegment(0);
-        if (segment != null) {
-            segment.decode(bodyByteBuffer);
-        }
+        decodeSegmentBody(0, bodyByteBuffer, segmentMetadatas[0].alignment);
         bodyByteBuffer.position(bodyByteBuffer.position() + 4); // Skip over CRC32
 
         for (int i = 1; i < MAX_SEGMENTS; i++) {
-            segment = getSegment(i);
-            if (segment != null) {
-                segment.decode(bodyByteBuffer);
-            }
+            decodeSegmentBody(i, bodyByteBuffer, segmentMetadatas[i].alignment);
         }
 
         if (segmentsCount > 1) {
@@ -232,18 +228,14 @@ public abstract class ControlFrame {
         }
     }
 
-    private SegmentMetadata encodeSegment(Segment segment, ByteArrayOutputStream outputStream) throws IOException {
-        if (segment == null) {
-            return new SegmentMetadata();
-        }
-
+    private SegmentMetadata encodeSegment(int segmentIndex, ByteArrayOutputStream outputStream) throws IOException {
         int position = outputStream.size();
-        segment.encode(outputStream);
+        int alignment = encodeSegmentBody(segmentIndex, outputStream);
 
         SegmentMetadata metadata = new SegmentMetadata();
         metadata.size = outputStream.size() - position;
         if (metadata.size > 0) {
-            metadata.alignment = segment.getAlignment();
+            metadata.alignment = alignment;
         }
 
         return metadata;
@@ -324,6 +316,11 @@ public abstract class ControlFrame {
     }
 
     protected void write(List<?> value, ByteArrayOutputStream stream, Class<?> elementClass) {
+        if (value == null) {
+            new UInt32(0).encode(stream);
+            return;
+        }
+
         new UInt32(value.size()).encode(stream);
 
         if (Byte.class.equals(elementClass)) {

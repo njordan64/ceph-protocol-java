@@ -4,41 +4,10 @@ import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt32;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
 public class AuthRequest extends ControlFrame {
-    public class Segment1 implements Segment {
-        @Override
-        public int getAlignment() {
-            return 8;
-        }
-
-        @Override
-        public void encode(ByteArrayOutputStream stream) throws IOException {
-            write(authMethod, stream);
-
-            if (preferredModes != null) {
-                write(new UInt32(preferredModes.size()), stream);
-                preferredModes.forEach(pm -> write(pm, stream));
-            } else {
-                stream.writeBytes(new byte[4]);
-            }
-
-            write(authPayload, stream);
-        }
-
-        @Override
-        public void decode(ByteBuffer byteBuffer) {
-            authMethod = readUInt32(byteBuffer);
-            preferredModes = readList(byteBuffer, UInt32.class);
-            authPayload = readByteArray(byteBuffer);
-        }
-    }
-
-    private final Segment1 segment1 = new Segment1();
-
     private UInt32 authMethod;
     private List<UInt32> preferredModes;
     private byte[] authPayload;
@@ -68,11 +37,31 @@ public class AuthRequest extends ControlFrame {
     }
 
     @Override
-    protected Segment getSegment(int index) {
-        if (index == 0) {
-            return segment1;
+    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
+        if (segmentIndex == 0) {
+            write(authMethod, outputStream);
+
+            if (preferredModes != null) {
+                write(new UInt32(preferredModes.size()), outputStream);
+                preferredModes.forEach(pm -> write(pm, outputStream));
+            } else {
+                outputStream.writeBytes(new byte[4]);
+            }
+
+            write(authPayload, outputStream);
+
+            return 8;
         } else {
-            return null;
+            return 0;
+        }
+    }
+
+    @Override
+    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
+        if (segmentIndex == 0) {
+            authMethod = readUInt32(byteBuffer);
+            preferredModes = readList(byteBuffer, UInt32.class);
+            authPayload = readByteArray(byteBuffer);
         }
     }
 

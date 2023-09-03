@@ -4,29 +4,10 @@ import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt64;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class IdentMissingFeatures extends ControlFrame {
-    public class Segment1 implements Segment {
-        @Override
-        public int getAlignment() {
-            return 8;
-        }
-
-        @Override
-        public void encode(ByteArrayOutputStream stream) throws IOException {
-            write(missingFeaturesMask, stream);
-        }
-
-        @Override
-        public void decode(ByteBuffer byteBuffer) {
-            missingFeaturesMask = readUInt64(byteBuffer);
-        }
-    }
-
     private UInt64 missingFeaturesMask;
-    private Segment1 segment1;
 
     public UInt64 getMissingFeaturesMask() {
         return missingFeaturesMask;
@@ -37,11 +18,19 @@ public class IdentMissingFeatures extends ControlFrame {
     }
 
     @Override
-    protected Segment getSegment(int index) {
-        if (index == 0) {
-            return segment1;
+    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
+        if (segmentIndex == 0) {
+            write(missingFeaturesMask, outputStream);
+            return 8;
         } else {
-            return null;
+            return 0;
+        }
+    }
+
+    @Override
+    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
+        if (segmentIndex == 0) {
+            missingFeaturesMask = readUInt64(byteBuffer);
         }
     }
 

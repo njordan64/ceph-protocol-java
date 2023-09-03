@@ -4,29 +4,10 @@ import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.UInt64;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class Retry extends ControlFrame {
-    public class Segment1 implements Segment {
-        @Override
-        public void encode(ByteArrayOutputStream stream) throws IOException {
-            write(connectionSeq, stream);
-        }
-
-        @Override
-        public void decode(ByteBuffer byteBuffer) {
-            connectionSeq = readUInt64(byteBuffer);
-        }
-
-        @Override
-        public int getAlignment() {
-            return 0;
-        }
-    }
-
     private UInt64 connectionSeq;
-    private Segment1 segment1 = new Segment1();
 
     public UInt64 getConnectionSeq() {
         return connectionSeq;
@@ -37,11 +18,19 @@ public class Retry extends ControlFrame {
     }
 
     @Override
-    protected Segment getSegment(int index) {
-        if (index == 0) {
-            return segment1;
+    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
+        if (segmentIndex == 0) {
+            write(connectionSeq, outputStream);
+            return 8;
         } else {
-            return null;
+            return 0;
+        }
+    }
+
+    @Override
+    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
+        if (segmentIndex == 0) {
+            connectionSeq = readUInt64(byteBuffer);
         }
     }
 
