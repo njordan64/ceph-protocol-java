@@ -29,8 +29,7 @@ public class UInt8 {
     }
 
     public boolean equals(Object obj) {
-        if (obj instanceof UInt8) {
-            UInt8 other = (UInt8) obj;
+        if (obj instanceof UInt8 other) {
             return value == other.value;
         }
 

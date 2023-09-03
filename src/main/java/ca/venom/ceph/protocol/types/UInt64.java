@@ -46,8 +46,7 @@ public class UInt64 {
     }
 
     public boolean equals(Object obj) {
-        if (obj instanceof UInt64) {
-            UInt64 other = (UInt64) obj;
+        if (obj instanceof UInt64 other) {
             return value.equals(other.value);
         }
 

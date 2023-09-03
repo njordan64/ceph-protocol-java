@@ -1,25 +1,26 @@
 package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.types.UTime;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
-public class Reset extends ControlFrame {
-    boolean fullReset;
+public class KeepAliveAck extends ControlFrame {
+    private UTime timestamp;
 
-    public boolean isFullReset() {
-        return fullReset;
+    public UTime getTimestamp() {
+        return timestamp;
     }
 
-    public void setFullReset(boolean fullReset) {
-        this.fullReset = fullReset;
+    public void setTimestamp(UTime timestamp) {
+        this.timestamp = timestamp;
     }
 
     @Override
     protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
         if (segmentIndex == 0) {
-            outputStream.write(fullReset ? 1 : 0);
+            timestamp.encode(outputStream);
             return 8;
         } else {
             return 0;
@@ -29,12 +30,12 @@ public class Reset extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            fullReset = byteBuffer.get() > 0;
+            timestamp = UTime.read(byteBuffer);
         }
     }
 
     @Override
     public MessageType getTag() {
-        return MessageType.SESSION_RESET;
+        return MessageType.KEEPALIVE2;
     }
 }

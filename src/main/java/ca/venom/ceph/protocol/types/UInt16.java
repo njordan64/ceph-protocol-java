@@ -37,8 +37,7 @@ public class UInt16 {
     }
 
     public boolean equals(Object obj) {
-        if (obj instanceof UInt16) {
-            UInt16 other = (UInt16) obj;
+        if (obj instanceof UInt16 other) {
             return value.equals(other.value);
         }
 

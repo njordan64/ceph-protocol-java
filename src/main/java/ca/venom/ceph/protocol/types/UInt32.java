@@ -27,10 +27,10 @@ public class UInt32 {
     }
 
     public long getValue() {
-        return ((long) (value.get(3) & 255) << 24) |
-               ((value.get(2) & 255) << 16) |
-               ((value.get(1) & 255) << 8) |
-               (value.get(0) & 255);
+        return ((long) (value.get(3) & 255L) << 24) |
+               ((value.get(2) & 255L) << 16) |
+               ((value.get(1) & 255L) << 8) |
+               (value.get(0) & 255L);
     }
 
     public void encode(ByteArrayOutputStream outputStream) {
