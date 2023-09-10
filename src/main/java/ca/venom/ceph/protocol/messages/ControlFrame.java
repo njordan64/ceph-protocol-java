@@ -2,10 +2,7 @@ package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.CephCRC32C;
 import ca.venom.ceph.protocol.MessageType;
-import ca.venom.ceph.protocol.types.UInt16;
-import ca.venom.ceph.protocol.types.UInt32;
-import ca.venom.ceph.protocol.types.UInt64;
-import ca.venom.ceph.protocol.types.UInt8;
+import ca.venom.ceph.protocol.types.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -315,6 +312,10 @@ public abstract class ControlFrame {
         stream.write(0);
     }
 
+    protected void write(Addr value, ByteArrayOutputStream stream) {
+        value.encode(stream);
+    }
+
     protected void write(List<?> value, ByteArrayOutputStream stream, Class<?> elementClass) {
         if (value == null) {
             new UInt32(0).encode(stream);
@@ -341,6 +342,8 @@ public abstract class ControlFrame {
             value.forEach(v -> ((UInt64) v).encode(stream));
         } else if (String.class.equals(elementClass)) {
             value.forEach(v -> write((String) v, stream));
+        } else if (Addr.class.isAssignableFrom(elementClass)) {
+            value.forEach(v -> write((Addr) v, stream));
         } else {
             throw new IllegalArgumentException("List cannot be encoded: " + elementClass.getName());
         }
@@ -422,6 +425,10 @@ public abstract class ControlFrame {
         return new String(stringBytes);
     }
 
+    protected Addr readAddr(ByteBuffer byteBuffer) {
+        return Addr.read(byteBuffer);
+    }
+
     protected <T> List<T> readList(ByteBuffer byteBuffer, Class<T> elementType) {
         int elementCount = (int) UInt32.read(byteBuffer).getValue();
         List<Object> list = new ArrayList<>(elementCount);
@@ -463,6 +470,10 @@ public abstract class ControlFrame {
         } else if (String.class.equals(elementType)) {
             for (int i = 0; i < elementCount; i++) {
                 list.add(readString(byteBuffer));
+            }
+        } else if (Addr.class.isAssignableFrom(elementType)) {
+            for (int i = 0; i < elementCount; i++) {
+                list.add(readAddr(byteBuffer));
             }
         } else {
             throw new IllegalArgumentException("List cannot be decoded: " + elementType.getName());

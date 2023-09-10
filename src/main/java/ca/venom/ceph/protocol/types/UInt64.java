@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
-public class UInt64 {
+public class UInt64 implements CephDataType {
     private final ByteBuffer value;
 
     public UInt64(BigInteger value) {
@@ -37,10 +37,12 @@ public class UInt64 {
         return new BigInteger(bytesToParse);
     }
 
+    @Override
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value.array(), value.arrayOffset(), 8);
     }
 
+    @Override
     public void encode(ByteArrayOutputStream outputStream) {
         outputStream.write(value.array(), value.arrayOffset(), 8);
     }

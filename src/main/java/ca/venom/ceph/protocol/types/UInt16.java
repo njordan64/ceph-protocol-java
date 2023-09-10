@@ -3,7 +3,7 @@ package ca.venom.ceph.protocol.types;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
-public class UInt16 {
+public class UInt16 implements CephDataType {
     private final ByteBuffer value;
 
     public UInt16(int value) {
@@ -28,10 +28,12 @@ public class UInt16 {
         return ((value.get(1) & 255) << 8) + (value.get(0) & 255);
     }
 
+    @Override
     public void encode(ByteArrayOutputStream outputStream) {
         outputStream.write(value.array(), value.arrayOffset(), 2);
     }
 
+    @Override
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value.array(), value.arrayOffset(), 2);
     }

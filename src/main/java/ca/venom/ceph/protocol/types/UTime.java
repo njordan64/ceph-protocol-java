@@ -3,7 +3,7 @@ package ca.venom.ceph.protocol.types;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
-public class UTime {
+public class UTime implements CephDataType {
     private final ByteBuffer value;
 
     public UTime(UInt32 time, UInt32 nanoSeconds) {
@@ -42,10 +42,12 @@ public class UTime {
         outputStream.write(value.array(), value.arrayOffset(), 8);
     }
 
+    @Override
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value.array(), value.arrayOffset(), 8);
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof UTime other) {
             return getTime() == other.getTime() && getNanoSeconds() == other.getNanoSeconds();

@@ -3,7 +3,7 @@ package ca.venom.ceph.protocol.types;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
-public class UInt32 {
+public class UInt32 implements CephDataType {
     private final ByteBuffer value;
 
     public UInt32(long value) {
@@ -37,10 +37,12 @@ public class UInt32 {
         outputStream.write(value.array(), value.arrayOffset(), 4);
     }
 
+    @Override
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value.array(), value.arrayOffset(), 4);
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof UInt32) {
             UInt32 other = (UInt32) obj;

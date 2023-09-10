@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-public class UInt8 {
+public class UInt8 implements CephDataType {
     private final byte value;
 
     public UInt8(int value) {
@@ -20,10 +20,12 @@ public class UInt8 {
         return value & 0xff;
     }
 
+    @Override
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value);
     }
 
+    @Override
     public void encode(ByteArrayOutputStream outputStream) {
         outputStream.write(value);
     }
