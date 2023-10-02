@@ -29,6 +29,11 @@ public class UInt16 implements CephDataType {
     }
 
     @Override
+    public int getSize() {
+        return 2;
+    }
+
+    @Override
     public void encode(ByteArrayOutputStream outputStream) {
         outputStream.write(value.array(), value.arrayOffset(), 2);
     }

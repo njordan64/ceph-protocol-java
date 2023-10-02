@@ -2,6 +2,7 @@ package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.CephList;
 import ca.venom.ceph.protocol.types.UInt64;
 
 import java.io.ByteArrayOutputStream;
@@ -9,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public class Reconnect extends ControlFrame {
-    private List<Addr> myAddresses;
+    private CephList<Addr> myAddresses;
     private UInt64 clientCookie;
     private UInt64 serverCookie;
     private UInt64 globalSeq;
@@ -17,11 +18,11 @@ public class Reconnect extends ControlFrame {
     private UInt64 messageSeq;
 
     public List<Addr> getMyAddresses() {
-        return myAddresses;
+        return myAddresses.getValues();
     }
 
     public void setMyAddresses(List<Addr> myAddresses) {
-        this.myAddresses = myAddresses;
+        this.myAddresses = new CephList<>(myAddresses);
     }
 
     public UInt64 getClientCookie() {
@@ -72,12 +73,12 @@ public class Reconnect extends ControlFrame {
     @Override
     protected int encodeSegmentBody(int index, ByteArrayOutputStream outputStream) {
         if (index == 0) {
-            write(myAddresses, outputStream, Addr.class);
-            write(clientCookie, outputStream);
-            write(serverCookie, outputStream);
-            write(globalSeq, outputStream);
-            write(connectSeq, outputStream);
-            write(messageSeq, outputStream);
+            myAddresses.encode(outputStream);
+            clientCookie.encode(outputStream);
+            serverCookie.encode(outputStream);
+            globalSeq.encode(outputStream);
+            connectSeq.encode(outputStream);
+            messageSeq.encode(outputStream);
 
             return 8;
         } else {
@@ -88,12 +89,12 @@ public class Reconnect extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int index, ByteBuffer byteBuffer, int alignment) {
         if (index == 0) {
-            myAddresses = readList(byteBuffer, Addr.class);
-            clientCookie = readUInt64(byteBuffer);
-            serverCookie = readUInt64(byteBuffer);
-            globalSeq = readUInt64(byteBuffer);
-            connectSeq = readUInt64(byteBuffer);
-            messageSeq = readUInt64(byteBuffer);
+            myAddresses = CephList.read(byteBuffer, Addr.class);
+            clientCookie = UInt64.read(byteBuffer);
+            serverCookie = UInt64.read(byteBuffer);
+            globalSeq = UInt64.read(byteBuffer);
+            connectSeq = UInt64.read(byteBuffer);
+            messageSeq = UInt64.read(byteBuffer);
         }
     }
 }

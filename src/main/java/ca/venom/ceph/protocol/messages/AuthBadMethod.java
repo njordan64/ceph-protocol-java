@@ -1,6 +1,8 @@
 package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.types.CephList;
+import ca.venom.ceph.protocol.types.Int32;
 import ca.venom.ceph.protocol.types.UInt32;
 
 import java.io.ByteArrayOutputStream;
@@ -9,9 +11,9 @@ import java.util.List;
 
 public class AuthBadMethod extends ControlFrame {
     private UInt32 method;
-    private int result;
-    private List<UInt32> allowedMethods;
-    private List<UInt32> allowedModes;
+    private Int32 result;
+    private CephList<UInt32> allowedMethods;
+    private CephList<UInt32> allowedModes;
 
     public UInt32 getMethod() {
         return method;
@@ -22,36 +24,36 @@ public class AuthBadMethod extends ControlFrame {
     }
 
     public int getResult() {
-        return result;
+        return result.getValue();
     }
 
     public void setResult(int result) {
-        this.result = result;
+        this.result = new Int32(result);
     }
 
     public List<UInt32> getAllowedMethods() {
-        return allowedMethods;
+        return allowedMethods.getValues();
     }
 
     public void setAllowedMethods(List<UInt32> allowedMethods) {
-        this.allowedMethods = allowedMethods;
+        this.allowedMethods = new CephList<>(allowedMethods);
     }
 
     public List<UInt32> getAllowedModes() {
-        return allowedModes;
+        return allowedModes.getValues();
     }
 
     public void setAllowedModes(List<UInt32> allowedModes) {
-        this.allowedModes = allowedModes;
+        this.allowedModes = new CephList<>(allowedModes);
     }
 
     @Override
     protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
         if (segmentIndex == 0) {
-            write(method, outputStream);
-            write(result, outputStream);
-            write(allowedMethods, outputStream, UInt32.class);
-            write(allowedModes, outputStream, UInt32.class);
+            method.encode(outputStream);
+            result.encode(outputStream);
+            allowedMethods.encode(outputStream);
+            allowedModes.encode(outputStream);
 
             return 8;
         } else {
@@ -62,10 +64,10 @@ public class AuthBadMethod extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            method = readUInt32(byteBuffer);
-            result = readInt(byteBuffer);
-            allowedMethods = readList(byteBuffer, UInt32.class);
-            allowedModes = readList(byteBuffer, UInt32.class);
+            method = UInt32.read(byteBuffer);
+            result = Int32.read(byteBuffer);
+            allowedMethods = CephList.read(byteBuffer, UInt32.class);
+            allowedModes = CephList.read(byteBuffer, UInt32.class);
         }
     }
 

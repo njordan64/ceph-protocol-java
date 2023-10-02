@@ -67,7 +67,7 @@ public class AddrIPv6 extends Addr {
     }
 
     @Override
-    protected int getSize() {
+    public int getSize() {
         return 28;
     }
 

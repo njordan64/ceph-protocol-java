@@ -39,8 +39,6 @@ public abstract class Addr implements CephDataType {
 
     protected abstract UInt16 getType();
 
-    protected abstract int getSize();
-
     protected abstract void encodeDetails(ByteArrayOutputStream outputStream);
 
     protected abstract void encodeDetails(ByteBuffer byteBuffer);

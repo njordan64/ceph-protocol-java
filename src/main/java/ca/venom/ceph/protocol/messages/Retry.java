@@ -20,7 +20,7 @@ public class Retry extends ControlFrame {
     @Override
     protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
         if (segmentIndex == 0) {
-            write(connectionSeq, outputStream);
+            connectionSeq.encode(outputStream);
             return 8;
         } else {
             return 0;
@@ -30,7 +30,7 @@ public class Retry extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            connectionSeq = readUInt64(byteBuffer);
+            connectionSeq = UInt64.read(byteBuffer);
         }
     }
 

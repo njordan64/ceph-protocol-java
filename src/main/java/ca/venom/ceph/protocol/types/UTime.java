@@ -43,6 +43,11 @@ public class UTime implements CephDataType {
     }
 
     @Override
+    public int getSize() {
+        return 8;
+    }
+
+    @Override
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value.array(), value.arrayOffset(), 8);
     }

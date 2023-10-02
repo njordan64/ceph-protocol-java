@@ -21,8 +21,8 @@ public abstract class ControlFrame {
 
     private static final int MAX_SEGMENTS = 4;
 
-    private BitSet flags = new BitSet(8);
-    private BitSet lateStatus = new BitSet(8);
+    private CephBitSet flags = new CephBitSet(new BitSet(8), 1);
+    private CephBitSet lateStatus = new CephBitSet(new BitSet(8), 1);
 
     protected abstract int encodeSegmentBody(int index, ByteArrayOutputStream outputStream);
 
@@ -31,11 +31,11 @@ public abstract class ControlFrame {
     public abstract MessageType getTag();
 
     public BitSet getFlags() {
-        return flags;
+        return flags.getValue();
     }
 
     public BitSet getLateStatus() {
-        return lateStatus;
+        return lateStatus.getValue();
     }
 
     public byte[] encode() throws IOException {
@@ -59,7 +59,7 @@ public abstract class ControlFrame {
         }
 
         if (segmentsCount > 1) {
-            write(lateStatus, outputStream, 1);
+            lateStatus.encode(outputStream);
             for (int i = 1; i < MAX_SEGMENTS; i++) {
                 if (segmentMetadatas[i].size > 0) {
                     outputStream.write(bytes); // placeholder for segment i CRC32C
@@ -122,7 +122,7 @@ public abstract class ControlFrame {
         }
 
         if (segmentsCount > 1) {
-            lateStatus = readBitSet(bodyByteBuffer, 1);
+            lateStatus = CephBitSet.read(bodyByteBuffer, 1);
         }
     }
 
@@ -133,19 +133,19 @@ public abstract class ControlFrame {
         ByteBuffer byteBuffer = ByteBuffer.wrap(headerBytes);
 
         byteBuffer.position(1); // Skip over tag
-        int segmentsCount = readUInt8(byteBuffer).getValue();
+        int segmentsCount = UInt8.read(byteBuffer).getValue();
 
         SegmentMetadata[] segmentMetadatas = new SegmentMetadata[4];
         for (int i = 0; i < MAX_SEGMENTS; i++) {
             segmentMetadatas[i] = new SegmentMetadata();
-            segmentMetadatas[i].size = (int) readUInt32(byteBuffer).getValue();
-            segmentMetadatas[i].alignment = readUInt16(byteBuffer).getValue();
+            segmentMetadatas[i].size = (int) UInt32.read(byteBuffer).getValue();
+            segmentMetadatas[i].alignment = UInt16.read(byteBuffer).getValue();
         }
 
-        flags = readBitSet(byteBuffer, 1);
+        flags = CephBitSet.read(byteBuffer, 1);
         byteBuffer.get(); // Skip over reserved byte
 
-        UInt32 crc32 = readUInt32(byteBuffer);
+        UInt32 crc32 = UInt32.read(byteBuffer);
         CephCRC32C cephCRC32C = new CephCRC32C();
         cephCRC32C.update(headerBytes, 0, 28);
         if (cephCRC32C.getValue() != crc32.getValue()) {
@@ -165,7 +165,7 @@ public abstract class ControlFrame {
     }
 
     private void writeHeaderPlaceholder(ByteArrayOutputStream outputStream) {
-        write(getTag().getTagNum(), outputStream);
+        getTag().getTagNum().encode(outputStream);
         outputStream.write(0); // placeholder for number of sections
 
         byte[] bytes = new byte[6];
@@ -174,7 +174,7 @@ public abstract class ControlFrame {
             outputStream.writeBytes(bytes); // placeholder for segment i size and alignment
         }
 
-        write(flags, outputStream, 1);
+        flags.encode(outputStream);
         outputStream.write((byte) 0); // reserved
 
         bytes = new byte[4];
@@ -262,238 +262,5 @@ public abstract class ControlFrame {
             position += bytesRead;
             count -= bytesRead;
         }
-    }
-
-    protected void write(byte value, ByteArrayOutputStream stream) {
-        stream.write(value);
-    }
-
-    protected void write(UInt8 value, ByteArrayOutputStream stream) {
-        value.encode(stream);
-    }
-
-    protected void write(short value, ByteArrayOutputStream stream) {
-        stream.write(value & 0xff);
-        stream.write((value >> 8) & 0xff);
-    }
-
-    protected void write(UInt16 value, ByteArrayOutputStream stream) {
-        value.encode(stream);
-    }
-
-    protected void write(int value, ByteArrayOutputStream stream) {
-        stream.write(value & 0xff);
-        stream.write((value >> 8) & 0xff);
-        stream.write((value >> 16) & 0xff);
-        stream.write((value >> 25) & 0xff);
-    }
-
-    protected void write(UInt32 value, ByteArrayOutputStream stream) {
-        value.encode(stream);
-    }
-
-    protected void write(long value, ByteArrayOutputStream stream) {
-        stream.write((int) (value & 0xffL));
-        stream.write((int) ((value >> 8) & 0xffL));
-        stream.write((int) ((value >> 16) & 0xffL));
-        stream.write((int) ((value >> 24) & 0xffL));
-        stream.write((int) ((value >> 32) & 0xffL));
-        stream.write((int) ((value >> 40) & 0xffL));
-        stream.write((int) ((value >> 48) & 0xffL));
-        stream.write((int) ((value >> 56) & 0xffL));
-    }
-
-    protected void write(UInt64 value, ByteArrayOutputStream stream) {
-        value.encode(stream);
-    }
-
-    protected void write(String value, ByteArrayOutputStream stream) {
-        stream.writeBytes(value.getBytes());
-        stream.write(0);
-    }
-
-    protected void write(Addr value, ByteArrayOutputStream stream) {
-        value.encode(stream);
-    }
-
-    protected void write(List<?> value, ByteArrayOutputStream stream, Class<?> elementClass) {
-        if (value == null) {
-            new UInt32(0).encode(stream);
-            return;
-        }
-
-        new UInt32(value.size()).encode(stream);
-
-        if (Byte.class.equals(elementClass)) {
-            value.forEach(v -> write((byte)v, stream));
-        } else if (UInt8.class.equals(elementClass)) {
-            value.forEach(v -> ((UInt8) v).encode(stream));
-        } else if (Short.class.equals(elementClass)) {
-            value.forEach(v -> write((short) v, stream));
-        } else if (UInt16.class.equals(elementClass)) {
-            value.forEach(v -> ((UInt16) v).encode(stream));
-        } else if (Integer.class.equals(elementClass)) {
-            value.forEach(v -> write((int) v, stream));
-        } else if (UInt32.class.equals(elementClass)) {
-            value.forEach(v -> ((UInt32) v).encode(stream));
-        } else if (Long.class.equals(elementClass)) {
-            value.forEach(v -> write((long) v, stream));
-        } else if (UInt64.class.equals(elementClass)) {
-            value.forEach(v -> ((UInt64) v).encode(stream));
-        } else if (String.class.equals(elementClass)) {
-            value.forEach(v -> write((String) v, stream));
-        } else if (Addr.class.isAssignableFrom(elementClass)) {
-            value.forEach(v -> write((Addr) v, stream));
-        } else {
-            throw new IllegalArgumentException("List cannot be encoded: " + elementClass.getName());
-        }
-    }
-
-    protected void write(byte[] value, ByteArrayOutputStream stream) {
-        new UInt32(value.length).encode(stream);
-        stream.writeBytes(value);
-    }
-
-    protected void write(BitSet value, ByteArrayOutputStream stream, int byteCount) {
-        byte[] bytes = value.toByteArray();
-        if (bytes.length < byteCount) {
-            stream.writeBytes(bytes);
-            stream.writeBytes(new byte[byteCount - bytes.length]);
-        } else {
-            stream.write(bytes, 0, byteCount);
-        }
-    }
-
-    protected byte readByte(ByteBuffer byteBuffer) {
-        return byteBuffer.get();
-    }
-
-    protected UInt8 readUInt8(ByteBuffer byteBuffer) {
-        return UInt8.read(byteBuffer);
-    }
-
-    protected short readShort(ByteBuffer byteBuffer) {
-        ByteOrder originalByteOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        short value = byteBuffer.getShort();
-        byteBuffer.order(originalByteOrder);
-
-        return value;
-    }
-
-    protected UInt16 readUInt16(ByteBuffer byteBuffer) {
-        return UInt16.read(byteBuffer);
-    }
-
-    protected int readInt(ByteBuffer byteBuffer) {
-        ByteOrder originalByteOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        int value = byteBuffer.getInt();
-        byteBuffer.order(originalByteOrder);
-
-        return value;
-    }
-
-    protected UInt32 readUInt32(ByteBuffer byteBuffer) {
-        return UInt32.read(byteBuffer);
-    }
-
-    protected long readLong(ByteBuffer byteBuffer) {
-        ByteOrder originalByteOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        long value = byteBuffer.getLong();
-        byteBuffer.order(originalByteOrder);
-
-        return value;
-    }
-
-    protected UInt64 readUInt64(ByteBuffer byteBuffer) {
-        return UInt64.read(byteBuffer);
-    }
-
-    protected String readString(ByteBuffer byteBuffer) {
-        int startPosition = byteBuffer.position();
-        while (byteBuffer.position() < byteBuffer.capacity()) {
-            if (byteBuffer.get() == 0) {
-                break;
-            }
-        }
-
-        byte[] stringBytes = new byte[byteBuffer.position() - startPosition - 1];
-        byteBuffer.get(startPosition, stringBytes);
-
-        return new String(stringBytes);
-    }
-
-    protected Addr readAddr(ByteBuffer byteBuffer) {
-        return Addr.read(byteBuffer);
-    }
-
-    protected <T> List<T> readList(ByteBuffer byteBuffer, Class<T> elementType) {
-        int elementCount = (int) UInt32.read(byteBuffer).getValue();
-        List<Object> list = new ArrayList<>(elementCount);
-
-        ByteOrder originalByteOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        if (Byte.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(byteBuffer.get());
-            }
-        } else if (UInt8.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(UInt8.read(byteBuffer));
-            }
-        } else if (Short.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(byteBuffer.getShort());
-            }
-        } else if (UInt16.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(UInt16.read(byteBuffer));
-            }
-        } else if (Integer.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(byteBuffer.getInt());
-            }
-        } else if (UInt32.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(UInt32.read(byteBuffer));
-            }
-        } else if (Long.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(byteBuffer.getLong());
-            }
-        } else if (UInt64.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(UInt64.read(byteBuffer));
-            }
-        } else if (String.class.equals(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(readString(byteBuffer));
-            }
-        } else if (Addr.class.isAssignableFrom(elementType)) {
-            for (int i = 0; i < elementCount; i++) {
-                list.add(readAddr(byteBuffer));
-            }
-        } else {
-            throw new IllegalArgumentException("List cannot be decoded: " + elementType.getName());
-        }
-        byteBuffer.order(originalByteOrder);
-
-        return (List<T>) list;
-    }
-
-    protected byte[] readByteArray(ByteBuffer byteBuffer) {
-        int bytesCount = (int) UInt32.read(byteBuffer).getValue();
-        byte[] bytes = new byte[bytesCount];
-        byteBuffer.get(bytes);
-
-        return bytes;
-    }
-
-    protected BitSet readBitSet(ByteBuffer byteBuffer, int byteCount) {
-        byte[] bytes = new byte[byteCount];
-        byteBuffer.get(bytes);
-        return BitSet.valueOf(bytes);
     }
 }

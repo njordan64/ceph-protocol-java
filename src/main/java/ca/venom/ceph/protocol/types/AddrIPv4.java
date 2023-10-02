@@ -43,7 +43,7 @@ public class AddrIPv4 extends Addr {
     }
 
     @Override
-    protected int getSize() {
+    public int getSize() {
         return 14;
     }
 

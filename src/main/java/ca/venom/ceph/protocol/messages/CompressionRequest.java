@@ -1,6 +1,8 @@
 package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.types.CephBoolean;
+import ca.venom.ceph.protocol.types.CephList;
 import ca.venom.ceph.protocol.types.UInt32;
 
 import java.io.ByteArrayOutputStream;
@@ -8,30 +10,30 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public class CompressionRequest extends ControlFrame {
-    private boolean compress;
-    private List<UInt32> preferredMethods;
+    private CephBoolean compress;
+    private CephList<UInt32> preferredMethods;
 
     public boolean isCompress() {
-        return compress;
+        return compress.getValue();
     }
 
     public void setCompress(boolean compress) {
-        this.compress = compress;
+        this.compress = new CephBoolean(compress);
     }
 
     public List<UInt32> getPreferredMethods() {
-        return preferredMethods;
+        return preferredMethods.getValues();
     }
 
     public void setPreferredMethods(List<UInt32> preferredMethods) {
-        this.preferredMethods = preferredMethods;
+        this.preferredMethods = new CephList<>(preferredMethods);
     }
 
     @Override
     protected int encodeSegmentBody(int index, ByteArrayOutputStream outputStream) {
         if (index == 0) {
-            write(compress ? (byte) 0xff : (byte) 0x00, outputStream);
-            write(preferredMethods, outputStream, UInt32.class);
+            compress.encode(outputStream);
+            preferredMethods.encode(outputStream);
 
             return 8;
         } else {
@@ -42,8 +44,8 @@ public class CompressionRequest extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int index, ByteBuffer byteBuffer, int alignment) {
         if (index == 0) {
-            compress = byteBuffer.get() != 0;
-            preferredMethods = readList(byteBuffer, UInt32.class);
+            compress = CephBoolean.read(byteBuffer);
+            preferredMethods = CephList.read(byteBuffer, UInt32.class);
         }
     }
 

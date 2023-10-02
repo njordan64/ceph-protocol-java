@@ -3,30 +3,31 @@ package ca.venom.ceph.protocol.messages;
 import ca.venom.ceph.NodeType;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.Addr;
-import ca.venom.ceph.protocol.types.UInt8;
+import ca.venom.ceph.protocol.types.CephBoolean;
+import ca.venom.ceph.protocol.types.CephEnum;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 public class Hello extends ControlFrame {
-    private NodeType nodeType;
-    private boolean msgAddr2;
+    private CephEnum<NodeType> nodeType;
+    private CephBoolean msgAddr2;
     private Addr addr;
 
     public NodeType getNodeType() {
-        return nodeType;
+        return nodeType.getValue();
     }
 
     public void setNodeType(NodeType nodeType) {
-        this.nodeType = nodeType;
+        this.nodeType = new CephEnum<>(nodeType);
     }
 
     public boolean isMsgAddr2() {
-        return msgAddr2;
+        return msgAddr2.getValue();
     }
 
     public void setMsgAddr2(boolean msgAddr2) {
-        this.msgAddr2 = msgAddr2;
+        this.msgAddr2 = new CephBoolean(msgAddr2);
     }
 
     public Addr getAddr() {
@@ -46,11 +47,11 @@ public class Hello extends ControlFrame {
     @Override
     protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
         if (segmentIndex == 0) {
-            write(new UInt8(nodeType.getTypeNum()), outputStream);
-            write(msgAddr2 ? (byte) 1 : (byte) 0, outputStream);
-            write((byte) 1, outputStream);
-            write((byte) 1, outputStream);
-            write(addr, outputStream);
+            nodeType.encode(outputStream);
+            msgAddr2.encode(outputStream);
+            outputStream.write(1);
+            outputStream.write(1);
+            addr.encode(outputStream);
 
             return 8;
         } else {
@@ -61,11 +62,11 @@ public class Hello extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            nodeType = NodeType.getFromTypeNum(byteBuffer.get());
-            msgAddr2 = byteBuffer.get() > 0;
+            nodeType = CephEnum.read(byteBuffer, NodeType.class);
+            msgAddr2 = CephBoolean.read(byteBuffer);
 
             byteBuffer.position(byteBuffer.position() + 2);
-            addr = readAddr(byteBuffer);
+            addr = Addr.read(byteBuffer);
         }
     }
 }

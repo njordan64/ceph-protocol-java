@@ -1,25 +1,26 @@
 package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.types.CephBytes;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 public class AuthRequestMore extends ControlFrame {
-    private byte[] authPayload;
+    private CephBytes authPayload;
 
     public byte[] getAuthPayload() {
-        return authPayload;
+        return authPayload.getValue();
     }
 
     public void setAuthPayload(byte[] authPayload) {
-        this.authPayload = authPayload;
+        this.authPayload = new CephBytes(authPayload);
     }
 
     @Override
     protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
         if (segmentIndex == 0) {
-            write(authPayload, outputStream);
+            authPayload.encode(outputStream);
             return 8;
         } else {
             return 0;
@@ -29,7 +30,7 @@ public class AuthRequestMore extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            authPayload = readByteArray(byteBuffer);
+            authPayload = CephBytes.read(byteBuffer);
         }
     }
 

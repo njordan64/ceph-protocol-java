@@ -20,7 +20,7 @@ public class Ack extends ControlFrame {
     @Override
     protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
         if (segmentIndex == 0) {
-            write(messageSequence, outputStream);
+            messageSequence.encode(outputStream);
             return 8;
         } else {
             return 0;
@@ -30,7 +30,7 @@ public class Ack extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            messageSequence = readUInt64(byteBuffer);
+            messageSequence = UInt64.read(byteBuffer);
         }
     }
 

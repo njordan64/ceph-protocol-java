@@ -38,6 +38,11 @@ public class UInt32 implements CephDataType {
     }
 
     @Override
+    public int getSize() {
+        return 4;
+    }
+
+    @Override
     public void encode(ByteBuffer byteBuffer) {
         byteBuffer.put(value.array(), value.arrayOffset(), 4);
     }

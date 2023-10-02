@@ -5,19 +5,19 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-public class UInt8 implements CephDataType {
+public class Int8 implements CephDataType {
     private final byte value;
 
-    public UInt8(int value) {
-        this.value = (byte) value;
+    public Int8(byte value) {
+        this.value = value;
     }
 
-    public static UInt8 read(ByteBuffer byteBuffer) {
-        return new UInt8(byteBuffer.get());
+    public static Int8 read(ByteBuffer byteBuffer) {
+        return new Int8(byteBuffer.get());
     }
 
-    public int getValue() {
-        return value & 0xff;
+    public byte getValue() {
+        return value;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class UInt8 implements CephDataType {
     }
 
     public boolean equals(Object obj) {
-        if (obj instanceof UInt8 other) {
+        if (obj instanceof Int8 other) {
             return value == other.value;
         }
 

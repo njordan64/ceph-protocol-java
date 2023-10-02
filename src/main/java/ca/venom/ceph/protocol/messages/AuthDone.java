@@ -1,6 +1,7 @@
 package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.types.CephBytes;
 import ca.venom.ceph.protocol.types.UInt32;
 import ca.venom.ceph.protocol.types.UInt64;
 
@@ -10,7 +11,7 @@ import java.nio.ByteBuffer;
 public class AuthDone extends ControlFrame {
     private UInt64 globalId;
     private UInt32 connectionMode;
-    private byte[] authMethodPayload;
+    private CephBytes authMethodPayload;
 
     public UInt64 getGlobalId() {
         return globalId;
@@ -29,19 +30,19 @@ public class AuthDone extends ControlFrame {
     }
 
     public byte[] getAuthMethodPayload() {
-        return authMethodPayload;
+        return authMethodPayload.getValue();
     }
 
     public void setAuthMethodPayload(byte[] authMethodPayload) {
-        this.authMethodPayload = authMethodPayload;
+        this.authMethodPayload = new CephBytes(authMethodPayload);
     }
 
     @Override
     protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
         if (segmentIndex == 0) {
-            write(globalId, outputStream);
-            write(connectionMode, outputStream);
-            write(authMethodPayload, outputStream);
+            globalId.encode(outputStream);
+            connectionMode.encode(outputStream);
+            authMethodPayload.encode(outputStream);
 
             return 8;
         } else {
@@ -52,9 +53,9 @@ public class AuthDone extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            globalId = readUInt64(byteBuffer);
-            connectionMode = readUInt32(byteBuffer);
-            authMethodPayload = readByteArray(byteBuffer);
+            globalId = UInt64.read(byteBuffer);
+            connectionMode = UInt32.read(byteBuffer);
+            authMethodPayload = CephBytes.read(byteBuffer);
         }
     }
 
