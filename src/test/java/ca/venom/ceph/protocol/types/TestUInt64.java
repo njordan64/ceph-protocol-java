@@ -29,6 +29,13 @@ public class TestUInt64 {
                   new BigInteger("18446744073709551615"));
     }
 
+    @Test
+    public void testParseValue3() {
+        valueTest((byte) 0x2b, (byte) 0x33, (byte) 0x2f, (byte) 0x91,
+                  (byte) 0xd0, (byte) 0x47, (byte) 0xbc, (byte) 0xad,
+                  new BigInteger("12518960025297695531"));
+    }
+
     private void valueTest(byte byte1, byte byte2, byte byte3, byte byte4,
                            byte byte5, byte byte6, byte byte7, byte byte8,
                            BigInteger value) {
@@ -57,6 +64,13 @@ public class TestUInt64 {
         encodeTest(new BigInteger("18446744073709551615"),
                    (byte) 255, (byte) 255, (byte) 255, (byte) 255,
                    (byte) 255, (byte) 255, (byte) 255, (byte) 255);
+    }
+
+    @Test
+    public void testEncode3() {
+        encodeTest(new BigInteger("12518960025297695531"),
+                   (byte) 0x2b, (byte) 0x33, (byte) 0x2f, (byte) 0x91,
+                   (byte) 0xd0, (byte) 0x47, (byte) 0xbc, (byte) 0xad);
     }
 
     private void encodeTest(BigInteger value,

@@ -1,18 +1,18 @@
 package ca.venom.ceph.protocol.types;
 
-import ca.venom.ceph.TypeNumEnum;
+import ca.venom.ceph.EnumWithIntValue;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
-public class CephEnum<T extends Enum<?> & TypeNumEnum> implements CephDataType {
+public class CephEnum<T extends Enum<?> & EnumWithIntValue> implements CephDataType {
     private T value;
 
     public CephEnum(T value) {
         this.value = value;
     }
 
-    public static <T extends Enum<?> & TypeNumEnum> CephEnum<T> read(ByteBuffer byteBuffer, Class<T> clazz) {
+    public static <T extends Enum<?> & EnumWithIntValue> CephEnum<T> read(ByteBuffer byteBuffer, Class<T> clazz) {
         int valueNum = UInt8.read(byteBuffer).getValue();
         T[] values = clazz.getEnumConstants();
         for (T value : values) {

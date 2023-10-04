@@ -1,6 +1,6 @@
 package ca.venom.ceph;
 
-public enum NodeType implements TypeNumEnum {
+public enum NodeType implements EnumWithIntValue {
     MON(0x01),
     MDS(0x02),
     OSD(0x04),

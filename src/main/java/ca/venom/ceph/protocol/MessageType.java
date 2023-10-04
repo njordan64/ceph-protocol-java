@@ -1,31 +1,31 @@
 package ca.venom.ceph.protocol;
 
-import ca.venom.ceph.protocol.messages.*;
+import ca.venom.ceph.protocol.frames.*;
 import ca.venom.ceph.protocol.types.UInt8;
 
 public enum MessageType {
-    HELLO(1, Hello.class),
-    AUTH_REQUEST(2, AuthRequest.class),
-    AUTH_BAD_METHOD(3, AuthBadMethod.class),
-    AUTH_REPLY_MORE(4, AuthReplyMore.class),
-    AUTH_REQUEST_MORE(5, AuthRequestMore.class),
-    AUTH_DONE(6, AuthDone.class),
-    AUTH_SIGNATURE(7, AuthSignature.class),
-    CLIENT_IDENT(8, ClientIdent.class),
-    SERVER_IDENT(9, ServerIdent.class),
-    IDENT_MISSING_FEATURES(10, IdentMissingFeatures.class),
-    SESSION_RECONNECT(11, Reconnect.class),
-    SESSION_RESET(12, Reset.class),
-    SESSION_RETRY(13, Retry.class),
-    SESSION_RETRY_GLOBAL(14, RetryGlobal.class),
-    SESSION_RECONNECT_OK(15, ReconnectOk.class),
-    WAIT(16, Wait.class),
+    HELLO(1, HelloFrame.class),
+    AUTH_REQUEST(2, AuthRequestFrame.class),
+    AUTH_BAD_METHOD(3, AuthBadMethodFrame.class),
+    AUTH_REPLY_MORE(4, AuthReplyMoreFrame.class),
+    AUTH_REQUEST_MORE(5, AuthRequestMoreFrame.class),
+    AUTH_DONE(6, AuthDoneFrame.class),
+    AUTH_SIGNATURE(7, AuthSignatureFrame.class),
+    CLIENT_IDENT(8, ClientIdentFrame.class),
+    SERVER_IDENT(9, ServerIdentFrame.class),
+    IDENT_MISSING_FEATURES(10, IdentMissingFeaturesFrame.class),
+    SESSION_RECONNECT(11, ReconnectFrame.class),
+    SESSION_RESET(12, ResetFrame.class),
+    SESSION_RETRY(13, RetryFrame.class),
+    SESSION_RETRY_GLOBAL(14, RetryGlobalFrame.class),
+    SESSION_RECONNECT_OK(15, ReconnectOkFrame.class),
+    WAIT(16, WaitFrame.class),
     MESSAGE(17, null),
-    KEEPALIVE2(18, KeepAlive.class),
+    KEEPALIVE2(18, KeepAliveFrame.class),
     KEEPALIVE2_ACK(19, KeepAliveAck.class),
-    ACK(20, Ack.class),
-    COMPRESSION_REQUEST(21, CompressionRequest.class),
-    COMPRESSION_DONE(22, CompressionDone.class);
+    ACK(20, AckFrame.class),
+    COMPRESSION_REQUEST(21, CompressionRequestFrame.class),
+    COMPRESSION_DONE(22, CompressionDoneFrame.class);
 
     private final UInt8 tagNum;
     private final Class<? extends ControlFrame> clazz;

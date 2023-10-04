@@ -23,6 +23,15 @@ public class CephString implements CephDataType {
 
         return new CephString(new String(bytes));
     }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
     @Override
     public int getSize() {
         return 4 + value.length();
