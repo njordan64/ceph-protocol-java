@@ -21,11 +21,15 @@ public class UTime implements CephDataType {
     }
 
     public static UTime read(ByteBuffer byteBuffer) {
-        return new UTime(byteBuffer.slice(byteBuffer.position(), 8));
+        UTime time = new UTime(byteBuffer.slice(byteBuffer.position(), 8));
+        byteBuffer.position(byteBuffer.position() + 8);
+
+        return time;
     }
 
     public long getTime() {
-        return ((long) (value.get(3) & 255L) << 24) |
+        return 1000L *
+                ((long) (value.get(3) & 255L) << 24) |
                 ((value.get(2) & 255L) << 16) |
                 ((value.get(1) & 255L) << 8) |
                 (value.get(0) & 255L);
