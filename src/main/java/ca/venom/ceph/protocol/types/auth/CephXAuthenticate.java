@@ -2,6 +2,7 @@ package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.protocol.types.CephDataType;
 import ca.venom.ceph.protocol.types.CephRawByte;
+import ca.venom.ceph.protocol.types.CephRawBytes;
 import ca.venom.ceph.protocol.types.UInt32;
 import ca.venom.ceph.protocol.types.UInt64;
 
@@ -10,12 +11,12 @@ import java.nio.ByteBuffer;
 
 public class CephXAuthenticate implements CephDataType {
     private CephRawByte version = new CephRawByte((byte) 3);
-    private UInt64 clientChallenge;
-    private UInt64 key;
+    private CephRawBytes clientChallenge;
+    private CephRawBytes key;
     private CephXTicketBlob oldTicket;
     private UInt32 otherKeys;
 
-    public CephXAuthenticate(UInt64 clientChallenge, UInt64 key, CephXTicketBlob oldTicket, UInt32 otherKeys) {
+    public CephXAuthenticate(CephRawBytes clientChallenge, CephRawBytes key, CephXTicketBlob oldTicket, UInt32 otherKeys) {
         this.clientChallenge = clientChallenge;
         this.key = key;
         this.oldTicket = oldTicket;
@@ -24,27 +25,27 @@ public class CephXAuthenticate implements CephDataType {
 
     public static CephXAuthenticate read(ByteBuffer byteBuffer) {
         CephRawByte version = CephRawByte.read(byteBuffer);
-        UInt64 clientChallenge = UInt64.read(byteBuffer);
-        UInt64 key = UInt64.read(byteBuffer);
+        CephRawBytes clientChallenge = CephRawBytes.read(byteBuffer, 8);
+        CephRawBytes key = CephRawBytes.read(byteBuffer, 8);
         CephXTicketBlob oldTicket = CephXTicketBlob.read(byteBuffer);
         UInt32 otherKeys = UInt32.read(byteBuffer);
 
         return new CephXAuthenticate(clientChallenge, key, oldTicket, otherKeys);
     }
 
-    public UInt64 getClientChallenge() {
+    public CephRawBytes getClientChallenge() {
         return clientChallenge;
     }
 
-    public void setClientChallenge(UInt64 clientChallenge) {
+    public void setClientChallenge(CephRawBytes clientChallenge) {
         this.clientChallenge = clientChallenge;
     }
 
-    public UInt64 getKey() {
+    public CephRawBytes getKey() {
         return key;
     }
 
-    public void setKey(UInt64 key) {
+    public void setKey(CephRawBytes key) {
         this.key = key;
     }
 

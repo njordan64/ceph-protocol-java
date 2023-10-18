@@ -1,20 +1,20 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.MessageType;
-import ca.venom.ceph.protocol.types.CephBytes;
+import ca.venom.ceph.protocol.types.CephRawBytes;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 public class AuthSignatureFrame extends ControlFrame {
-    private CephBytes sha256Digest;
+    private CephRawBytes sha256Digest;
 
     public byte[] getSha256Digest() {
         return sha256Digest.getValue();
     }
 
     public void setSha256Digest(byte[] sha256Digest) {
-        this.sha256Digest = new CephBytes(sha256Digest);
+        this.sha256Digest = new CephRawBytes(sha256Digest);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class AuthSignatureFrame extends ControlFrame {
     @Override
     protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
         if (segmentIndex == 0) {
-            sha256Digest = CephBytes.read(byteBuffer);
+            sha256Digest = CephRawBytes.read(byteBuffer, 32);
         }
     }
 

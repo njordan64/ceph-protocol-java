@@ -1,6 +1,7 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.AuthMode;
+import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephString;
@@ -23,6 +24,7 @@ import static org.junit.Assert.*;
 public class TestAuthRequestFrame {
     private static final String MESSAGE1_PATH = "authrequest1.bin";
     private byte[] message1Bytes;
+    private CephProtocolContext ctx;
 
     @Before
     public void setup() throws Exception {
@@ -39,13 +41,17 @@ public class TestAuthRequestFrame {
         message1Bytes = outputStream.toByteArray();
         outputStream.close();
         inputStream.close();
+
+        ctx = new CephProtocolContext();
+        ctx.setRev1(true);
+        ctx.setSecureMode(CephProtocolContext.SecureMode.CRC);
     }
 
     @Test
     public void testDecodeMessage1() throws Exception {
         AuthRequestFrame parsedMessage = new AuthRequestFrame();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
-        parsedMessage.decode(inputStream);
+        parsedMessage.decode(inputStream, ctx);
 
         assertEquals(MessageType.AUTH_REQUEST, parsedMessage.getTag());
         assertEquals(0, parsedMessage.getFlags().cardinality());
@@ -80,6 +86,6 @@ public class TestAuthRequestFrame {
         payload.setGlobalId(new UInt64(new BigInteger("0")));
         authRequestFrame.setPayload(payload);
 
-        assertArrayEquals(message1Bytes, authRequestFrame.encode());
+        assertArrayEquals(message1Bytes, authRequestFrame.encode(ctx));
     }
 }

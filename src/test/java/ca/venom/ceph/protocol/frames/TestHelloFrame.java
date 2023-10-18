@@ -1,6 +1,7 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.NodeType;
+import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.AddrIPv4;
 import org.junit.Before;
@@ -17,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 public class TestHelloFrame {
     private static final String MESSAGE1_PATH = "hello1.bin";
     private byte[] message1Bytes;
+    private CephProtocolContext ctx;
 
     @Before
     public void setup() throws Exception {
@@ -33,13 +35,17 @@ public class TestHelloFrame {
         message1Bytes = outputStream.toByteArray();
         outputStream.close();
         inputStream.close();
+
+        ctx = new CephProtocolContext();
+        ctx.setRev1(true);
+        ctx.setSecureMode(CephProtocolContext.SecureMode.CRC);
     }
 
     @Test
     public void testDecodeMessage1() throws Exception {
         HelloFrame parsedMessage = new HelloFrame();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
-        parsedMessage.decode(inputStream);
+        parsedMessage.decode(inputStream, ctx);
 
         assertEquals(MessageType.HELLO, parsedMessage.getTag());
         assertEquals(0, parsedMessage.getFlags().cardinality());
@@ -70,6 +76,6 @@ public class TestHelloFrame {
 
         helloFrame.setAddr(addr);
 
-        assertArrayEquals(message1Bytes, helloFrame.encode());
+        assertArrayEquals(message1Bytes, helloFrame.encode(ctx));
     }
 }

@@ -1,6 +1,7 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.CephCRC32C;
+import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.*;
 
@@ -35,7 +36,7 @@ public abstract class ControlFrame {
         return lateStatus.getValue();
     }
 
-    public byte[] encode() throws IOException {
+    public byte[] encode(CephProtocolContext ctx) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         SegmentMetadata[] segmentMetadatas = new SegmentMetadata[MAX_SEGMENTS];
         writeHeaderPlaceholder(outputStream);
@@ -68,12 +69,15 @@ public abstract class ControlFrame {
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
 
         updateHeader(segmentMetadatas, bytes, byteBuffer);
-        updateSegmentCrcs(segmentMetadatas, bytes, byteBuffer);
+
+        if (ctx.getSecureMode() == CephProtocolContext.SecureMode.CRC) {
+            updateSegmentCrcs(segmentMetadatas, bytes, byteBuffer);
+        }
 
         return bytes;
     }
 
-    public void decode(InputStream inputStream) throws IOException {
+    public void decode(InputStream inputStream, CephProtocolContext ctx) throws IOException {
         SegmentMetadata[] segmentMetadatas = readHeader(inputStream);
         int segmentsCount = 0;
         for (int i = 0; i < MAX_SEGMENTS; i++) {
@@ -96,14 +100,22 @@ public abstract class ControlFrame {
         ByteBuffer bodyByteBuffer = ByteBuffer.wrap(bodyBytes);
 
         bodyByteBuffer.position(segmentMetadatas[0].size);
-        checkSegmentCrc32(bodyByteBuffer, bodyBytes, segmentMetadatas[0], 0);
+        if (ctx.getSecureMode() == CephProtocolContext.SecureMode.CRC) {
+            checkSegmentCrc32(bodyByteBuffer, bodyBytes, segmentMetadatas[0], 0);
+        } else {
+            bodyByteBuffer.position(bodyByteBuffer.position() + 4);
+        }
 
         int crcIndex = epilogueIndex + 1;
         int segmentIndex = segmentMetadatas[0].size;
         for (int i = 1; i < MAX_SEGMENTS; i++) {
             if (segmentMetadatas[i].size > 0) {
                 bodyByteBuffer.position(crcIndex);
-                checkSegmentCrc32(bodyByteBuffer, bodyBytes, segmentMetadatas[i], segmentIndex);
+                if (ctx.getSecureMode() == CephProtocolContext.SecureMode.CRC) {
+                    checkSegmentCrc32(bodyByteBuffer, bodyBytes, segmentMetadatas[i], segmentIndex);
+                } else {
+                    bodyByteBuffer.position(bodyByteBuffer.position() + 4);
+                }
 
                 crcIndex += 4;
                 segmentIndex += segmentMetadatas[i].size;

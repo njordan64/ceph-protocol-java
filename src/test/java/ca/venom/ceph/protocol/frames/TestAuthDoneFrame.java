@@ -1,5 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephBoolean;
@@ -33,6 +34,7 @@ public class TestAuthDoneFrame {
     private static final byte[] ENCRYPTED_SECRET = Base64.getDecoder().decode("UAAAAIsAjSn+TV0HSZPTB58SJ09igR/NHzbUmrNPYuzOshS/FbTTnjaPEOv+L+5kqYn1OEp8DvxFt3St0kq7leB0X1w2jpyupNNY2CnOnTXinu9Y");
 
     private byte[] message1Bytes;
+    private CephProtocolContext ctx;
 
     @Before
     public void setup() throws Exception {
@@ -49,13 +51,17 @@ public class TestAuthDoneFrame {
         message1Bytes = outputStream.toByteArray();
         outputStream.close();
         inputStream.close();
+
+        ctx = new CephProtocolContext();
+        ctx.setRev1(true);
+        ctx.setSecureMode(CephProtocolContext.SecureMode.CRC);
     }
 
     @Test
     public void testDecodeMessage1() throws Exception {
         AuthDoneFrame parsedMessage = new AuthDoneFrame();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
-        parsedMessage.decode(inputStream);
+        parsedMessage.decode(inputStream, ctx);
 
         assertEquals(MessageType.AUTH_DONE, parsedMessage.getTag());
         assertEquals(0, parsedMessage.getFlags().cardinality());
@@ -98,6 +104,6 @@ public class TestAuthDoneFrame {
         payload.setEncryptedSecret(new CephBytes(ENCRYPTED_SECRET));
         payload.setExtra(new CephBytes(new byte[0]));
 
-        assertArrayEquals(message1Bytes, authDoneFrame.encode());
+        assertArrayEquals(message1Bytes, authDoneFrame.encode(ctx));
     }
 }

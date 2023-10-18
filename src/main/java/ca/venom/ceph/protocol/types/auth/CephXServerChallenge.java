@@ -10,21 +10,22 @@ import java.nio.ByteBuffer;
 
 public class CephXServerChallenge implements CephDataType {
     private CephRawByte constant1 = new CephRawByte((byte) 1);
-    private UInt64 serverChallenge;
+    private CephRawBytes serverChallenge;
 
-    public CephXServerChallenge(UInt64 serverChallenge) {
+    public CephXServerChallenge(CephRawBytes serverChallenge) {
         this.serverChallenge = serverChallenge;
     }
 
     public static CephXServerChallenge read(ByteBuffer byteBuffer) {
-        return new CephXServerChallenge(UInt64.read(byteBuffer));
+        CephRawByte version = CephRawByte.read(byteBuffer);
+        return new CephXServerChallenge(CephRawBytes.read(byteBuffer, 8));
     }
 
-    public UInt64 getServerChallenge() {
+    public CephRawBytes getServerChallenge() {
         return serverChallenge;
     }
 
-    public void setServerChallenge(UInt64 serverChallenge) {
+    public void setServerChallenge(CephRawBytes serverChallenge) {
         this.serverChallenge = serverChallenge;
     }
 
