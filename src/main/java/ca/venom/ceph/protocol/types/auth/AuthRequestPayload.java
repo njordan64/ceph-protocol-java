@@ -2,27 +2,13 @@ package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.AuthMode;
 import ca.venom.ceph.protocol.types.CephEnum;
-import ca.venom.ceph.protocol.types.UInt64;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import ca.venom.ceph.protocol.types.Int64;
+import io.netty.buffer.ByteBuf;
 
 public class AuthRequestPayload extends CephDataContainer {
     private CephEnum<AuthMode> authMode;
     private EntityName entityName;
-    private UInt64 globalId;
-
-    public AuthRequestPayload() {
-        super();
-    }
-
-    public AuthRequestPayload(ByteBuffer byteBuffer) {
-        super(byteBuffer);
-
-        authMode = CephEnum.read(byteBuffer, AuthMode.class);
-        entityName = EntityName.read(byteBuffer);
-        globalId = UInt64.read(byteBuffer);
-    }
+    private Int64 globalId;
 
     public AuthMode getAuthMode() {
         return authMode.getValue();
@@ -40,11 +26,11 @@ public class AuthRequestPayload extends CephDataContainer {
         this.entityName = entityName;
     }
 
-    public UInt64 getGlobalId() {
+    public Int64 getGlobalId() {
         return globalId;
     }
 
-    public void setGlobalId(UInt64 globalId) {
+    public void setGlobalId(Int64 globalId) {
         this.globalId = globalId;
     }
 
@@ -54,16 +40,21 @@ public class AuthRequestPayload extends CephDataContainer {
     }
 
     @Override
-    protected void encodePayload(ByteArrayOutputStream stream) {
-        authMode.encode(stream);
-        entityName.encode(stream);
-        globalId.encode(stream);
+    protected void encodePayload(ByteBuf byteBuf, boolean le) {
+        authMode.encode(byteBuf, le);
+        entityName.encode(byteBuf, le);
+        globalId.encode(byteBuf, le);
     }
 
     @Override
-    protected void encodePayload(ByteBuffer byteBuffer) {
-        authMode.encode(byteBuffer);
-        entityName.encode(byteBuffer);
-        globalId.encode(byteBuffer);
+    protected void decodePayload(ByteBuf byteBuf, boolean le) {
+        authMode = new CephEnum<>(AuthMode.class);
+        authMode.decode(byteBuf, le);
+
+        entityName = new EntityName();
+        entityName.decode(byteBuf, le);
+
+        globalId = new Int64();
+        globalId.decode(byteBuf, le);
     }
 }

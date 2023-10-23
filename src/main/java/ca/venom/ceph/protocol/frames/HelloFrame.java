@@ -6,9 +6,7 @@ import ca.venom.ceph.protocol.types.Addr;
 import ca.venom.ceph.protocol.types.CephBoolean;
 import ca.venom.ceph.protocol.types.CephEnum;
 import ca.venom.ceph.protocol.types.CephRawByte;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class HelloFrame extends ControlFrame {
     private CephEnum<NodeType> nodeType;
@@ -41,35 +39,31 @@ public class HelloFrame extends ControlFrame {
         this.addr = addr;
     }
 
+    @Override
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        nodeType.encode(byteBuf, le);
+        msgAddr2.encode(byteBuf, le);
+        constant1.encode(byteBuf, le);
+        constant2.encode(byteBuf, le);
+        addr.encode(byteBuf, le);
+    }
+
+    @Override
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        nodeType = new CephEnum<>(NodeType.class);
+        nodeType.decode(byteBuf, le);
+
+        msgAddr2 = new CephBoolean();
+        msgAddr2.decode(byteBuf, le);
+
+        byteBuf.skipBytes(2);
+
+        addr = new Addr();
+        addr.decode(byteBuf, le);
+    }
 
     @Override
     public MessageType getTag() {
         return MessageType.HELLO;
-    }
-
-    @Override
-    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
-        if (segmentIndex == 0) {
-            nodeType.encode(outputStream);
-            msgAddr2.encode(outputStream);
-            constant1.encode(outputStream);
-            constant2.encode(outputStream);
-            addr.encode(outputStream);
-
-            return 8;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
-        if (segmentIndex == 0) {
-            nodeType = CephEnum.read(byteBuffer, NodeType.class);
-            msgAddr2 = CephBoolean.read(byteBuffer);
-            constant1 = CephRawByte.read(byteBuffer);
-            constant2 = CephRawByte.read(byteBuffer);
-            addr = Addr.read(byteBuffer);
-        }
     }
 }

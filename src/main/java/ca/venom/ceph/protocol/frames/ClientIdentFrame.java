@@ -2,9 +2,8 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.*;
+import io.netty.buffer.ByteBuf;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.List;
 
@@ -12,18 +11,18 @@ public class ClientIdentFrame extends ControlFrame {
     private CephList<Addr> myAddresses;
     private Addr targetAddress;
     private Int64 globalId;
-    private UInt64 globalSeq;
+    private Int64 globalSeq;
     private CephBitSet supportedFeatures;
     private CephBitSet requiredFeatures;
     private CephBitSet flags;
-    private UInt64 clientCookie;
+    private Int64 clientCookie;
 
     public List<Addr> getMyAddresses() {
         return myAddresses.getValues();
     }
 
     public void setMyAddresses(List<Addr> myAddresses) {
-        this.myAddresses = new CephList<>(myAddresses);
+        this.myAddresses = new CephList<>(myAddresses, Addr.class);
     }
 
     public Addr getTargetAddress() {
@@ -42,11 +41,11 @@ public class ClientIdentFrame extends ControlFrame {
         this.globalId = new Int64(globalId);
     }
 
-    public UInt64 getGlobalSeq() {
+    public Int64 getGlobalSeq() {
         return globalSeq;
     }
 
-    public void setGlobalSeq(UInt64 globalSeq) {
+    public void setGlobalSeq(Int64 globalSeq) {
         this.globalSeq = globalSeq;
     }
 
@@ -74,48 +73,55 @@ public class ClientIdentFrame extends ControlFrame {
         this.flags = new CephBitSet(flags, 8);
     }
 
-    public UInt64 getClientCookie() {
+    public Int64 getClientCookie() {
         return clientCookie;
     }
 
-    public void setClientCookie(UInt64 clientCookie) {
+    public void setClientCookie(Int64 clientCookie) {
         this.clientCookie = clientCookie;
+    }
+
+    @Override
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        myAddresses.encode(byteBuf, le);
+        targetAddress.encode(byteBuf, le);
+        globalId.encode(byteBuf, le);
+        globalSeq.encode(byteBuf, le);
+        supportedFeatures.encode(byteBuf, le);
+        requiredFeatures.encode(byteBuf, le);
+        flags.encode(byteBuf, le);
+        clientCookie.encode(byteBuf, le);
+    }
+
+    @Override
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        myAddresses = new CephList<>(Addr.class);
+        myAddresses.decode(byteBuf, le);
+
+        targetAddress = new Addr();
+        targetAddress.decode(byteBuf, le);
+
+        globalId = new Int64();
+        globalId.decode(byteBuf, le);
+
+        globalSeq = new Int64();
+        globalSeq.decode(byteBuf, le);
+
+        supportedFeatures = new CephBitSet(8);
+        supportedFeatures.decode(byteBuf, le);
+
+        requiredFeatures = new CephBitSet(8);
+        requiredFeatures.decode(byteBuf, le);
+
+        flags = new CephBitSet(8);
+        flags.decode(byteBuf, le);
+
+        clientCookie = new Int64();
+        clientCookie.decode(byteBuf, le);
     }
 
     @Override
     public MessageType getTag() {
         return MessageType.CLIENT_IDENT;
-    }
-
-    @Override
-    protected int encodeSegmentBody(int index, ByteArrayOutputStream outputStream) {
-        if (index == 0) {
-            myAddresses.encode(outputStream);
-            targetAddress.encode(outputStream);
-            globalId.encode(outputStream);
-            globalSeq.encode(outputStream);
-            supportedFeatures.encode(outputStream);
-            requiredFeatures.encode(outputStream);
-            flags.encode(outputStream);
-            clientCookie.encode(outputStream);
-
-            return 8;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    protected void decodeSegmentBody(int index, ByteBuffer byteBuffer, int alignment) {
-        if (index == 0) {
-            myAddresses = CephList.read(byteBuffer, Addr.class);
-            targetAddress = Addr.read(byteBuffer);
-            globalId = Int64.read(byteBuffer);
-            globalSeq = UInt64.read(byteBuffer);
-            supportedFeatures = CephBitSet.read(byteBuffer, 8);
-            requiredFeatures = CephBitSet.read(byteBuffer, 8);
-            flags = CephBitSet.read(byteBuffer, 8);
-            clientCookie = UInt64.read(byteBuffer);
-        }
     }
 }

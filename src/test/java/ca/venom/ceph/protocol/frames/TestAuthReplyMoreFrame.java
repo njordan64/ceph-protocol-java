@@ -1,20 +1,18 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.HexFunctions;
-import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephRawBytes;
 import ca.venom.ceph.protocol.types.auth.AuthReplyMorePayload;
 import ca.venom.ceph.protocol.types.auth.CephXServerChallenge;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 public class TestAuthReplyMoreFrame {
     private static final String MESSAGE1_PATH = "authreplymore1.bin";
@@ -43,13 +41,11 @@ public class TestAuthReplyMoreFrame {
     }
 
     @Test
-    public void testDecodeMessage1() throws Exception {
+    public void testDecodeMessage1() {
         AuthReplyMoreFrame parsedMessage = new AuthReplyMoreFrame();
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
-        parsedMessage.decode(inputStream, ctx);
-
-        assertEquals(MessageType.AUTH_REPLY_MORE, parsedMessage.getTag());
-        assertEquals(0, parsedMessage.getFlags().cardinality());
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
+        byteBuf.skipBytes(32);
+        parsedMessage.decodeSegment1(byteBuf, true);
 
         byte[] serverChallenge = new byte[] {
                 (byte) 0x2b, (byte) 0x33, (byte) 0x2f, (byte) 0x91,
@@ -59,7 +55,7 @@ public class TestAuthReplyMoreFrame {
     }
 
     @Test
-    public void testEncodeMessage1() throws Exception {
+    public void testEncodeMessage1() {
         AuthReplyMoreFrame authReplyMore = new AuthReplyMoreFrame();
         AuthReplyMorePayload payload = new AuthReplyMorePayload();
         authReplyMore.setPayload(payload);
@@ -67,8 +63,17 @@ public class TestAuthReplyMoreFrame {
                 (byte) 0x2b, (byte) 0x33, (byte) 0x2f, (byte) 0x91,
                 (byte) 0xd0, (byte) 0x47, (byte) 0xbc, (byte) 0xad
         };
-        CephXServerChallenge serverChallenge = new CephXServerChallenge(new CephRawBytes(serverChallengeBytes));
+        CephXServerChallenge serverChallenge = new CephXServerChallenge();
+        serverChallenge.setServerChallenge(new CephRawBytes(serverChallengeBytes));
         payload.setServerChallenge(serverChallenge);
-        assertArrayEquals(message1Bytes, authReplyMore.encode(ctx));
+
+        byte[] expectedSegment = new byte[message1Bytes.length - 36];
+        System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
+
+        ByteBuf byteBuf = Unpooled.buffer();
+        authReplyMore.encodeSegment1(byteBuf, true);
+        byte[] actualSegment = new byte[byteBuf.writerIndex()];
+        byteBuf.readBytes(actualSegment, 0, byteBuf.writerIndex());
+        assertArrayEquals(expectedSegment, actualSegment);
     }
 }

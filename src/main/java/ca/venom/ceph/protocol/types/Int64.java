@@ -1,28 +1,47 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class Int64 implements CephDataType {
-    private final long value;
+    private long value;
+
+    public Int64() {
+    }
 
     public Int64(long value) {
         this.value = value;
     }
 
-    public static Int64 read(ByteBuffer byteBuffer) {
-        ByteOrder originalOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+    public Int64(BigInteger value) {
+        byte[] valueBytes = value.toByteArray();
+        byte[] fullBytes = new byte[8];
 
-        Int64 parsed = new Int64(byteBuffer.getLong());
-        byteBuffer.order(originalOrder);
-        return parsed;
+        if (valueBytes.length >= 8) {
+            System.arraycopy(valueBytes, valueBytes.length - 8, fullBytes, 0, 8);
+        } else {
+            System.arraycopy(valueBytes, 0, fullBytes, 8 - valueBytes.length, valueBytes.length);
+        }
+
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(fullBytes);
+        this.value = byteBuf.readLong();
     }
 
     public long getValue() {
         return value;
+    }
+
+    public BigInteger getValueUnsigned() {
+        byte[] fullBytes = new byte[9];
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(fullBytes);
+        byteBuf.writerIndex(1);
+        byteBuf.writeLong(value);
+
+        return new BigInteger(fullBytes);
     }
 
     @Override
@@ -31,20 +50,21 @@ public class Int64 implements CephDataType {
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        ByteOrder originalOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        byteBuffer.putLong(value);
-        byteBuffer.order(originalOrder);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            byteBuf.writeLongLE(value);
+        } else {
+            byteBuf.writeLong(value);
+        }
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        byte[] bytes = new byte[8];
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        byteBuffer.putLong(value);
-        outputStream.writeBytes(bytes);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            value = byteBuf.readLongLE();
+        } else {
+            value = byteBuf.readLong();
+        }
     }
 
     public boolean equals(Object obj) {

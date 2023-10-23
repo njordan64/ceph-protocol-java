@@ -1,24 +1,9 @@
 package ca.venom.ceph.protocol.types.auth;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class AuthReplyMorePayload extends CephDataContainer {
     private CephXServerChallenge serverChallenge;
-
-    public AuthReplyMorePayload() {
-        super();
-    }
-
-    public AuthReplyMorePayload(CephXServerChallenge serverChallenge) {
-        super();
-        this.serverChallenge = serverChallenge;
-    }
-
-    public AuthReplyMorePayload(ByteBuffer byteBuffer) {
-        super(byteBuffer);
-        serverChallenge = CephXServerChallenge.read(byteBuffer);
-    }
 
     public CephXServerChallenge getServerChallenge() {
         return serverChallenge;
@@ -34,12 +19,13 @@ public class AuthReplyMorePayload extends CephDataContainer {
     }
 
     @Override
-    protected void encodePayload(ByteArrayOutputStream stream) {
-        serverChallenge.encode(stream);
+    protected void encodePayload(ByteBuf byteBuf, boolean le) {
+        serverChallenge.encode(byteBuf, le);
     }
 
     @Override
-    protected void encodePayload(ByteBuffer byteBuffer) {
-        serverChallenge.encode(byteBuffer);
+    protected void decodePayload(ByteBuf byteBuf, boolean le) {
+        serverChallenge = new CephXServerChallenge();
+        serverChallenge.decode(byteBuf, le);
     }
 }

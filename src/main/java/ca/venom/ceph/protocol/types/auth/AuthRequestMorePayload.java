@@ -1,27 +1,10 @@
 package ca.venom.ceph.protocol.types.auth;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class AuthRequestMorePayload extends CephDataContainer {
     private CephXRequestHeader requestHeader;
     private CephXAuthenticate authenticate;
-
-    public AuthRequestMorePayload() {
-        super();
-    }
-
-    public AuthRequestMorePayload(CephXRequestHeader requestHeader, CephXAuthenticate authenticate) {
-        super();
-        this.requestHeader = requestHeader;
-        this.authenticate = authenticate;
-    }
-
-    public AuthRequestMorePayload(ByteBuffer byteBuffer) {
-        super(byteBuffer);
-        this.requestHeader = CephXRequestHeader.read(byteBuffer);
-        this.authenticate = CephXAuthenticate.read(byteBuffer);
-    }
 
     public CephXRequestHeader getRequestHeader() {
         return requestHeader;
@@ -45,14 +28,17 @@ public class AuthRequestMorePayload extends CephDataContainer {
     }
 
     @Override
-    protected void encodePayload(ByteArrayOutputStream stream) {
-        requestHeader.encode(stream);
-        authenticate.encode(stream);
+    protected void encodePayload(ByteBuf byteBuf, boolean le) {
+        requestHeader.encode(byteBuf, le);
+        authenticate.encode(byteBuf, le);
     }
 
     @Override
-    protected void encodePayload(ByteBuffer byteBuffer) {
-        requestHeader.encode(byteBuffer);
-        authenticate.encode(byteBuffer);
+    protected void decodePayload(ByteBuf byteBuf, boolean le) {
+        requestHeader = new CephXRequestHeader();
+        requestHeader.decode(byteBuf, le);
+
+        authenticate = new CephXAuthenticate();
+        authenticate.decode(byteBuf, le);
     }
 }

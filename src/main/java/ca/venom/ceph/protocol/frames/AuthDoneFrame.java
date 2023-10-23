@@ -1,32 +1,29 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.MessageType;
-import ca.venom.ceph.protocol.types.CephBytes;
-import ca.venom.ceph.protocol.types.UInt32;
-import ca.venom.ceph.protocol.types.UInt64;
+import ca.venom.ceph.protocol.types.Int32;
+import ca.venom.ceph.protocol.types.Int64;
 import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class AuthDoneFrame extends ControlFrame {
-    private UInt64 globalId;
-    private UInt32 connectionMode;
+    private Int64 globalId;
+    private Int32 connectionMode;
     private AuthDonePayload payload;
 
-    public UInt64 getGlobalId() {
+    public Int64 getGlobalId() {
         return globalId;
     }
 
-    public void setGlobalId(UInt64 globalId) {
+    public void setGlobalId(Int64 globalId) {
         this.globalId = globalId;
     }
 
-    public UInt32 getConnectionMode() {
+    public Int32 getConnectionMode() {
         return connectionMode;
     }
 
-    public void setConnectionMode(UInt32 connectionMode) {
+    public void setConnectionMode(Int32 connectionMode) {
         this.connectionMode = connectionMode;
     }
 
@@ -39,25 +36,22 @@ public class AuthDoneFrame extends ControlFrame {
     }
 
     @Override
-    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
-        if (segmentIndex == 0) {
-            globalId.encode(outputStream);
-            connectionMode.encode(outputStream);
-            payload.encode(outputStream);
-
-            return 8;
-        } else {
-            return 0;
-        }
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        globalId.encode(byteBuf, le);
+        connectionMode.encode(byteBuf, le);
+        payload.encode(byteBuf, le);
     }
 
     @Override
-    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
-        if (segmentIndex == 0) {
-            globalId = UInt64.read(byteBuffer);
-            connectionMode = UInt32.read(byteBuffer);
-            payload = new AuthDonePayload(byteBuffer);
-        }
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        globalId = new Int64();
+        globalId.decode(byteBuf, le);
+
+        connectionMode = new Int32();
+        connectionMode.decode(byteBuf, le);
+
+        payload = new AuthDonePayload();
+        payload.decode(byteBuf, le);
     }
 
     @Override

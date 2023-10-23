@@ -1,27 +1,27 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import io.netty.buffer.ByteBuf;
 
 public class Int16 implements CephDataType {
-    private final short value;
+    private short value;
+
+    public Int16() {
+    }
 
     public Int16(short value) {
         this.value = value;
     }
 
-    public static Int16 read(ByteBuffer byteBuffer) {
-        ByteOrder originalOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-        Int16 parsed = new Int16(byteBuffer.getShort());
-        byteBuffer.order(originalOrder);
-        return parsed;
+    public Int16(int value) {
+        this.value = (short) value;
     }
 
     public short getValue() {
         return value;
+    }
+
+    public int getValueUnsigned() {
+        return 0xffff & value;
     }
 
     @Override
@@ -30,15 +30,21 @@ public class Int16 implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        outputStream.write(value & 0xff);
-        outputStream.write((value >> 8) & 0xff);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            byteBuf.writeShortLE(value);
+        } else {
+            byteBuf.writeShort(value);
+        }
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        byteBuffer.put((byte) (value & 0xff));
-        byteBuffer.put((byte) ((value >> 8) & 0xff));
+    public void decode(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            value = byteBuf.readShortLE();
+        } else {
+            value = byteBuf.readShort();
+        }
     }
 
     public boolean equals(Object obj) {

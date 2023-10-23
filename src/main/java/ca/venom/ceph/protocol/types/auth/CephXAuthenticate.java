@@ -3,35 +3,15 @@ package ca.venom.ceph.protocol.types.auth;
 import ca.venom.ceph.protocol.types.CephDataType;
 import ca.venom.ceph.protocol.types.CephRawByte;
 import ca.venom.ceph.protocol.types.CephRawBytes;
-import ca.venom.ceph.protocol.types.UInt32;
-import ca.venom.ceph.protocol.types.UInt64;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import ca.venom.ceph.protocol.types.Int32;
+import io.netty.buffer.ByteBuf;
 
 public class CephXAuthenticate implements CephDataType {
     private CephRawByte version = new CephRawByte((byte) 3);
     private CephRawBytes clientChallenge;
     private CephRawBytes key;
     private CephXTicketBlob oldTicket;
-    private UInt32 otherKeys;
-
-    public CephXAuthenticate(CephRawBytes clientChallenge, CephRawBytes key, CephXTicketBlob oldTicket, UInt32 otherKeys) {
-        this.clientChallenge = clientChallenge;
-        this.key = key;
-        this.oldTicket = oldTicket;
-        this.otherKeys = otherKeys;
-    }
-
-    public static CephXAuthenticate read(ByteBuffer byteBuffer) {
-        CephRawByte version = CephRawByte.read(byteBuffer);
-        CephRawBytes clientChallenge = CephRawBytes.read(byteBuffer, 8);
-        CephRawBytes key = CephRawBytes.read(byteBuffer, 8);
-        CephXTicketBlob oldTicket = CephXTicketBlob.read(byteBuffer);
-        UInt32 otherKeys = UInt32.read(byteBuffer);
-
-        return new CephXAuthenticate(clientChallenge, key, oldTicket, otherKeys);
-    }
+    private Int32 otherKeys;
 
     public CephRawBytes getClientChallenge() {
         return clientChallenge;
@@ -57,11 +37,11 @@ public class CephXAuthenticate implements CephDataType {
         this.oldTicket = oldTicket;
     }
 
-    public UInt32 getOtherKeys() {
+    public Int32 getOtherKeys() {
         return otherKeys;
     }
 
-    public void setOtherKeys(UInt32 otherKeys) {
+    public void setOtherKeys(Int32 otherKeys) {
         this.otherKeys = otherKeys;
     }
 
@@ -71,20 +51,31 @@ public class CephXAuthenticate implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        version.encode(outputStream);
-        clientChallenge.encode(outputStream);
-        key.encode(outputStream);
-        oldTicket.encode(outputStream);
-        otherKeys.encode(outputStream);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        version.encode(byteBuf, le);
+        clientChallenge.encode(byteBuf, le);
+        key.encode(byteBuf, le);
+        oldTicket.encode(byteBuf, le);
+        otherKeys.encode(byteBuf, le);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        version.encode(byteBuffer);
-        clientChallenge.encode(byteBuffer);
-        key.encode(byteBuffer);
-        oldTicket.encode(byteBuffer);
-        otherKeys.encode(byteBuffer);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        byte versionValue = byteBuf.readByte();
+        if (versionValue != version.getValue()) {
+            throw new IllegalArgumentException("Unsupported version (" + versionValue + ") only 3 is supported");
+        }
+
+        clientChallenge = new CephRawBytes(8);
+        clientChallenge.decode(byteBuf, le);
+
+        key = new CephRawBytes(8);
+        key.decode(byteBuf, le);
+
+        oldTicket = new CephXTicketBlob();
+        oldTicket.decode(byteBuf, le);
+
+        otherKeys = new Int32();
+        otherKeys.decode(byteBuf, le);
     }
 }

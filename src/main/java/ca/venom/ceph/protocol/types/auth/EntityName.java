@@ -2,31 +2,18 @@ package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.protocol.types.CephDataType;
 import ca.venom.ceph.protocol.types.CephString;
-import ca.venom.ceph.protocol.types.UInt32;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import ca.venom.ceph.protocol.types.Int32;
+import io.netty.buffer.ByteBuf;
 
 public class EntityName implements CephDataType {
-    private UInt32 type;
+    private Int32 type;
     private CephString entityName;
 
-    public EntityName(UInt32 type, CephString entityName) {
-        this.type = type;
-        this.entityName = entityName;
-    }
-
-    public static EntityName read(ByteBuffer byteBuffer) {
-        UInt32 type = UInt32.read(byteBuffer);
-        CephString entityName = CephString.read(byteBuffer);
-        return new EntityName(type, entityName);
-    }
-
-    public UInt32 getType() {
+    public Int32 getType() {
         return type;
     }
 
-    public void setType(UInt32 type) {
+    public void setType(Int32 type) {
         this.type = type;
     }
 
@@ -44,14 +31,17 @@ public class EntityName implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream stream) {
-        type.encode(stream);
-        entityName.encode(stream);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        type.encode(byteBuf, le);
+        entityName.encode(byteBuf, le);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        type.encode(byteBuffer);
-        entityName.encode(byteBuffer);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        type = new Int32();
+        type.decode(byteBuf, le);
+
+        entityName = new CephString();
+        entityName.decode(byteBuf, le);
     }
 }

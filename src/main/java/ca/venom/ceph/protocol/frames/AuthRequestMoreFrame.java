@@ -1,11 +1,8 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.MessageType;
-import ca.venom.ceph.protocol.types.CephBytes;
 import ca.venom.ceph.protocol.types.auth.AuthRequestMorePayload;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class AuthRequestMoreFrame extends ControlFrame {
     private AuthRequestMorePayload payload;
@@ -19,20 +16,14 @@ public class AuthRequestMoreFrame extends ControlFrame {
     }
 
     @Override
-    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
-        if (segmentIndex == 0) {
-            payload.encode(outputStream);
-            return 8;
-        } else {
-            return 0;
-        }
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        payload.encode(byteBuf, le);
     }
 
     @Override
-    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
-        if (segmentIndex == 0) {
-            payload = new AuthRequestMorePayload(byteBuffer);
-        }
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        payload = new AuthRequestMorePayload();
+        payload.decode(byteBuf, le);
     }
 
     @Override

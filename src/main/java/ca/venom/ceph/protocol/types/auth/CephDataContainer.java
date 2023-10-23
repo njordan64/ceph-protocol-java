@@ -1,42 +1,38 @@
 package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.protocol.types.CephDataType;
-import ca.venom.ceph.protocol.types.UInt32;
+import io.netty.buffer.ByteBuf;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public abstract class CephDataContainer implements CephDataType {
-    protected CephDataContainer() {
-    }
-
-    protected CephDataContainer(ByteBuffer byteBuffer) {
-        UInt32 length = UInt32.read(byteBuffer);
-    }
-
     public int getSize() {
         return 4 + getPayloadSize();
     }
 
     protected abstract int getPayloadSize();
 
-    public void encode(ByteArrayOutputStream stream) {
-        new UInt32(getPayloadSize()).encode(stream);
-        encodePayload(stream);
-    }
-
-    protected abstract void encodePayload(ByteArrayOutputStream stream);
+    protected abstract void encodePayload(ByteBuf byteBuf, boolean le);
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        ByteOrder originalOrder = byteBuffer.order();
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        byteBuffer.putInt(getPayloadSize());
-        byteBuffer.order(originalOrder);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            byteBuf.writeIntLE(getPayloadSize());
+        } else {
+            byteBuf.writeInt(getPayloadSize());
+        }
 
-        encodePayload(byteBuffer);
+        encodePayload(byteBuf, le);
     }
 
-    protected abstract void encodePayload(ByteBuffer byteBuffer);
+    protected abstract void decodePayload(ByteBuf byteBuf, boolean le);
+
+    @Override
+    public void decode(ByteBuf byteBuf, boolean le) {
+        byteBuf.skipBytes(4);
+
+        decodePayload(byteBuf, le);
+    }
 }

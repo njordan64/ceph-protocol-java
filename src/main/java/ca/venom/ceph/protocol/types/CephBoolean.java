@@ -1,10 +1,14 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
+import io.netty.buffer.ByteBuf;
+
 import java.nio.ByteBuffer;
 
 public class CephBoolean implements CephDataType {
     private boolean value;
+
+    public CephBoolean() {
+    }
 
     public CephBoolean(boolean value) {
         this.value = value;
@@ -28,12 +32,12 @@ public class CephBoolean implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        outputStream.write(value ? 1 : 0);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        byteBuf.writeByte(value ? 1 : 0);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        byteBuffer.put(value ? (byte) 1 : (byte) 0);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        value = byteBuf.readByte() != 0;
     }
 }

@@ -1,12 +1,17 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
+import io.netty.buffer.ByteBuf;
+
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 public class CephBitSet implements CephDataType {
     private BitSet value;
     private int byteCount;
+
+    public CephBitSet(int byteCount) {
+        this.byteCount = byteCount;
+    }
 
     public CephBitSet(BitSet value, int byteCount) {
         this.value = value;
@@ -27,32 +32,39 @@ public class CephBitSet implements CephDataType {
         this.value = value;
     }
 
-    public int getByteCount() {
-        return byteCount;
-    }
-
-    public void setByteCount(int byteCount) {
-        this.byteCount = byteCount;
-    }
-
     @Override
     public int getSize() {
         return byteCount;
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
+    public void encode(ByteBuf byteBuf, boolean le) {
         byte[] bytes = new byte[byteCount];
         byte[] bitsetBytes = value.toByteArray();
-        System.arraycopy(bitsetBytes, 0, bytes, 0, Math.min(byteCount, bitsetBytes.length));
-        outputStream.writeBytes(bytes);
+
+        if (le) {
+            System.arraycopy(bitsetBytes, 0, bytes, 0, Math.min(byteCount, bitsetBytes.length));
+        } else {
+            for (int i = 0; i < Math.min(byteCount, bitsetBytes.length); i++) {
+                bytes[byteCount - i - 1] = bitsetBytes[i];
+            }
+        }
+
+        byteBuf.writeBytes(bytes);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
+    public void decode(ByteBuf byteBuf, boolean le) {
         byte[] bytes = new byte[byteCount];
-        byte[] bitsetBytes = value.toByteArray();
-        System.arraycopy(bitsetBytes, 0, bytes, 0, Math.min(byteCount, bitsetBytes.length));
-        byteBuffer.put(bytes);
+
+        if (le) {
+            byteBuf.readBytes(bytes);
+        } else {
+            for (int i = byteCount - 1; i >= 0; i--) {
+                bytes[i] = byteBuf.readByte();
+            }
+        }
+
+        value = BitSet.valueOf(bytes);
     }
 }

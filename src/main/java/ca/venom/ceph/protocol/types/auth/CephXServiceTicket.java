@@ -1,29 +1,14 @@
 package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.protocol.types.CephDataType;
-import ca.venom.ceph.protocol.types.UInt8;
+import ca.venom.ceph.protocol.types.Int8;
 import ca.venom.ceph.protocol.types.UTime;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class CephXServiceTicket implements CephDataType {
-    private UInt8 version = new UInt8(1);
+    private Int8 version = new Int8((byte) 1);
     private CryptoKey sessionKey;
     private UTime validity;
-
-    public CephXServiceTicket(CryptoKey sessionKey, UTime validity) {
-        this.sessionKey = sessionKey;
-        this.validity = validity;
-    }
-
-    public static CephXServiceTicket read(ByteBuffer byteBuffer) {
-        UInt8 version = UInt8.read(byteBuffer);
-        CryptoKey sessionKey = CryptoKey.read(byteBuffer);
-        UTime validity = UTime.read(byteBuffer);
-
-        return new CephXServiceTicket(sessionKey, validity);
-    }
 
     public CryptoKey getSessionKey() {
         return sessionKey;
@@ -47,16 +32,23 @@ public class CephXServiceTicket implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        version.encode(outputStream);
-        sessionKey.encode(outputStream);
-        validity.encode(outputStream);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        version.encode(byteBuf, le);
+        sessionKey.encode(byteBuf, le);
+        validity.encode(byteBuf, le);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        version.encode(byteBuffer);
-        sessionKey.encode(byteBuffer);
-        validity.encode(byteBuffer);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        byte versionValue = byteBuf.readByte();
+        if (versionValue != version.getValue()) {
+            throw new IllegalArgumentException("Unsupported version (" + versionValue + ") only 1 is supported");
+        }
+
+        sessionKey = new CryptoKey();
+        sessionKey.decode(byteBuf, le);
+
+        validity = new UTime();
+        validity.decode(byteBuf, le);
     }
 }

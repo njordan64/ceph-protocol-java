@@ -2,41 +2,21 @@ package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.protocol.types.CephDataType;
 import ca.venom.ceph.protocol.types.CephRawBytes;
-import ca.venom.ceph.protocol.types.UInt16;
+import ca.venom.ceph.protocol.types.Int16;
 import ca.venom.ceph.protocol.types.UTime;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class CryptoKey implements CephDataType {
-    private UInt16 type;
+    private Int16 type;
     private UTime created;
-    private UInt16 secretLength;
+    private Int16 secretLength;
     private CephRawBytes secret;
 
-    public CryptoKey(UInt16 type, UTime created, CephRawBytes secret) {
-        this.type = type;
-        this.created = created;
-        this.secretLength = new UInt16(secret.getSize());
-        this.secret = secret;
-    }
-
-    public static CryptoKey read(ByteBuffer byteBuffer) {
-        UInt16 type = UInt16.read(byteBuffer);
-        UTime created = UTime.read(byteBuffer);
-
-        int secretLength = UInt16.read(byteBuffer).getValue();
-        byte[] secretBytes = new byte[secretLength];
-        byteBuffer.get(secretBytes);
-
-        return new CryptoKey(type, created, new CephRawBytes(secretBytes));
-    }
-
-    public UInt16 getType() {
+    public Int16 getType() {
         return type;
     }
 
-    public void setType(UInt16 type) {
+    public void setType(Int16 type) {
         this.type = type;
     }
 
@@ -54,7 +34,7 @@ public class CryptoKey implements CephDataType {
 
     public void setSecret(CephRawBytes secret) {
         this.secret = secret;
-        this.secretLength = new UInt16(secret.getSize());
+        this.secretLength = new Int16((short) secret.getSize());
     }
 
     @Override
@@ -63,18 +43,25 @@ public class CryptoKey implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        type.encode(outputStream);
-        created.encode(outputStream);
-        secretLength.encode(outputStream);
-        secret.encode(outputStream);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        type.encode(byteBuf, le);
+        created.encode(byteBuf, le);
+        secretLength.encode(byteBuf, le);
+        secret.encode(byteBuf, le);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        type.encode(byteBuffer);
-        created.encode(byteBuffer);
-        secretLength.encode(byteBuffer);
-        secret.encode(byteBuffer);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        type = new Int16();
+        type.decode(byteBuf, le);
+
+        created = new UTime();
+        created.decode(byteBuf, le);
+
+        secretLength = new Int16();
+        secretLength.decode(byteBuf, le);
+
+        secret = new CephRawBytes(secretLength.getValue());
+        secret.decode(byteBuf, le);
     }
 }

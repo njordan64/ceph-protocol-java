@@ -1,12 +1,12 @@
 package ca.venom.ceph.protocol.types;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
+import static org.junit.Assert.assertEquals;
 
-import static org.junit.Assert.*;
-
-public class TestUInt8 {
+public class TestInt8 {
     @Test
     public void testParseValue0() {
         valueTest(0);
@@ -23,9 +23,10 @@ public class TestUInt8 {
     }
 
     private void valueTest(int value) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {(byte) value});
-        UInt8 uint8 = UInt8.read(byteBuffer);
-        assertEquals(value, uint8.getValue());
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(new byte[] {(byte) value});
+        Int8 int8 = new Int8();
+        int8.decode(byteBuf, true);
+        assertEquals(value, int8.getValueUnsigned());
     }
 
     @Test
@@ -44,14 +45,12 @@ public class TestUInt8 {
     }
 
     private void encodeTest(int value) {
-        UInt8 uint8 = new UInt8(value);
+        Int8 uint8 = new Int8(value);
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-        uint8.encode(byteBuffer);
+        ByteBuf byteBuf = Unpooled.buffer(10);
+        uint8.encode(byteBuf, true);
 
-        assertEquals(1, byteBuffer.position());
-        byteBuffer.flip();
-
-        assertEquals((byte) value, byteBuffer.get());
+        assertEquals(1, byteBuf.writerIndex());
+        assertEquals((byte) value, byteBuf.readByte());
     }
 }

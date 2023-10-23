@@ -1,7 +1,6 @@
 package ca.venom.ceph.protocol;
 
 import ca.venom.ceph.protocol.frames.*;
-import ca.venom.ceph.protocol.types.UInt8;
 
 public enum MessageType {
     HELLO(1, HelloFrame.class),
@@ -27,17 +26,17 @@ public enum MessageType {
     COMPRESSION_REQUEST(21, CompressionRequestFrame.class),
     COMPRESSION_DONE(22, CompressionDoneFrame.class);
 
-    private final UInt8 tagNum;
+    private final int tagNum;
     private final Class<? extends ControlFrame> clazz;
 
     private MessageType(int tagNum, Class<? extends ControlFrame> clazz) {
-        this.tagNum = new UInt8(tagNum);
+        this.tagNum = tagNum;
         this.clazz = clazz;
     }
 
-    public static MessageType getFromTagNum(UInt8 tagNum) {
+    public static MessageType getFromTagNum(int tagNum) {
         for (MessageType messageType : MessageType.values()) {
-            if (messageType.tagNum.equals(tagNum)) {
+            if (messageType.tagNum == tagNum) {
                 return messageType;
             }
         }
@@ -45,7 +44,7 @@ public enum MessageType {
         return null;
     }
 
-    public UInt8 getTagNum() {
+    public int getTagNum() {
         return tagNum;
     }
 

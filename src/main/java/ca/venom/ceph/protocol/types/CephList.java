@@ -1,32 +1,22 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
+
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CephList<T extends CephDataType> implements CephDataType {
     private List<T> values;
+    private final Class<T> clazz;
 
-    public CephList(List<T> values) {
-        this.values = values;
+    public CephList(Class<T> clazz) {
+        this.clazz = clazz;
     }
 
-    public static <T extends  CephDataType> CephList<T> read(ByteBuffer byteBuffer, Class<T> clazz) {
-        UInt32 count = UInt32.read(byteBuffer);
-        List<T> values = new ArrayList<>();
-
-        try {
-            Method readMethod = clazz.getMethod("read", ByteBuffer.class);
-            for (int i = 0; i < count.getValue(); i++) {
-                values.add((T) readMethod.invoke(null, byteBuffer));
-            }
-        } catch (Exception e) {
-            //
-        }
-
-        return new CephList<>(values);
+    public CephList(List<T> values, Class<T> clazz) {
+        this.values = values;
+        this.clazz = clazz;
     }
 
     public List<T> getValues() {
@@ -48,14 +38,36 @@ public class CephList<T extends CephDataType> implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        new UInt32(values.size()).encode(outputStream);
-        values.forEach(v -> v.encode(outputStream));
+    public void encode(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            byteBuf.writeIntLE(values.size());
+        } else {
+            byteBuf.writeInt(values.size());
+        }
+
+        values.forEach(v -> v.encode(byteBuf, le));
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        new UInt32(values.size()).encode(byteBuffer);
-        values.forEach(v -> v.encode(byteBuffer));
+    public void decode(ByteBuf byteBuf, boolean le) {
+        int count;
+        if (le) {
+            count = byteBuf.readIntLE();
+        } else {
+            count = byteBuf.readInt();
+        }
+
+        try {
+            values = new ArrayList<>();
+            Constructor<T> constructor = clazz.getConstructor();
+            for (int i = 0; i < count; i++) {
+                T value = constructor.newInstance();
+                value.decode(byteBuf, le);
+
+                values.add(value);
+            }
+        } catch (Exception e) {
+            //
+        }
     }
 }

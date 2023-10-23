@@ -1,37 +1,29 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.MessageType;
-import ca.venom.ceph.protocol.types.UInt64;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import ca.venom.ceph.protocol.types.Int64;
+import io.netty.buffer.ByteBuf;
 
 public class IdentMissingFeaturesFrame extends ControlFrame {
-    private UInt64 missingFeaturesMask;
+    private Int64 missingFeaturesMask;
 
-    public UInt64 getMissingFeaturesMask() {
+    public Int64 getMissingFeaturesMask() {
         return missingFeaturesMask;
     }
 
-    public void setMissingFeaturesMask(UInt64 missingFeaturesMask) {
+    public void setMissingFeaturesMask(Int64 missingFeaturesMask) {
         this.missingFeaturesMask = missingFeaturesMask;
     }
 
     @Override
-    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
-        if (segmentIndex == 0) {
-            missingFeaturesMask.encode(outputStream);
-            return 8;
-        } else {
-            return 0;
-        }
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        missingFeaturesMask.encode(byteBuf, le);
     }
 
     @Override
-    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
-        if (segmentIndex == 0) {
-            missingFeaturesMask = UInt64.read(byteBuffer);
-        }
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        missingFeaturesMask = new Int64();
+        missingFeaturesMask.decode(byteBuf, le);
     }
 
     @Override

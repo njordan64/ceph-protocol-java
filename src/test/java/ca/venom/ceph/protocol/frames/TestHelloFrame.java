@@ -2,11 +2,15 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.NodeType;
 import ca.venom.ceph.protocol.CephProtocolContext;
+import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.MessageType;
-import ca.venom.ceph.protocol.types.AddrIPv4;
+import ca.venom.ceph.protocol.types.Addr;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.sound.midi.SysexMessage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -23,17 +27,7 @@ public class TestHelloFrame {
     @Before
     public void setup() throws Exception {
         InputStream inputStream = TestHelloFrame.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        byte[] buffer = new byte[4096];
-        int bytesRead = inputStream.read(buffer);
-        while (bytesRead > -1) {
-            outputStream.write(buffer, 0, bytesRead);
-            bytesRead = inputStream.read(buffer);
-        }
-
-        message1Bytes = outputStream.toByteArray();
-        outputStream.close();
+        message1Bytes = inputStream.readAllBytes();
         inputStream.close();
 
         ctx = new CephProtocolContext();
@@ -44,22 +38,22 @@ public class TestHelloFrame {
     @Test
     public void testDecodeMessage1() throws Exception {
         HelloFrame parsedMessage = new HelloFrame();
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
-        parsedMessage.decode(inputStream, ctx);
-
-        assertEquals(MessageType.HELLO, parsedMessage.getTag());
-        assertEquals(0, parsedMessage.getFlags().cardinality());
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
+        byteBuf.skipBytes(32);
+        parsedMessage.decodeSegment1(byteBuf, true);
 
         assertEquals(NodeType.MON, parsedMessage.getNodeType());
         assertTrue(parsedMessage.isMsgAddr2());
 
-        AddrIPv4 addr = (AddrIPv4) parsedMessage.getAddr();
-        assertEquals(0, addr.getNonce().getValue());
-        assertEquals(50504, addr.getPort());
-        assertEquals((byte) 192, addr.getAddrBytes()[0]);
-        assertEquals((byte) 168, addr.getAddrBytes()[1]);
-        assertEquals((byte) 122, addr.getAddrBytes()[2]);
-        assertEquals((byte) 227, addr.getAddrBytes()[3]);
+        Addr addr = parsedMessage.getAddr();
+        assertArrayEquals(new byte[4], addr.getNonce());
+
+        Addr.Ipv4Details details = (Addr.Ipv4Details) addr.getAddrDetails();
+        assertEquals(50504, details.getPort());
+        assertEquals((byte) 192, details.getAddrBytes()[0]);
+        assertEquals((byte) 168, details.getAddrBytes()[1]);
+        assertEquals((byte) 122, details.getAddrBytes()[2]);
+        assertEquals((byte) 227, details.getAddrBytes()[3]);
     }
 
     @Test
@@ -69,13 +63,23 @@ public class TestHelloFrame {
         helloFrame.setNodeType(NodeType.MON);
         helloFrame.setMsgAddr2(true);
 
-        AddrIPv4 addr = new AddrIPv4();
-        addr.setPort(50504);
-        byte[] addrBytes = new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227};
-        addr.setAddrBytes(addrBytes);
+        Addr addr = new Addr();
+        addr.setNonce(new byte[4]);
+
+        Addr.Ipv4Details details = new Addr.Ipv4Details();
+        addr.setAddrDetails(details);
+        details.setPort((short) 50504);
+        details.setAddrBytes(new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227});
 
         helloFrame.setAddr(addr);
 
-        assertArrayEquals(message1Bytes, helloFrame.encode(ctx));
+        byte[] expectedSegment = new byte[message1Bytes.length - 36];
+        System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
+        ByteBuf byteBuf = Unpooled.buffer();
+        helloFrame.encodeSegment1(byteBuf, true);
+
+        byte[] actualSegment = new byte[byteBuf.writerIndex()];
+        System.arraycopy(byteBuf.array(), 0, actualSegment, 0, byteBuf.writerIndex());
+        assertArrayEquals(expectedSegment, actualSegment);
     }
 }

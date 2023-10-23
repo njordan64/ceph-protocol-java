@@ -1,32 +1,18 @@
 package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.protocol.types.*;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class CephXTicketBlob implements CephDataType {
     private CephRawByte version = new CephRawByte((byte) 1);
-    private UInt64 secretId;
+    private Int64 secretId;
     private CephBytes blob;
 
-    public CephXTicketBlob(UInt64 secretId, CephBytes blob) {
-        this.secretId = secretId;
-        this.blob = blob;
-    }
-
-    public static CephXTicketBlob read(ByteBuffer byteBuffer) {
-        CephRawByte version = CephRawByte.read(byteBuffer);
-        UInt64 secretId = UInt64.read(byteBuffer);
-        CephBytes blob = CephBytes.read(byteBuffer);
-        return new CephXTicketBlob(secretId, blob);
-    }
-
-    public UInt64 getSecretId() {
+    public Int64 getSecretId() {
         return secretId;
     }
 
-    public void setSecretId(UInt64 secretId) {
+    public void setSecretId(Int64 secretId) {
         this.secretId = secretId;
     }
 
@@ -44,16 +30,23 @@ public class CephXTicketBlob implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        version.encode(outputStream);
-        secretId.encode(outputStream);
-        blob.encode(outputStream);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        version.encode(byteBuf, le);
+        secretId.encode(byteBuf, le);
+        blob.encode(byteBuf, le);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        version.encode(byteBuffer);
-        secretId.encode(byteBuffer);
-        blob.encode(byteBuffer);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        byte versionValue = byteBuf.readByte();
+        if (versionValue != version.getValue()) {
+            throw new IllegalArgumentException("Unsupported version (" + versionValue + ") only 1 is supported");
+        }
+
+        secretId = new Int64();
+        secretId.decode(byteBuf, le);
+
+        blob = new CephBytes();
+        blob.decode(byteBuf, le);
     }
 }

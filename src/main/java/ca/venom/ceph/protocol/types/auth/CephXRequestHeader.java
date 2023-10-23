@@ -1,27 +1,17 @@
 package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.protocol.types.CephDataType;
-import ca.venom.ceph.protocol.types.UInt16;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import ca.venom.ceph.protocol.types.Int16;
+import io.netty.buffer.ByteBuf;
 
 public class CephXRequestHeader implements CephDataType {
-    private UInt16 requestType;
+    private Int16 requestType;
 
-    public CephXRequestHeader(UInt16 requestType) {
-        this.requestType = requestType;
-    }
-
-    public static CephXRequestHeader read(ByteBuffer byteBuffer) {
-        return new CephXRequestHeader(UInt16.read(byteBuffer));
-    }
-
-    public UInt16 getRequestType() {
+    public Int16 getRequestType() {
         return requestType;
     }
 
-    public void setRequestType(UInt16 requestType) {
+    public void setRequestType(Int16 requestType) {
         this.requestType = requestType;
     }
 
@@ -31,12 +21,13 @@ public class CephXRequestHeader implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        requestType.encode(outputStream);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        requestType.encode(byteBuf, le);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        requestType.encode(byteBuffer);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        requestType = new Int16();
+        requestType.decode(byteBuf, le);
     }
 }

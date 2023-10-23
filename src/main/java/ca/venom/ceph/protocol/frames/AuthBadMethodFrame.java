@@ -3,23 +3,21 @@ package ca.venom.ceph.protocol.frames;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephList;
 import ca.venom.ceph.protocol.types.Int32;
-import ca.venom.ceph.protocol.types.UInt32;
+import io.netty.buffer.ByteBuf;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public class AuthBadMethodFrame extends ControlFrame {
-    private UInt32 method;
+    private Int32 method;
     private Int32 result;
-    private CephList<UInt32> allowedMethods;
-    private CephList<UInt32> allowedModes;
+    private CephList<Int32> allowedMethods;
+    private CephList<Int32> allowedModes;
 
-    public UInt32 getMethod() {
+    public Int32 getMethod() {
         return method;
     }
 
-    public void setMethod(UInt32 method) {
+    public void setMethod(Int32 method) {
         this.method = method;
     }
 
@@ -31,44 +29,43 @@ public class AuthBadMethodFrame extends ControlFrame {
         this.result = new Int32(result);
     }
 
-    public List<UInt32> getAllowedMethods() {
+    public List<Int32> getAllowedMethods() {
         return allowedMethods.getValues();
     }
 
-    public void setAllowedMethods(List<UInt32> allowedMethods) {
-        this.allowedMethods = new CephList<>(allowedMethods);
+    public void setAllowedMethods(List<Int32> allowedMethods) {
+        this.allowedMethods = new CephList<>(allowedMethods, Int32.class);
     }
 
-    public List<UInt32> getAllowedModes() {
+    public List<Int32> getAllowedModes() {
         return allowedModes.getValues();
     }
 
-    public void setAllowedModes(List<UInt32> allowedModes) {
-        this.allowedModes = new CephList<>(allowedModes);
+    public void setAllowedModes(List<Int32> allowedModes) {
+        this.allowedModes = new CephList<>(allowedModes, Int32.class);
     }
 
     @Override
-    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
-        if (segmentIndex == 0) {
-            method.encode(outputStream);
-            result.encode(outputStream);
-            allowedMethods.encode(outputStream);
-            allowedModes.encode(outputStream);
-
-            return 8;
-        } else {
-            return 0;
-        }
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        method.encode(byteBuf, le);
+        result.encode(byteBuf, le);
+        allowedMethods.encode(byteBuf, le);
+        allowedModes.encode(byteBuf, le);
     }
 
     @Override
-    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
-        if (segmentIndex == 0) {
-            method = UInt32.read(byteBuffer);
-            result = Int32.read(byteBuffer);
-            allowedMethods = CephList.read(byteBuffer, UInt32.class);
-            allowedModes = CephList.read(byteBuffer, UInt32.class);
-        }
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        method = new Int32();
+        method.decode(byteBuf, le);
+
+        result = new Int32();
+        result.decode(byteBuf, le);
+
+        allowedMethods = new CephList<>(Int32.class);
+        allowedMethods.decode(byteBuf, le);
+
+        allowedModes = new CephList<>(Int32.class);
+        allowedModes.decode(byteBuf, le);
     }
 
     @Override

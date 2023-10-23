@@ -1,49 +1,26 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 public class UTime implements CephDataType {
-    private final ByteBuffer value;
+    private long time;
+    private long nanoSeconds;
 
-    public UTime(UInt32 time, UInt32 nanoSeconds) {
-        byte[] bytes = new byte[8];
-        this.value = ByteBuffer.wrap(bytes);
-
-        time.encode(this.value);
-        nanoSeconds.encode(this.value);
-
-        this.value.flip();
+    public UTime() {
     }
 
-    private UTime(ByteBuffer value) {
-        this.value = value;
-    }
-
-    public static UTime read(ByteBuffer byteBuffer) {
-        UTime time = new UTime(byteBuffer.slice(byteBuffer.position(), 8));
-        byteBuffer.position(byteBuffer.position() + 8);
-
-        return time;
+    public UTime(long time, long nanoSeconds) {
+        this.time = time;
+        this.nanoSeconds = nanoSeconds;
     }
 
     public long getTime() {
-        return 1000L *
-                ((long) (value.get(3) & 255L) << 24) |
-                ((value.get(2) & 255L) << 16) |
-                ((value.get(1) & 255L) << 8) |
-                (value.get(0) & 255L);
+        return time;
     }
 
     public long getNanoSeconds() {
-        return ((long) (value.get(7) & 255L) << 24) |
-                ((value.get(6) & 255L) << 16) |
-                ((value.get(5) & 255L) << 8) |
-                (value.get(4) & 255L);
-    }
-
-    public void encode(ByteArrayOutputStream outputStream) {
-        outputStream.write(value.array(), value.arrayOffset(), 8);
+        return nanoSeconds;
     }
 
     @Override
@@ -52,8 +29,47 @@ public class UTime implements CephDataType {
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        byteBuffer.put(value.array(), value.arrayOffset(), 8);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        byte[] bytes = new byte[8];
+        ByteBuf conversionByteBuf = Unpooled.wrappedBuffer(bytes);
+
+        if (le) {
+            conversionByteBuf.writeLongLE(time);
+            byteBuf.writeBytes(bytes, 0, 4);
+
+            conversionByteBuf.writerIndex(0);
+            conversionByteBuf.writeLongLE(nanoSeconds);
+            byteBuf.writeBytes(bytes, 0, 4);
+        } else {
+            conversionByteBuf.writeLong(time);
+            byteBuf.writeBytes(bytes, 4, 4);
+
+            conversionByteBuf.writerIndex(0);
+            conversionByteBuf.writeLong(nanoSeconds);
+            byteBuf.writeBytes(bytes, 4, 4);
+        }
+    }
+
+    @Override
+    public void decode(ByteBuf byteBuf, boolean le) {
+        byte[] bytes = new byte[8];
+        ByteBuf conversionByteBuf = Unpooled.wrappedBuffer(bytes);
+
+        if (le) {
+            byteBuf.readBytes(bytes, 0, 4);
+            time = conversionByteBuf.readLongLE();
+
+            conversionByteBuf.readerIndex(0);
+            byteBuf.readBytes(bytes, 0, 4);
+            nanoSeconds = conversionByteBuf.readLongLE();
+        } else {
+            byteBuf.readBytes(bytes, 4, 4);
+            time = conversionByteBuf.readLong();
+
+            conversionByteBuf.readerIndex(0);
+            byteBuf.readBytes(byteBuf, 4, 4);
+            nanoSeconds = conversionByteBuf.readLong();
+        }
     }
 
     @Override
@@ -66,6 +82,6 @@ public class UTime implements CephDataType {
     }
 
     public int hashCode() {
-        return value.hashCode();
+        return 32 + Long.hashCode(time) + Long.hashCode(nanoSeconds);
     }
 }

@@ -1,38 +1,32 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class Int8 implements CephDataType {
-    private final byte value;
+    private byte value;
+
+    public Int8() {
+    }
 
     public Int8(byte value) {
         this.value = value;
     }
 
-    public static Int8 read(ByteBuffer byteBuffer) {
-        return new Int8(byteBuffer.get());
+    public Int8(int value) {
+        this.value = (byte) value;
     }
 
     public byte getValue() {
         return value;
     }
 
+    public int getValueUnsigned() {
+        return 0xff & value;
+    }
+
     @Override
     public int getSize() {
         return 1;
-    }
-
-    @Override
-    public void encode(ByteBuffer byteBuffer) {
-        byteBuffer.put(value);
-    }
-
-    @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        outputStream.write(value);
     }
 
     public boolean equals(Object obj) {
@@ -45,5 +39,15 @@ public class Int8 implements CephDataType {
 
     public int hashCode() {
         return Byte.valueOf(value).hashCode();
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf, boolean le) {
+        byteBuf.writeByte(value);
+    }
+
+    @Override
+    public void decode(ByteBuf byteBuf, boolean le) {
+        value = byteBuf.readByte();
     }
 }

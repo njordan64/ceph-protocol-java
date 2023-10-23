@@ -3,15 +3,14 @@ package ca.venom.ceph.protocol.frames;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephBoolean;
 import ca.venom.ceph.protocol.types.CephList;
-import ca.venom.ceph.protocol.types.UInt32;
+import ca.venom.ceph.protocol.types.Int32;
+import io.netty.buffer.ByteBuf;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public class CompressionRequestFrame extends ControlFrame {
     private CephBoolean compress;
-    private CephList<UInt32> preferredMethods;
+    private CephList<Int32> preferredMethods;
 
     public boolean isCompress() {
         return compress.getValue();
@@ -21,32 +20,27 @@ public class CompressionRequestFrame extends ControlFrame {
         this.compress = new CephBoolean(compress);
     }
 
-    public List<UInt32> getPreferredMethods() {
+    public List<Int32> getPreferredMethods() {
         return preferredMethods.getValues();
     }
 
-    public void setPreferredMethods(List<UInt32> preferredMethods) {
-        this.preferredMethods = new CephList<>(preferredMethods);
+    public void setPreferredMethods(List<Int32> preferredMethods) {
+        this.preferredMethods = new CephList<>(preferredMethods, Int32.class);
     }
 
     @Override
-    protected int encodeSegmentBody(int index, ByteArrayOutputStream outputStream) {
-        if (index == 0) {
-            compress.encode(outputStream);
-            preferredMethods.encode(outputStream);
-
-            return 8;
-        } else {
-            return 0;
-        }
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        compress.encode(byteBuf, le);
+        preferredMethods.encode(byteBuf, le);
     }
 
     @Override
-    protected void decodeSegmentBody(int index, ByteBuffer byteBuffer, int alignment) {
-        if (index == 0) {
-            compress = CephBoolean.read(byteBuffer);
-            preferredMethods = CephList.read(byteBuffer, UInt32.class);
-        }
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        compress = new CephBoolean();
+        compress.decode(byteBuf, le);
+
+        preferredMethods = new CephList<>(Int32.class);
+        preferredMethods.decode(byteBuf, le);
     }
 
     @Override

@@ -1,10 +1,14 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
+import io.netty.buffer.ByteBuf;
+
 import java.nio.ByteBuffer;
 
 public class CephRawByte implements CephDataType {
     private byte value;
+
+    public CephRawByte() {
+    }
 
     public CephRawByte(byte value) {
         this.value = value;
@@ -28,12 +32,12 @@ public class CephRawByte implements CephDataType {
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        outputStream.write(0xff & value);
+    public void encode(ByteBuf byteBuf, boolean le) {
+        byteBuf.writeByte(value);
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        byteBuffer.put(value);
+    public void decode(ByteBuf byteBuf, boolean le) {
+        value = byteBuf.readByte();
     }
 }

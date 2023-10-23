@@ -1,18 +1,15 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.MessageType;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class WaitFrame extends ControlFrame {
     @Override
-    protected int encodeSegmentBody(int segmentIndex, ByteArrayOutputStream outputStream) {
-        return 0;
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
     }
 
     @Override
-    protected void decodeSegmentBody(int segmentIndex, ByteBuffer byteBuffer, int alignment) {
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
     }
 
     @Override

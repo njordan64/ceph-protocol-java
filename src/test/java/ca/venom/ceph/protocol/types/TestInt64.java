@@ -1,13 +1,14 @@
 package ca.venom.ceph.protocol.types;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-public class TestUInt64 {
+public class TestInt64 {
     @Test
     public void testParseValue0() {
         valueTest((byte) 0, (byte) 0, (byte) 0, (byte) 0,
@@ -39,10 +40,11 @@ public class TestUInt64 {
     private void valueTest(byte byte1, byte byte2, byte byte3, byte byte4,
                            byte byte5, byte byte6, byte byte7, byte byte8,
                            BigInteger value) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {byte1, byte2, byte3, byte4,
-                                                            byte5, byte6, byte7, byte8});
-        UInt64 uint64 = UInt64.read(byteBuffer);
-        assertEquals(value, uint64.getValue());
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(new byte[] {byte1, byte2, byte3, byte4,
+                                                             byte5, byte6, byte7, byte8});
+        Int64 int64 = new Int64();
+        int64.decode(byteBuf, true);
+        assertEquals(value, int64.getValueUnsigned());
     }
 
     @Test
@@ -76,21 +78,20 @@ public class TestUInt64 {
     private void encodeTest(BigInteger value,
                             byte byte1, byte byte2, byte byte3, byte byte4,
                             byte byte5, byte byte6, byte byte7, byte byte8) {
-        UInt64 uint64 = new UInt64(value);
+        Int64 int64 = new Int64(value);
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-        uint64.encode(byteBuffer);
+        ByteBuf byteBuf = Unpooled.buffer(10);
+        int64.encode(byteBuf, true);
 
-        assertEquals(8, byteBuffer.position());
-        byteBuffer.flip();
+        assertEquals(8, byteBuf.writerIndex());
 
-        assertEquals(byte1, byteBuffer.get());
-        assertEquals(byte2, byteBuffer.get());
-        assertEquals(byte3, byteBuffer.get());
-        assertEquals(byte4, byteBuffer.get());
-        assertEquals(byte5, byteBuffer.get());
-        assertEquals(byte6, byteBuffer.get());
-        assertEquals(byte7, byteBuffer.get());
-        assertEquals(byte8, byteBuffer.get());
+        assertEquals(byte1, byteBuf.readByte());
+        assertEquals(byte2, byteBuf.readByte());
+        assertEquals(byte3, byteBuf.readByte());
+        assertEquals(byte4, byteBuf.readByte());
+        assertEquals(byte5, byteBuf.readByte());
+        assertEquals(byte6, byteBuf.readByte());
+        assertEquals(byte7, byteBuf.readByte());
+        assertEquals(byte8, byteBuf.readByte());
     }
 }

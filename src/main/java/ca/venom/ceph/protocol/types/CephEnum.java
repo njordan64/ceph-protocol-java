@@ -1,27 +1,19 @@
 package ca.venom.ceph.protocol.types;
 
 import ca.venom.ceph.EnumWithIntValue;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class CephEnum<T extends Enum<?> & EnumWithIntValue> implements CephDataType {
     private T value;
+    private final Class<T> clazz;
+
+    public CephEnum(Class<T> clazz) {
+        this.clazz = clazz;
+    }
 
     public CephEnum(T value) {
         this.value = value;
-    }
-
-    public static <T extends Enum<?> & EnumWithIntValue> CephEnum<T> read(ByteBuffer byteBuffer, Class<T> clazz) {
-        int valueNum = UInt8.read(byteBuffer).getValue();
-        T[] values = clazz.getEnumConstants();
-        for (T value : values) {
-            if (valueNum == value.getValueInt()) {
-                return new CephEnum<>(value);
-            }
-        }
-
-        return new CephEnum<>(null);
+        this.clazz = (Class<T>) value.getClass();
     }
 
     public T getValue() {
@@ -38,12 +30,20 @@ public class CephEnum<T extends Enum<?> & EnumWithIntValue> implements CephDataT
     }
 
     @Override
-    public void encode(ByteArrayOutputStream outputStream) {
-        outputStream.write(value.getValueInt());
+    public void encode(ByteBuf byteBuf, boolean le) {
+        byteBuf.writeByte(0xff & value.getValueInt());
     }
 
     @Override
-    public void encode(ByteBuffer byteBuffer) {
-        byteBuffer.put((byte) (0xff & value.getValueInt()));
+    public void decode(ByteBuf byteBuf, boolean le) {
+        this.value = null;
+
+        int valueNum = 0xff & byteBuf.readByte();
+        T[] values = clazz.getEnumConstants();
+        for (T value : values) {
+            if (valueNum == value.getValueInt()) {
+                this.value = value;
+            }
+        }
     }
 }

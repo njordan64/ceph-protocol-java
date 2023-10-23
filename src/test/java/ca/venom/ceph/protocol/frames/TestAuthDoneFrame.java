@@ -1,27 +1,27 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephBoolean;
 import ca.venom.ceph.protocol.types.CephBytes;
 import ca.venom.ceph.protocol.types.CephList;
+import ca.venom.ceph.protocol.types.Int16;
 import ca.venom.ceph.protocol.types.Int32;
-import ca.venom.ceph.protocol.types.UInt16;
-import ca.venom.ceph.protocol.types.UInt32;
-import ca.venom.ceph.protocol.types.UInt64;
+import ca.venom.ceph.protocol.types.Int64;
 import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
 import ca.venom.ceph.protocol.types.auth.CephXResponseHeader;
 import ca.venom.ceph.protocol.types.auth.CephXTicketInfo;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -60,13 +60,13 @@ public class TestAuthDoneFrame {
     @Test
     public void testDecodeMessage1() throws Exception {
         AuthDoneFrame parsedMessage = new AuthDoneFrame();
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(message1Bytes, 1, message1Bytes.length - 1);
-        parsedMessage.decode(inputStream, ctx);
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
+        byteBuf.skipBytes(32);
+        parsedMessage.decodeSegment1(byteBuf, true);
 
         assertEquals(MessageType.AUTH_DONE, parsedMessage.getTag());
-        assertEquals(0, parsedMessage.getFlags().cardinality());
-        assertEquals(new UInt64(new BigInteger("154220")), parsedMessage.getGlobalId());
-        assertEquals(new UInt32(2L), parsedMessage.getConnectionMode());
+        assertEquals(new Int64(new BigInteger("154220")), parsedMessage.getGlobalId());
+        assertEquals(new Int32(2), parsedMessage.getConnectionMode());
 
         assertEquals(0x100, parsedMessage.getPayload().getResponseHeader().getResponseType().getValue());
         assertEquals(0, parsedMessage.getPayload().getResponseHeader().getStatus().getValue());
@@ -80,30 +80,39 @@ public class TestAuthDoneFrame {
     }
 
     @Test
-    public void testEncodeMessage1() throws Exception {
+    public void testEncodeMessage1() {
         AuthDoneFrame authDoneFrame = new AuthDoneFrame();
-        authDoneFrame.setGlobalId(new UInt64(new BigInteger("154220")));
-        authDoneFrame.setConnectionMode(new UInt32(2L));
+        authDoneFrame.setGlobalId(new Int64(new BigInteger("154220")));
+        authDoneFrame.setConnectionMode(new Int32(2));
 
         AuthDonePayload payload = new AuthDonePayload();
         authDoneFrame.setPayload(payload);
-        CephXResponseHeader responseHeader = new CephXResponseHeader(
-                new UInt16(0x100),
-                new Int32(0)
-        );
+        CephXResponseHeader responseHeader = new CephXResponseHeader();
+        responseHeader.setResponseType(new Int16((short) 0x100));
+        responseHeader.setStatus(new Int32(0));
         payload.setResponseHeader(responseHeader);
 
-        CephXTicketInfo ticketInfo = new CephXTicketInfo(
-                new UInt32(32L),
-                new CephBytes(SERVICE_TICKET),
-                new CephBoolean(false),
-                new CephBytes(TICKET)
-        );
-        payload.setTicketInfos(new CephList<>(Collections.singletonList(ticketInfo)));
+        CephXTicketInfo ticketInfo = new CephXTicketInfo();
+        ticketInfo.setServiceId(new Int32(32));
+        ticketInfo.setServiceTicket(new CephBytes(SERVICE_TICKET));
+        ticketInfo.setEncrypted(new CephBoolean(false));
+        ticketInfo.setTicket(new CephBytes(TICKET));
+        List<CephXTicketInfo> ticketInfoList = new ArrayList<>();
+        ticketInfoList.add(ticketInfo);
+        CephList<CephXTicketInfo> ticketInfoCephList = new CephList<>(CephXTicketInfo.class);
+        ticketInfoCephList.setValues(ticketInfoList);
+        payload.setTicketInfos(ticketInfoCephList);
 
         payload.setEncryptedSecret(new CephBytes(ENCRYPTED_SECRET));
         payload.setExtra(new CephBytes(new byte[0]));
 
-        assertArrayEquals(message1Bytes, authDoneFrame.encode(ctx));
+        byte[] expectedPayload = new byte[message1Bytes.length - 36];
+        System.arraycopy(message1Bytes, 32, expectedPayload, 0, message1Bytes.length - 36);
+
+        ByteBuf byteBuf = Unpooled.buffer();
+        authDoneFrame.encodeSegment1(byteBuf, true);
+        byte[] actualPayload = new byte[byteBuf.writerIndex()];
+        byteBuf.readBytes(actualPayload);
+        assertArrayEquals(expectedPayload, actualPayload);
     }
 }

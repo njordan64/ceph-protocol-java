@@ -1,12 +1,12 @@
 package ca.venom.ceph.protocol.types;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
+import static org.junit.Assert.assertEquals;
 
-import static org.junit.Assert.*;
-
-public class TestUInt32 {
+public class TestInt32 {
     @Test
     public void testParseValue0() {
         valueTest((byte) 0, (byte) 0, (byte) 0, (byte) 0, 0L);
@@ -23,9 +23,10 @@ public class TestUInt32 {
     }
 
     private void valueTest(byte byte1, byte byte2, byte byte3, byte byte4, long value) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {byte1, byte2, byte3, byte4});
-        UInt32 uint32 = UInt32.read(byteBuffer);
-        assertEquals(value, uint32.getValue());
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(new byte[] {byte1, byte2, byte3, byte4});
+        Int32 int32 = new Int32();
+        int32.decode(byteBuf, true);
+        assertEquals(value, int32.getValueUnsigned());
     }
 
     @Test
@@ -44,17 +45,16 @@ public class TestUInt32 {
     }
 
     private void encodeTest(long value, byte byte1, byte byte2, byte byte3, byte byte4) {
-        UInt32 uint32 = new UInt32(value);
+        Int32 int32 = new Int32(value);
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-        uint32.encode(byteBuffer);
+        ByteBuf byteBuf = Unpooled.buffer(10);
+        int32.encode(byteBuf, true);
 
-        assertEquals(4, byteBuffer.position());
-        byteBuffer.flip();
+        assertEquals(4, byteBuf.writerIndex());
 
-        assertEquals(byte1, byteBuffer.get());
-        assertEquals(byte2, byteBuffer.get());
-        assertEquals(byte3, byteBuffer.get());
-        assertEquals(byte4, byteBuffer.get());
+        assertEquals(byte1, byteBuf.readByte());
+        assertEquals(byte2, byteBuf.readByte());
+        assertEquals(byte3, byteBuf.readByte());
+        assertEquals(byte4, byteBuf.readByte());
     }
 }

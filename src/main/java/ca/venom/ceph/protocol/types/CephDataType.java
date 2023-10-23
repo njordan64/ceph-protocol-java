@@ -1,12 +1,11 @@
 package ca.venom.ceph.protocol.types;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 public interface CephDataType {
     int getSize();
 
-    void encode(ByteArrayOutputStream outputStream);
+    void encode(ByteBuf byteBuf, boolean le);
 
-    void encode(ByteBuffer byteBuffer);
+    void decode(ByteBuf byteBuf, boolean le);
 }
