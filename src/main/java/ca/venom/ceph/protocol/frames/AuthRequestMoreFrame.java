@@ -4,7 +4,7 @@ import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.auth.AuthRequestMorePayload;
 import io.netty.buffer.ByteBuf;
 
-public class AuthRequestMoreFrame extends ControlFrame {
+public class AuthRequestMoreFrame extends AuthFrameBase {
     private AuthRequestMorePayload payload;
 
     public AuthRequestMorePayload getPayload() {

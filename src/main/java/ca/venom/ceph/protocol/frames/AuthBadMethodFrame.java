@@ -7,7 +7,7 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.List;
 
-public class AuthBadMethodFrame extends ControlFrame {
+public class AuthBadMethodFrame extends AuthFrameBase {
     private Int32 method;
     private Int32 result;
     private CephList<Int32> allowedMethods;

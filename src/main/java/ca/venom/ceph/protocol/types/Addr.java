@@ -11,6 +11,10 @@ public class Addr implements CephDataType {
         void encode(ByteBuf byteBuf, boolean le);
 
         void decode(ByteBuf byteBuf, boolean le);
+
+        int getSize();
+
+        int getType();
     }
 
     public static class Ipv4Details implements Details {
@@ -34,6 +38,16 @@ public class Addr implements CephDataType {
 
         public void setAddrBytes(byte[] addrBytes) {
             this.addrBytes = addrBytes;
+        }
+
+        @Override
+        public int getSize() {
+            return 14;
+        }
+
+        @Override
+        public int getType() {
+            return 2;
         }
 
         @Override
@@ -94,6 +108,16 @@ public class Addr implements CephDataType {
         }
 
         @Override
+        public int getSize() {
+            return 16;
+        }
+
+        @Override
+        public int getType() {
+            return 10;
+        }
+
+        @Override
         public void encode(ByteBuf byteBuf, boolean le) {
             byteBuf.writeShort(port);
             flowInfo.encode(byteBuf, false);
@@ -113,8 +137,20 @@ public class Addr implements CephDataType {
         }
     }
 
+    private CephRawByte marker = new CephRawByte((byte) 1);
+    private CephRawByte version = new CephRawByte((byte) 1);
+    private CephRawByte minVersion = new CephRawByte((byte) 1);
+    private Int32 type;
     private Details addrDetails;
     private CephRawBytes nonce;
+
+    public int getType() {
+        return type.getValue();
+    }
+
+    public void setType(int type) {
+        this.type = new Int32(type);
+    }
 
     public byte[] getNonce() {
         return nonce.getValue();
@@ -134,29 +170,25 @@ public class Addr implements CephDataType {
 
     @Override
     public void encode(ByteBuf byteBuf, boolean le) {
-        int type = 0;
-        if (addrDetails instanceof Ipv4Details) {
-            type = 2;
-        } else if (addrDetails instanceof Ipv6Details) {
-            type = 10;
-        }
+        marker.encode(byteBuf, le);
+        version.encode(byteBuf, le);
+        minVersion.encode(byteBuf, le);
 
         if (le) {
-            byteBuf.writeIntLE(14 + getSize());
-            byteBuf.writeIntLE(type);
+            byteBuf.writeIntLE(14 + addrDetails.getSize());
         } else {
-            byteBuf.writeInt(14 + getSize());
-            byteBuf.writeInt(type);
+            byteBuf.writeInt(14 + addrDetails.getSize());
         }
 
+        type.encode(byteBuf, le);
         nonce.encode(byteBuf, le);
 
         if (le) {
-            byteBuf.writeIntLE(getSize() + 2);
-            byteBuf.writeShortLE(type);
+            byteBuf.writeIntLE(2 + addrDetails.getSize());
+            byteBuf.writeShortLE(addrDetails.getType());
         } else {
-            byteBuf.writeInt(getSize() + 2);
-            byteBuf.writeShort(type);
+            byteBuf.writeInt(2 + addrDetails.getSize());
+            byteBuf.writeShort(addrDetails.getType());
         }
 
         addrDetails.encode(byteBuf, le);
@@ -164,44 +196,28 @@ public class Addr implements CephDataType {
 
     @Override
     public void decode(ByteBuf byteBuf, boolean le) {
-        byteBuf.skipBytes(4);
-        int type;
-        if (le) {
-            type = byteBuf.readIntLE();
-        } else {
-            type = byteBuf.readInt();
-        }
+        byte marker = byteBuf.readByte();
+        byte version = byteBuf.readByte();
+        byte minVersion = byteBuf.readByte();
+        int length = le ? byteBuf.readIntLE() : byteBuf.readInt();
+        type = new Int32();
+        type.decode(byteBuf, le);
 
         nonce = new CephRawBytes(4);
         nonce.decode(byteBuf, le);
+        int innerLength = le ? byteBuf.readIntLE() : byteBuf.readInt();
 
-        if (type == 2) {
+        int encodedType = le ? byteBuf.readShortLE() : byteBuf.readShort();
+        if (encodedType == 2) {
             addrDetails = new Ipv4Details();
-        } else if (type == 10) {
+        } else if (encodedType == 10) {
             addrDetails = new Ipv6Details();
         }
-
-        int detailsLength;
-        if (le) {
-            detailsLength = byteBuf.readIntLE();
-        } else {
-            detailsLength = byteBuf.readInt();
-        }
-
-        int endIndex = byteBuf.readerIndex() + detailsLength;
-        byteBuf.skipBytes(2);
         addrDetails.decode(byteBuf, le);
-        byteBuf.readerIndex(endIndex);
     }
 
     @Override
     public int getSize() {
-        if (addrDetails instanceof Ipv4Details) {
-            return 14;
-        } else if (addrDetails instanceof Ipv6Details) {
-            return 28;
-        }
-
-        return 0;
+        return 21 + addrDetails.getSize();
     }
 }

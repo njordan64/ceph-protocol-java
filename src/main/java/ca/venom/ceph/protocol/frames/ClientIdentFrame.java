@@ -8,6 +8,7 @@ import java.util.BitSet;
 import java.util.List;
 
 public class ClientIdentFrame extends ControlFrame {
+    private CephRawByte version = new CephRawByte((byte) 2);
     private CephList<Addr> myAddresses;
     private Addr targetAddress;
     private Int64 globalId;
@@ -83,6 +84,7 @@ public class ClientIdentFrame extends ControlFrame {
 
     @Override
     public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+        version.encode(byteBuf, le);
         myAddresses.encode(byteBuf, le);
         targetAddress.encode(byteBuf, le);
         globalId.encode(byteBuf, le);
@@ -95,6 +97,7 @@ public class ClientIdentFrame extends ControlFrame {
 
     @Override
     public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+        byte version = byteBuf.readByte();
         myAddresses = new CephList<>(Addr.class);
         myAddresses.decode(byteBuf, le);
 

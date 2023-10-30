@@ -4,12 +4,18 @@ import ca.venom.ceph.protocol.frames.ControlFrame;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.MessageToMessageCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class CephFrameCodec extends MessageToMessageCodec<CephPreParsedFrame, ControlFrame> {
+    private static final Logger LOG = LoggerFactory.getLogger(CephFrameCodec.class);
+
     @Override
     protected void encode(ChannelHandlerContext ctx, ControlFrame controlFrame, List<Object> list) throws Exception {
+        LOG.debug(">>> CephFrameCodec.encode");
+
         CephPreParsedFrame frame = new CephPreParsedFrame();
         frame.setMessageType(controlFrame.getTag());
 
@@ -50,10 +56,14 @@ public class CephFrameCodec extends MessageToMessageCodec<CephPreParsedFrame, Co
         if (segmentByteBuf != null) {
             segmentByteBuf.release();
         }
+
+        list.add(frame);
     }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, CephPreParsedFrame frame, List<Object> list) throws Exception {
+        LOG.debug(">>> CephFrameCodec.decode");
+
         ControlFrame controlFrame = frame.getMessageType().getInstance();
         if (frame.getSegment1() != null) {
             controlFrame.decodeSegment1(frame.getSegment1().getSegmentByteBuf(), frame.getSegment1().isLE());

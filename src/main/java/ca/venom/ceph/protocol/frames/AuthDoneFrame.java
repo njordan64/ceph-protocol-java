@@ -6,7 +6,7 @@ import ca.venom.ceph.protocol.types.Int64;
 import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
 import io.netty.buffer.ByteBuf;
 
-public class AuthDoneFrame extends ControlFrame {
+public class AuthDoneFrame extends AuthFrameBase {
     private Int64 globalId;
     private Int32 connectionMode;
     private AuthDonePayload payload;

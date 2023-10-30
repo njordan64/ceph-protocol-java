@@ -4,7 +4,7 @@ import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephRawBytes;
 import io.netty.buffer.ByteBuf;
 
-public class AuthSignatureFrame extends ControlFrame {
+public class AuthSignatureFrame extends AuthFrameBase {
     private CephRawBytes sha256Digest;
 
     public byte[] getSha256Digest() {

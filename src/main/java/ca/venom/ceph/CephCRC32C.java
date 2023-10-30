@@ -1,5 +1,7 @@
 package ca.venom.ceph;
 
+import io.netty.buffer.ByteBuf;
+
 public class CephCRC32C {
     private static final long[] SCTP_CRC_TABLEIL8_O32 = new long[]
     {

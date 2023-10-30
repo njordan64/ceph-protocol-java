@@ -8,7 +8,6 @@ public class CephPreParsedFrame {
         private final ByteBuf segmentByteBuf;
         private final int length;
         private final boolean le;
-        private long crc32c;
 
         public Segment(ByteBuf segmentByteBuf, int length, boolean le) {
             this.segmentByteBuf = segmentByteBuf;
@@ -26,14 +25,6 @@ public class CephPreParsedFrame {
 
         public boolean isLE() {
             return le;
-        }
-
-        public long getCrc32c() {
-            return crc32c;
-        }
-
-        public void setCrc32c(long crc32c) {
-            this.crc32c = crc32c;
         }
     }
 

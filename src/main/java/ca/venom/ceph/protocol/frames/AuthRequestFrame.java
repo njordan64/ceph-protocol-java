@@ -9,7 +9,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AuthRequestFrame extends ControlFrame {
+public class AuthRequestFrame extends AuthFrameBase {
     private Int32 authMethod;
     private CephList<Int32> preferredModes = new CephList<>(new ArrayList<>(), Int32.class);
     private AuthRequestPayload payload;

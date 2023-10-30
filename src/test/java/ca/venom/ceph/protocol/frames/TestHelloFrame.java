@@ -43,13 +43,12 @@ public class TestHelloFrame {
         parsedMessage.decodeSegment1(byteBuf, true);
 
         assertEquals(NodeType.MON, parsedMessage.getNodeType());
-        assertTrue(parsedMessage.isMsgAddr2());
 
         Addr addr = parsedMessage.getAddr();
         assertArrayEquals(new byte[4], addr.getNonce());
 
         Addr.Ipv4Details details = (Addr.Ipv4Details) addr.getAddrDetails();
-        assertEquals(50504, details.getPort());
+        assertEquals(60832, details.getPort());
         assertEquals((byte) 192, details.getAddrBytes()[0]);
         assertEquals((byte) 168, details.getAddrBytes()[1]);
         assertEquals((byte) 122, details.getAddrBytes()[2]);
@@ -61,14 +60,14 @@ public class TestHelloFrame {
         HelloFrame helloFrame = new HelloFrame();
 
         helloFrame.setNodeType(NodeType.MON);
-        helloFrame.setMsgAddr2(true);
 
         Addr addr = new Addr();
+        addr.setType(2);
         addr.setNonce(new byte[4]);
 
         Addr.Ipv4Details details = new Addr.Ipv4Details();
         addr.setAddrDetails(details);
-        details.setPort((short) 50504);
+        details.setPort((short) 60832);
         details.setAddrBytes(new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227});
 
         helloFrame.setAddr(addr);
