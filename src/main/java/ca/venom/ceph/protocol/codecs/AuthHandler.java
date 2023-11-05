@@ -23,6 +23,7 @@ import ca.venom.ceph.protocol.types.auth.CephXTicketInfo;
 import ca.venom.ceph.protocol.types.auth.EntityName;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
     private static final Logger LOG = LoggerFactory.getLogger(AuthHandler.class);
@@ -58,6 +60,9 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
     private final SecretKeySpec authKey;
     private State state = State.NONE;
     private SecretKeySpec sessionKey;
+    private ByteBuf sentByteBuf;
+    private ByteBuf receivedByteBuf;
+    private CompletableFuture<Void> authFinished;
 
     public AuthHandler(String username, String keyString) {
         this.username = username;
@@ -66,11 +71,28 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         authKey = new SecretKeySpec(keyBytes, 12, 16, "AES");
     }
 
-    public void start(ChannelHandlerContext ctx) {
+    public CompletableFuture<Void> start(Channel channel) {
         LOG.debug(">>> AuthHandler.start");
 
+        synchronized (this) {
+            if (authFinished != null) {
+                CompletableFuture<Void> authInProgress = new CompletableFuture<>();
+                authInProgress.completeExceptionally(new IllegalStateException("Auth in progress"));
+                return authInProgress;
+            } else {
+                authFinished = new CompletableFuture<>();
+            }
+        }
+
         if (state == State.COMPLETE) {
-            return;
+            authFinished.complete(null);
+            CompletableFuture<Void> toReturn = authFinished;
+
+            synchronized (this) {
+                authFinished = null;
+            }
+
+            return toReturn;
         }
 
         AuthRequestFrame request = new AuthRequestFrame();
@@ -91,7 +113,9 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
 
         state = State.INITIATED;
 
-        ctx.writeAndFlush(request);
+        channel.writeAndFlush(request);
+
+        return authFinished;
     }
 
     @Override
@@ -200,20 +224,23 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
 
         state = State.COMPLETE;
 
+        CephPreParsedFrameCodec preParsedFrameCodec = ctx.pipeline().get(CephPreParsedFrameCodec.class);
         if (request.getConnectionMode().getValue() == 2) {
-            ctx.pipeline().get(CephPreParsedFrameCodec.class).enableSecureMode(
-                    streamKey,
-                    rxNonceBytes,
-                    txNonceBytes
-            );
-            ctx.channel().config().setAutoRead(true);
+            preParsedFrameCodec.enableSecureMode(streamKey, rxNonceBytes, txNonceBytes);
         }
+
+        sentByteBuf = preParsedFrameCodec.getSentByteBuf();
+        receivedByteBuf =  preParsedFrameCodec.getReceivedByteBuf();
+        preParsedFrameCodec.releaseSentByteBuf();
+        preParsedFrameCodec.releaseReceivedByteBuf();
+        preParsedFrameCodec.setCaptureBytes(false);
+
+        ctx.channel().config().setAutoRead(true);
     }
 
     private void handleAuthSignature(ChannelHandlerContext ctx, AuthSignatureFrame request) throws Exception {
         LOG.debug(">>> AuthHandler.handleAuthSignature");
 
-        ByteBuf sentByteBuf = ctx.pipeline().get(CephPreParsedFrameCodec.class).getSentByteBuf();
         byte[] x = new byte[sentByteBuf.writerIndex()];
         sentByteBuf.getBytes(0, x);
         Mac mac = Mac.getInstance("HmacSHA256");
@@ -230,18 +257,24 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
             }
         }
 
-        ByteBuf receivedByteBuf = ctx.pipeline().get(CephPreParsedFrameCodec.class).getReceivedByteBuf();
+        sentByteBuf = null;
+
         mac = Mac.getInstance("HmacSHA256");
         mac.init(sessionKey);
 
         byte[] receivedBytes = new byte[receivedByteBuf.writerIndex()];
-        receivedByteBuf.readBytes(receivedByteBuf);
+        receivedByteBuf.readBytes(receivedBytes);
 
         AuthSignatureFrame signatureFrame = new AuthSignatureFrame();
         signatureFrame.setSha256Digest(mac.doFinal(receivedBytes));
 
-        ctx.pipeline().get(CephPreParsedFrameCodec.class).releaseReceivedByteBuf();
-        ctx.pipeline().get(CephPreParsedFrameCodec.class).releaseSentByteBuf();
-        ctx.writeAndFlush(signatureFrame);
+        receivedByteBuf = null;
+
+        ctx.writeAndFlush(signatureFrame).sync();
+
+        authFinished.complete(null);
+        synchronized (this) {
+            authFinished = null;
+        }
     }
 }

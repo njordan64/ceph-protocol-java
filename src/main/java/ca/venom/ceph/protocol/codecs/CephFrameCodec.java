@@ -14,7 +14,7 @@ public class CephFrameCodec extends MessageToMessageCodec<CephPreParsedFrame, Co
 
     @Override
     protected void encode(ChannelHandlerContext ctx, ControlFrame controlFrame, List<Object> list) throws Exception {
-        LOG.debug(">>> CephFrameCodec.encode");
+        LOG.debug(">>> CephFrameCodec.encode: (" + controlFrame.getTag().name() + ")");
 
         CephPreParsedFrame frame = new CephPreParsedFrame();
         frame.setMessageType(controlFrame.getTag());
@@ -62,7 +62,7 @@ public class CephFrameCodec extends MessageToMessageCodec<CephPreParsedFrame, Co
 
     @Override
     protected void decode(ChannelHandlerContext ctx, CephPreParsedFrame frame, List<Object> list) throws Exception {
-        LOG.debug(">>> CephFrameCodec.decode");
+        LOG.debug(">>> CephFrameCodec.decode: (" + frame.getMessageType().name() + ")");
 
         ControlFrame controlFrame = frame.getMessageType().getInstance();
         if (frame.getSegment1() != null) {

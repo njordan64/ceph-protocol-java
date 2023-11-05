@@ -1,6 +1,7 @@
 package ca.venom.ceph.protocol.codecs;
 
 import ca.venom.ceph.CephCRC32C;
+import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.frames.BannerFrame;
 import io.netty.buffer.ByteBuf;
@@ -83,11 +84,13 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
             int startIndex = byteBuf.readerIndex();
             CephPreParsedFrame frame = decodeSingleFrame(byteBuf);
             if (frame != null) {
+                LOG.debug(">>> Decoded: (" + frame.getMessageType().name() + ")");
                 if (captureBytes) {
                     receivedByteBuf.writeBytes(byteBuf, startIndex, byteBuf.readerIndex() - startIndex);
                 }
                 list.add(frame);
             } else {
+                LOG.debug(">>> Decoded: null");
                 break;
             }
 
@@ -110,6 +113,8 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
         ByteBuf headerByteBuf;
         ByteBuf parseByteBuf;
         if (secureMode) {
+            long originalRxCounter = rxCounter;
+
             headerByteBuf = decryptChunk(byteBuf, 0);
             int frameLength = getMessageLengthFromHeader(headerByteBuf);
 
@@ -120,12 +125,14 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
                     headerByteBuf.writeBytes(nextChunk);
                     messageLength += 96;
                 } else {
+                    rxCounter = originalRxCounter;
                     return null;
                 }
             }
 
             parseByteBuf = headerByteBuf.slice(32, headerByteBuf.writerIndex() - 32);
             if (parseByteBuf.readableBytes() < frameLength - 32) {
+                rxCounter = originalRxCounter;
                 return null;
             }
         } else {
@@ -221,10 +228,12 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
     }
 
     private ByteBuf decryptChunk(ByteBuf byteBuf, int offset) throws Exception {
-        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, rxNonceBytes);
+        LOG.trace("*** StreamKey: " + HexFunctions.hexToString(streamKey.getEncoded()));
+        LOG.trace("*** Nonce: " + HexFunctions.hexToString(rxNonceBytes));
         ByteBuf nonceByteBuf = Unpooled.wrappedBuffer(rxNonceBytes);
         nonceByteBuf.writerIndex(4);
-        nonceByteBuf.writeLongLE(++rxCounter);
+        nonceByteBuf.writeLongLE(rxCounter++);
+        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, rxNonceBytes);
 
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, streamKey,gcmParameterSpec);
@@ -321,7 +330,7 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
 
     @Override
     protected void encode(ChannelHandlerContext ctx, CephPreParsedFrame frame, ByteBuf byteBuf) throws Exception {
-        LOG.debug(">>> CephPreParsedFrameCodec.encode");
+        LOG.debug(">>> CephPreParsedFrameCodec.encode (" + frame.getMessageType().name() + ")");
 
         ByteBuf frameByteBuf = Unpooled.buffer();
 
@@ -475,13 +484,27 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
         int offset = 0;
         while (offset < frameByteBuf.writerIndex()) {
             byte[] bytesToEncrypt = new byte[80];
-            offset += bytesToEncrypt.length;
-            frameByteBuf.readBytes(bytesToEncrypt, offset, Math.min(80, frameByteBuf.writerIndex() - offset));
+            int byteCount;
+            if (frameByteBuf.writerIndex() - offset < 80) {
+                byteCount = frameByteBuf.writerIndex() - offset;
+            } else {
+                byteCount = 80;
+            }
+
+            LOG.trace("*** StreamKey: " + HexFunctions.hexToString(streamKey.getEncoded()));
+            LOG.trace("*** Nonce: " + HexFunctions.hexToString(txNonceBytes));
+
+            frameByteBuf.readBytes(bytesToEncrypt, 0, byteCount);
+            offset += byteCount;
 
             GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, txNonceBytes);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, streamKey, gcmParameterSpec);
-            byteBuf.writeBytes(cipher.doFinal(bytesToEncrypt, 0, 96));
+            byte[] encryptedBytes = cipher.doFinal(bytesToEncrypt);
+            byteBuf.writeBytes(encryptedBytes);
+
+            LOG.trace("*** Unencrypted Data:\n" + HexFunctions.hexToString(bytesToEncrypt));
+            LOG.trace("*** Encrypted Data:\n" + HexFunctions.hexToString(encryptedBytes));
 
             txCounter++;
             ByteBuf txNonceByteBuf = Unpooled.wrappedBuffer(txNonceBytes);

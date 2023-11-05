@@ -19,7 +19,7 @@ public class HexFunctions {
                (bytes[start] & 255);
     }
 
-    public static void printHexString(byte[] bytes) {
+    public static String hexToString(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < bytes.length; i++) {
@@ -38,6 +38,10 @@ public class HexFunctions {
             sb.append(lowChar);
         }
 
-        System.out.println(sb.toString());
+        return sb.toString();
+    }
+
+    public static void printHexString(byte[] bytes) {
+        System.out.println(hexToString(bytes));
     }
 }

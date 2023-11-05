@@ -42,12 +42,12 @@ public class ClientIdentFrame extends ControlFrame {
         this.globalId = new Int64(globalId);
     }
 
-    public Int64 getGlobalSeq() {
-        return globalSeq;
+    public long getGlobalSeq() {
+        return globalSeq.getValue();
     }
 
-    public void setGlobalSeq(Int64 globalSeq) {
-        this.globalSeq = globalSeq;
+    public void setGlobalSeq(long globalSeq) {
+        this.globalSeq = new Int64(globalSeq);
     }
 
     public BitSet getSupportedFeatures() {
@@ -74,12 +74,12 @@ public class ClientIdentFrame extends ControlFrame {
         this.flags = new CephBitSet(flags, 8);
     }
 
-    public Int64 getClientCookie() {
-        return clientCookie;
+    public long getClientCookie() {
+        return clientCookie.getValue();
     }
 
-    public void setClientCookie(Int64 clientCookie) {
-        this.clientCookie = clientCookie;
+    public void setClientCookie(long clientCookie) {
+        this.clientCookie = new Int64(clientCookie);
     }
 
     @Override

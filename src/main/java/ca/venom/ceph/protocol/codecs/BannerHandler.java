@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.codecs;
 
-import ca.venom.ceph.TriConsumer;
+import ca.venom.ceph.PipelineInitializer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -9,16 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 public class BannerHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger LOG = LoggerFactory.getLogger(BannerHandler.class);
     private static final String PREFIX = "ceph v2\n";
     private static final int EXPECTED_SIZE = 26;
-    private final TriConsumer pipelineInitializer;
+    private final PipelineInitializer pipelineInitializer;
 
-    public BannerHandler(TriConsumer pipelineInitializer) {
+    public BannerHandler(PipelineInitializer pipelineInitializer) {
         this.pipelineInitializer = pipelineInitializer;
     }
 
@@ -53,7 +51,7 @@ public class BannerHandler extends SimpleChannelInboundHandler<ByteBuf> {
             ByteBuf bannerByteBuf = ctx.alloc().buffer(EXPECTED_SIZE);
             bannerByteBuf.writeBytes(PREFIX.getBytes(StandardCharsets.UTF_8));
             bannerByteBuf.writeShortLE(16);
-            bannerByteBuf.writeLongLE(1); // Rev1 no compression
+            bannerByteBuf.writeLongLE(3); // Rev1, compression
             bannerByteBuf.writeLongLE(1); // Rev 1 no compression
 
             ByteBuf sentByteBuf = Unpooled.buffer();
