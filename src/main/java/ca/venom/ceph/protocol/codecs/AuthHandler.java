@@ -1,6 +1,7 @@
 package ca.venom.ceph.protocol.codecs;
 
 import ca.venom.ceph.AuthMode;
+import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.frames.AuthDoneFrame;
 import ca.venom.ceph.protocol.frames.AuthFrameBase;
 import ca.venom.ceph.protocol.frames.AuthReplyMoreFrame;
@@ -248,6 +249,7 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
 
         byte[] sentBytes = new byte[sentByteBuf.writerIndex()];
         sentByteBuf.readBytes(sentBytes);
+        HexFunctions.printHexString(sentBytes);
 
         byte[] expectedSignature = request.getSha256Digest();
         byte[] actualSignature = mac.doFinal(sentBytes);

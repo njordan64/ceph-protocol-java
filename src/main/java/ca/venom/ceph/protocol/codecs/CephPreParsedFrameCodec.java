@@ -3,7 +3,6 @@ package ca.venom.ceph.protocol.codecs;
 import ca.venom.ceph.CephCRC32C;
 import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.MessageType;
-import ca.venom.ceph.protocol.frames.BannerFrame;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFrame> {
@@ -115,23 +113,78 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
         if (secureMode) {
             long originalRxCounter = rxCounter;
 
-            headerByteBuf = decryptChunk(byteBuf, 0);
-            int frameLength = getMessageLengthFromHeader(headerByteBuf);
-
-            messageLength = 96;
-            while (headerByteBuf.writerIndex() < frameLength) {
-                if (byteBuf.readableBytes() >= messageLength + 96) {
-                    ByteBuf nextChunk = decryptChunk(byteBuf, messageLength);
-                    headerByteBuf.writeBytes(nextChunk);
-                    messageLength += 96;
-                } else {
-                    rxCounter = originalRxCounter;
-                    return null;
-                }
+            headerByteBuf = Unpooled.buffer(80);
+            decryptChunk(byteBuf, 0, 80, headerByteBuf);
+            int segment1Size = headerByteBuf.getIntLE(2);
+            int segment2Size = headerByteBuf.getIntLE(8);
+            int segment3Size = headerByteBuf.getIntLE(14);
+            int segment4Size = headerByteBuf.getIntLE(20);
+            if (segment1Size < 48) {
+                headerByteBuf.writerIndex(32 + segment1Size);
             }
 
-            parseByteBuf = headerByteBuf.slice(32, headerByteBuf.writerIndex() - 32);
-            if (parseByteBuf.readableBytes() < frameLength - 32) {
+            int[] remainingChunkSizes = getEncryptedChunkSizes(headerByteBuf);
+            int bytesNeeded = 96;
+            for (int chunkSize : remainingChunkSizes) {
+                bytesNeeded += chunkSize;
+            }
+
+            if (byteBuf.readableBytes() >= bytesNeeded) {
+                parseByteBuf = Unpooled.buffer(48);
+                parseByteBuf.writeBytes(headerByteBuf, 32, 48);
+                headerByteBuf.writerIndex(32);
+
+                int offset = 96;
+                if (remainingChunkSizes[0] > 0) {
+                    int decryptedChunkSize = segment1Size - 48;
+                    int paddingLen = 16 - (decryptedChunkSize % 16);
+                    decryptChunk(byteBuf, offset, decryptedChunkSize + paddingLen, parseByteBuf);
+                    parseByteBuf.writerIndex(parseByteBuf.writerIndex() - paddingLen);
+                    offset += remainingChunkSizes[0];
+                }
+
+                if (remainingChunkSizes[1] > 0) {
+                    if (segment3Size == 0 && segment4Size == 0) {
+                        segment2Size += 5;
+                    }
+
+                    int paddingLen = 16 - (segment2Size % 16);
+                    decryptChunk(byteBuf, offset, segment2Size + paddingLen, parseByteBuf);
+                    parseByteBuf.writerIndex(parseByteBuf.writerIndex() - paddingLen);
+                    offset += remainingChunkSizes[1];
+                }
+
+                if (remainingChunkSizes[2] > 0) {
+                    if (segment4Size == 0) {
+                        segment3Size += 5;
+                        if (segment2Size > 0) {
+                            segment3Size += 4;
+                        }
+                    }
+
+                    int paddingLen = 16 - (segment4Size % 16);
+                    decryptChunk(byteBuf, offset, segment3Size + paddingLen, parseByteBuf);
+                    parseByteBuf.writerIndex(parseByteBuf.writerIndex() - paddingLen);
+                    offset += remainingChunkSizes[2];
+                }
+
+                if (remainingChunkSizes[3] > 0) {
+                    segment4Size += 5;
+                    if (segment2Size > 0) {
+                        segment4Size += 4;
+                    }
+                    if (segment3Size > 0) {
+                        segment4Size += 4;
+                    }
+
+                    int paddingLen = 16 - (segment4Size % 16);
+                    decryptChunk(byteBuf, offset, segment4Size + paddingLen, parseByteBuf);
+                    parseByteBuf.writerIndex(parseByteBuf.writerIndex() - paddingLen);
+                    offset += remainingChunkSizes[3];
+                }
+
+                messageLength = offset;
+            } else {
                 rxCounter = originalRxCounter;
                 return null;
             }
@@ -227,7 +280,7 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
         return frame;
     }
 
-    private ByteBuf decryptChunk(ByteBuf byteBuf, int offset) throws Exception {
+    private void decryptChunk(ByteBuf byteBuf, int offset, int length, ByteBuf decryptedByteBuf) throws Exception {
         LOG.trace("*** StreamKey: " + HexFunctions.hexToString(streamKey.getEncoded()));
         LOG.trace("*** Nonce: " + HexFunctions.hexToString(rxNonceBytes));
         ByteBuf nonceByteBuf = Unpooled.wrappedBuffer(rxNonceBytes);
@@ -238,13 +291,45 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, streamKey,gcmParameterSpec);
 
-        byte[] encryptedBytes = new byte[96];
+        byte[] encryptedBytes = new byte[length + 16];
         byteBuf.getBytes(byteBuf.readerIndex() + offset, encryptedBytes);
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
 
-        ByteBuf decryptedByteBuf = Unpooled.buffer(decryptedBytes.length);
         decryptedByteBuf.writeBytes(decryptedBytes);
-        return decryptedByteBuf;
+    }
+
+    private int[] getEncryptedChunkSizes(ByteBuf headerByteBuf) {
+        int[] chunkSizes = new int[4];
+
+        int segmentSize = headerByteBuf.getIntLE(2);
+        if (segmentSize > 48) {
+            chunkSizes[0] = ((79 + segmentSize - 48) / 80) * 96;
+        } else {
+            chunkSizes[0] = 0;
+        }
+
+        segmentSize = headerByteBuf.getIntLE(8);
+        if (segmentSize > 0) {
+            chunkSizes[1] = ((79 + segmentSize) / 80) * 96;
+        } else {
+            chunkSizes[1] = 0;
+        }
+
+        segmentSize = headerByteBuf.getIntLE(14);
+        if (segmentSize > 0) {
+            chunkSizes[2] = ((79 + segmentSize) / 80) * 96;
+        } else {
+            chunkSizes[2] = 0;
+        }
+
+        segmentSize = headerByteBuf.getIntLE(20);
+        if (segmentSize > 0) {
+            chunkSizes[3] = ((79 + segmentSize) / 80) * 96;
+        } else {
+            chunkSizes[3] = 0;
+        }
+
+        return chunkSizes;
     }
 
     private void validateHeaderCrc(ByteBuf headerByteBuf) throws Exception {
@@ -332,8 +417,6 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
     protected void encode(ChannelHandlerContext ctx, CephPreParsedFrame frame, ByteBuf byteBuf) throws Exception {
         LOG.debug(">>> CephPreParsedFrameCodec.encode (" + frame.getMessageType().name() + ")");
 
-        ByteBuf frameByteBuf = Unpooled.buffer();
-
         ByteBuf headerByteBuf = Unpooled.buffer(32);
         headerByteBuf.writeByte((byte) frame.getMessageType().getTagNum());
         headerByteBuf.writeByte((byte) getSegmentCount(frame));
@@ -348,6 +431,76 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
 
         addHeaderCrc(headerByteBuf);
 
+        ByteBuf outputByteBuf;
+        if (secureMode) {
+            outputByteBuf = writeEncryptedFrame(headerByteBuf, frame);
+        } else {
+            outputByteBuf = writePlainTextFrame(headerByteBuf, frame);
+        }
+
+        if (captureBytes) {
+            int readerIndex = outputByteBuf.readerIndex();
+            sentByteBuf.writeBytes(outputByteBuf);
+            outputByteBuf.readerIndex(readerIndex);
+        }
+
+        byteBuf.writeBytes(outputByteBuf);
+    }
+
+    private int getSegmentCount(CephPreParsedFrame frame) {
+        int segmentCount = 1;
+        if (frame.getSegment2() != null) {
+            segmentCount++;
+        }
+        if (frame.getSegment3() != null) {
+            segmentCount++;
+        }
+        if (frame.getSegment4() != null) {
+            segmentCount++;
+        }
+
+        return segmentCount;
+    }
+
+    private void writeSegmentHeader(CephPreParsedFrame.Segment segment, ByteBuf headerByteBuf) {
+        if (segment != null) {
+            headerByteBuf.writeIntLE(segment.getLength());
+            headerByteBuf.writeShortLE(segment.isLE() ? 8 : 0);
+        } else {
+            headerByteBuf.writeIntLE(0);
+            headerByteBuf.writeShortLE(0);
+        }
+    }
+
+    private void addHeaderCrc(ByteBuf headerByteBuf) {
+        CephCRC32C crc32C = new CephCRC32C(0L);
+        crc32C.update(headerByteBuf.array(), headerByteBuf.arrayOffset(), 28);
+
+        byte[] crcBytes = new byte[8];
+        ByteBuf crcByteBuf = Unpooled.wrappedBuffer(crcBytes);
+        crcByteBuf.writerIndex(0);
+        crcByteBuf.writeLongLE(crc32C.getValue());
+
+        headerByteBuf.writeBytes(crcBytes, 0, 4);
+    }
+
+    private void writeSegmentCrc(ByteBuf segmentByteBuf, int length, ByteBuf frameByteBuf) {
+        byte[] bytes = new byte[length];
+        segmentByteBuf.getBytes(0, bytes);
+
+        CephCRC32C crc32C = new CephCRC32C(-1L);
+        crc32C.update(bytes);
+        long crcValue = crc32C.getValue();
+
+        byte[] crcBytes = new byte[8];
+        ByteBuf crcByteBuf = Unpooled.wrappedBuffer(crcBytes);
+        crcByteBuf.setLongLE(0, crcValue);
+
+        frameByteBuf.writeBytes(crcBytes, 0, 4);
+    }
+
+    private ByteBuf writePlainTextFrame(ByteBuf headerByteBuf, CephPreParsedFrame frame) {
+        ByteBuf frameByteBuf = Unpooled.buffer();
         frameByteBuf.writeBytes(headerByteBuf, 0, 32);
 
         if (frame.getSegment1() != null) {
@@ -414,101 +567,106 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
             }
         }
 
-        int originalIndex = frameByteBuf.readerIndex();
         byte [] sentBytes = new byte[frameByteBuf.writerIndex()];
         frameByteBuf.getBytes(0, sentBytes);
-        sentByteBuf.writeBytes(sentBytes);
 
-        if (secureMode) {
-            writeEncryptedFrame(frameByteBuf, byteBuf);
+
+        byte[] x = new byte[frameByteBuf.writerIndex()];
+        frameByteBuf.getBytes(0, x);
+
+        return frameByteBuf;
+    }
+
+    private ByteBuf writeEncryptedFrame(ByteBuf headerByteBuf, CephPreParsedFrame frame) throws Exception {
+        ByteBuf outputByteBuf = Unpooled.buffer();
+        ByteBuf chunkByteBuf = Unpooled.buffer(80);
+
+        int segment1Length = frame.getSegment1().getSegmentByteBuf().writerIndex();
+        int segment2Length = frame.getSegment2() == null ? 0 : frame.getSegment2().getSegmentByteBuf().writerIndex();
+        int segment3Length = frame.getSegment3() == null ? 0 : frame.getSegment3().getSegmentByteBuf().writerIndex();
+        int segment4Length = frame.getSegment4() == null ? 0 : frame.getSegment4().getSegmentByteBuf().writerIndex();
+
+        chunkByteBuf.writeBytes(headerByteBuf);
+        if (segment1Length > 48) {
+            chunkByteBuf.writeBytes(frame.getSegment1().getSegmentByteBuf(), 0, 48);
+            outputByteBuf.writeBytes(encryptChunk(chunkByteBuf));
+
+            int unencyptedSize = segment1Length - 48;
+            int paddingLen = 80 - (unencyptedSize % 80);
+            chunkByteBuf = Unpooled.buffer(unencyptedSize + paddingLen);
+            chunkByteBuf.writeBytes(frame.getSegment1().getSegmentByteBuf(), 48, unencyptedSize);
+            chunkByteBuf.writerIndex(unencyptedSize + paddingLen);
+            outputByteBuf.writeBytes(encryptChunk(chunkByteBuf));
         } else {
-            byte[] x = new byte[frameByteBuf.writerIndex()];
-            frameByteBuf.getBytes(0, x);
-            byteBuf.writeBytes(frameByteBuf, 0, frameByteBuf.writerIndex());
-        }
-    }
-
-    private int getSegmentCount(CephPreParsedFrame frame) {
-        int segmentCount = 1;
-        if (frame.getSegment2() != null) {
-            segmentCount++;
-        }
-        if (frame.getSegment3() != null) {
-            segmentCount++;
-        }
-        if (frame.getSegment4() != null) {
-            segmentCount++;
+            chunkByteBuf.writeBytes(frame.getSegment1().getSegmentByteBuf());
+            chunkByteBuf.writerIndex(80);
+            outputByteBuf.writeBytes(encryptChunk(chunkByteBuf));
         }
 
-        return segmentCount;
-    }
-
-    private void writeSegmentHeader(CephPreParsedFrame.Segment segment, ByteBuf headerByteBuf) {
-        if (segment != null) {
-            headerByteBuf.writeIntLE(segment.getLength());
-            headerByteBuf.writeShortLE(segment.isLE() ? 8 : 0);
-        } else {
-            headerByteBuf.writeIntLE(0);
-            headerByteBuf.writeShortLE(0);
-        }
-    }
-
-    private void addHeaderCrc(ByteBuf headerByteBuf) {
-        CephCRC32C crc32C = new CephCRC32C(0L);
-        crc32C.update(headerByteBuf.array(), headerByteBuf.arrayOffset(), 28);
-
-        byte[] crcBytes = new byte[8];
-        ByteBuf crcByteBuf = Unpooled.wrappedBuffer(crcBytes);
-        crcByteBuf.writerIndex(0);
-        crcByteBuf.writeLongLE(crc32C.getValue());
-
-        headerByteBuf.writeBytes(crcBytes, 0, 4);
-    }
-
-    private void writeSegmentCrc(ByteBuf segmentByteBuf, int length, ByteBuf frameByteBuf) {
-        byte[] bytes = new byte[length];
-        segmentByteBuf.getBytes(0, bytes);
-
-        CephCRC32C crc32C = new CephCRC32C(-1L);
-        crc32C.update(bytes);
-        long crcValue = crc32C.getValue();
-
-        byte[] crcBytes = new byte[8];
-        ByteBuf crcByteBuf = Unpooled.wrappedBuffer(crcBytes);
-        crcByteBuf.setLongLE(0, crcValue);
-
-        frameByteBuf.writeBytes(crcBytes, 0, 4);
-    }
-
-    private void writeEncryptedFrame(ByteBuf frameByteBuf, ByteBuf byteBuf) throws Exception {
-        int offset = 0;
-        while (offset < frameByteBuf.writerIndex()) {
-            byte[] bytesToEncrypt = new byte[80];
-            int byteCount;
-            if (frameByteBuf.writerIndex() - offset < 80) {
-                byteCount = frameByteBuf.writerIndex() - offset;
-            } else {
-                byteCount = 80;
+        chunkByteBuf = Unpooled.buffer();
+        if (segment2Length > 0) {
+            int paddingLen = 16 - (segment2Length % 16);
+            chunkByteBuf.writeBytes(frame.getSegment2().getSegmentByteBuf());
+            if (segment3Length > 0 || segment4Length > 0) {
+                chunkByteBuf.writeZero(paddingLen);
             }
-
-            LOG.trace("*** StreamKey: " + HexFunctions.hexToString(streamKey.getEncoded()));
-            LOG.trace("*** Nonce: " + HexFunctions.hexToString(txNonceBytes));
-
-            frameByteBuf.readBytes(bytesToEncrypt, 0, byteCount);
-            offset += byteCount;
-
-            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, txNonceBytes);
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.ENCRYPT_MODE, streamKey, gcmParameterSpec);
-            byte[] encryptedBytes = cipher.doFinal(bytesToEncrypt);
-            byteBuf.writeBytes(encryptedBytes);
-
-            LOG.trace("*** Unencrypted Data:\n" + HexFunctions.hexToString(bytesToEncrypt));
-            LOG.trace("*** Encrypted Data:\n" + HexFunctions.hexToString(encryptedBytes));
-
-            txCounter++;
-            ByteBuf txNonceByteBuf = Unpooled.wrappedBuffer(txNonceBytes);
-            txNonceByteBuf.setLongLE(4, txCounter);
         }
+
+        if (segment3Length > 0) {
+            int paddingLen = 16 - (segment3Length % 16);
+            chunkByteBuf.writeBytes(frame.getSegment3().getSegmentByteBuf());
+            if (segment4Length > 0) {
+                chunkByteBuf.writeZero(paddingLen);
+            }
+        }
+
+        if (segment4Length > 0) {
+            chunkByteBuf.writeBytes(frame.getSegment4().getSegmentByteBuf());
+        }
+
+        if (segment2Length > 0 && segment3Length > 0 && segment4Length > 0) {
+            chunkByteBuf.writeZero(1); // Flags
+        }
+        if (segment2Length > 0) {
+            writeSegmentCrc(frame.getSegment2().getSegmentByteBuf(), segment2Length, chunkByteBuf);
+        }
+        if (segment3Length > 0) {
+            writeSegmentCrc(frame.getSegment3().getSegmentByteBuf(), segment3Length, chunkByteBuf);
+        }
+        if (segment4Length > 0) {
+            writeSegmentCrc(frame.getSegment4().getSegmentByteBuf(), segment4Length, chunkByteBuf);
+        }
+
+        if (chunkByteBuf.writerIndex() % 16 > 0) {
+            chunkByteBuf.writeZero(16 - (chunkByteBuf.writerIndex() % 16));
+        }
+
+        if (chunkByteBuf.writerIndex() > 0) {
+            outputByteBuf.writeBytes(encryptChunk(chunkByteBuf));
+        }
+
+        return outputByteBuf;
+    }
+
+    private byte[] encryptChunk(ByteBuf byteBuf) throws Exception {
+        LOG.trace("*** StreamKey: " + HexFunctions.hexToString(streamKey.getEncoded()));
+        LOG.trace("*** Nonce: " + HexFunctions.hexToString(txNonceBytes));
+
+        byte[] bytesToEncrypt = new byte[byteBuf.writerIndex()];
+        byteBuf.readBytes(bytesToEncrypt);
+
+        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, txNonceBytes);
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, streamKey, gcmParameterSpec);
+        byte[] encryptedBytes = cipher.doFinal(bytesToEncrypt);
+
+        LOG.trace("*** Unencrypted Data:\n" + HexFunctions.hexToString(bytesToEncrypt));
+        LOG.trace("*** Encrypted Data:\n" + HexFunctions.hexToString(encryptedBytes));
+
+        txCounter++;
+        ByteBuf txNonceByteBuf = Unpooled.wrappedBuffer(txNonceBytes);
+        txNonceByteBuf.setLongLE(4, txCounter);
+
+        return encryptedBytes;
     }
 }
