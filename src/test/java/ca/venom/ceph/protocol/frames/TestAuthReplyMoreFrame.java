@@ -6,20 +6,20 @@ import ca.venom.ceph.protocol.types.auth.AuthReplyMorePayload;
 import ca.venom.ceph.protocol.types.auth.CephXServerChallenge;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class TestAuthReplyMoreFrame {
-    private static final String MESSAGE1_PATH = "authreplymore1.bin";
+    private static final String MESSAGE1_PATH = "frames/authreplymore1.bin";
     private byte[] message1Bytes;
     private CephProtocolContext ctx;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         InputStream inputStream = TestAuthReplyMoreFrame.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

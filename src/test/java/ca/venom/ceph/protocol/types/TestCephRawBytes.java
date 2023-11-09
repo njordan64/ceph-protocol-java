@@ -5,57 +5,49 @@ import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestInt16 {
+public class TestCephRawBytes {
     @Test
     public void testEncodeLE() {
-        Int16 val = new Int16(1);
+        CephRawBytes val = new CephRawBytes(new byte[] {1, 2});
         byte[] encoded = new byte[2];
         ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
         encodedByteBuf.writerIndex(0);
 
         val.encode(encodedByteBuf, true);
-        assertArrayEquals(new byte[] {1, 0}, encoded);
+        assertArrayEquals(new byte[] {1, 2},  encoded);
     }
 
     @Test
     public void testEncodeBE() {
-        Int16 val = new Int16(1);
+        CephRawBytes val = new CephRawBytes(new byte[] {1, 2});
         byte[] encoded = new byte[2];
         ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
         encodedByteBuf.writerIndex(0);
 
         val.encode(encodedByteBuf, false);
-        assertArrayEquals(new byte[] {0, 1}, encoded);
+        assertArrayEquals(new byte[] {1, 2},  encoded);
     }
 
     @Test
     public void testDecodeLE() {
-        byte[] encoded = new byte[] {1, 0};
+        byte[] encoded = new byte[] {1, 2};
         ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
 
-        Int16 val = new Int16();
+        CephRawBytes val = new CephRawBytes(2);
         val.decode(encodedByteBuf, true);
 
-        assertEquals((short) 1, val.getValue());
+        assertArrayEquals(new byte[] {1, 2}, val.getValue());
     }
 
     @Test
     public void testDecodeBE() {
-        byte[] encoded = new byte[] {0, 1};
+        byte[] encoded = new byte[] {1, 2};
         ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
 
-        Int16 val = new Int16();
+        CephRawBytes val = new CephRawBytes(2);
         val.decode(encodedByteBuf, false);
 
-        assertEquals((short) 1, val.getValue());
-    }
-
-    @Test
-    public void testLargeValue() {
-        Int16 val = new Int16(Short.MAX_VALUE * 2 - 1);
-        assertEquals((short)-3, val.getValue());
-        assertEquals(Short.MAX_VALUE * 2 - 1, val.getValueUnsigned());
+        assertArrayEquals(new byte[] {1, 2}, val.getValue());
     }
 }

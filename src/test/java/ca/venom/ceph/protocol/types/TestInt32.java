@@ -2,59 +2,60 @@ package ca.venom.ceph.protocol.types;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestInt32 {
     @Test
-    public void testParseValue0() {
-        valueTest((byte) 0, (byte) 0, (byte) 0, (byte) 0, 0L);
+    public void testEncodeLE() {
+        Int32 val = new Int32(1);
+        byte[] encoded = new byte[4];
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
+        encodedByteBuf.writerIndex(0);
+
+        val.encode(encodedByteBuf, true);
+        assertArrayEquals(new byte[] {1, 0, 0, 0}, encoded);
     }
 
     @Test
-    public void testParseValue1() {
-        valueTest((byte) 0, (byte) 0, (byte) 0, (byte) 129, 2164260864L);
+    public void testEncodeBE() {
+        Int32 val = new Int32(1);
+        byte[] encoded = new byte[4];
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
+        encodedByteBuf.writerIndex(0);
+
+        val.encode(encodedByteBuf, false);
+        assertArrayEquals(new byte[] {0, 0, 0, 1}, encoded);
     }
 
     @Test
-    public void testParseValue2() {
-        valueTest((byte) 255, (byte) 255, (byte) 255, (byte) 255, 4294967295L);
-    }
+    public void testDecodeLE() {
+        byte[] encoded = new byte[] {1, 0, 0, 0};
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
 
-    private void valueTest(byte byte1, byte byte2, byte byte3, byte byte4, long value) {
-        ByteBuf byteBuf = Unpooled.wrappedBuffer(new byte[] {byte1, byte2, byte3, byte4});
-        Int32 int32 = new Int32();
-        int32.decode(byteBuf, true);
-        assertEquals(value, int32.getValueUnsigned());
-    }
+        Int32 val = new Int32();
+        val.decode(encodedByteBuf, true);
 
-    @Test
-    public void testEncode0() {
-        encodeTest(0L, (byte) 0, (byte) 0, (byte) 0, (byte) 0);
+        assertEquals((short) 1, val.getValue());
     }
 
     @Test
-    public void testEncode1() {
-        encodeTest(2164260864L, (byte) 0, (byte) 0, (byte) 0, (byte) 129);
+    public void testDecodeBE() {
+        byte[] encoded = new byte[] {0, 0, 0, 1};
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
+
+        Int32 val = new Int32();
+        val.decode(encodedByteBuf, false);
+
+        assertEquals((short) 1, val.getValue());
     }
 
     @Test
-    public void testEncode2() {
-        encodeTest(4294967295L, (byte) 255, (byte) 255, (byte) 255, (byte) 255);
-    }
-
-    private void encodeTest(long value, byte byte1, byte byte2, byte byte3, byte byte4) {
-        Int32 int32 = new Int32(value);
-
-        ByteBuf byteBuf = Unpooled.buffer(10);
-        int32.encode(byteBuf, true);
-
-        assertEquals(4, byteBuf.writerIndex());
-
-        assertEquals(byte1, byteBuf.readByte());
-        assertEquals(byte2, byteBuf.readByte());
-        assertEquals(byte3, byteBuf.readByte());
-        assertEquals(byte4, byteBuf.readByte());
+    public void testLargeValue() {
+        Int32 val = new Int32(((long) Integer.MAX_VALUE) * 2 - 1);
+        assertEquals(-3, val.getValue());
+        assertEquals(((long) Integer.MAX_VALUE) * 2 - 1, val.getValueUnsigned());
     }
 }

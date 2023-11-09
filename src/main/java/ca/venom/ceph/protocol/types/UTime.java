@@ -32,6 +32,7 @@ public class UTime implements CephDataType {
     public void encode(ByteBuf byteBuf, boolean le) {
         byte[] bytes = new byte[8];
         ByteBuf conversionByteBuf = Unpooled.wrappedBuffer(bytes);
+        conversionByteBuf.writerIndex(0);
 
         if (le) {
             conversionByteBuf.writeLongLE(time);

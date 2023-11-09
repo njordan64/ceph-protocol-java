@@ -2,29 +2,23 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.NodeType;
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.HexFunctions;
-import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.Addr;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import javax.sound.midi.SysexMessage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestHelloFrame {
-    private static final String MESSAGE1_PATH = "hello1.bin";
+    private static final String MESSAGE1_PATH = "frames/hello1.bin";
     private byte[] message1Bytes;
     private CephProtocolContext ctx;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         InputStream inputStream = TestHelloFrame.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
         message1Bytes = inputStream.readAllBytes();

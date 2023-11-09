@@ -2,55 +2,60 @@ package ca.venom.ceph.protocol.types;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestInt8 {
     @Test
-    public void testParseValue0() {
-        valueTest(0);
+    public void testEncodeLE() {
+        Int8 val = new Int8(1);
+        byte[] encoded = new byte[1];
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
+        encodedByteBuf.writerIndex(0);
+
+        val.encode(encodedByteBuf, true);
+        assertArrayEquals(new byte[] {1}, encoded);
     }
 
     @Test
-    public void testParseValue129() {
-        valueTest(129);
+    public void testEncodeBE() {
+        Int8 val = new Int8(1);
+        byte[] encoded = new byte[1];
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
+        encodedByteBuf.writerIndex(0);
+
+        val.encode(encodedByteBuf, false);
+        assertArrayEquals(new byte[] {1}, encoded);
     }
 
     @Test
-    public void testParseValue255() {
-        valueTest(255);
-    }
+    public void testDecodeLE() {
+        byte[] encoded = new byte[] {1};
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
 
-    private void valueTest(int value) {
-        ByteBuf byteBuf = Unpooled.wrappedBuffer(new byte[] {(byte) value});
-        Int8 int8 = new Int8();
-        int8.decode(byteBuf, true);
-        assertEquals(value, int8.getValueUnsigned());
-    }
+        Int8 val = new Int8();
+        val.decode(encodedByteBuf, true);
 
-    @Test
-    public void testEncode0() {
-        encodeTest(0);
+        assertEquals((byte) 1, val.getValue());
     }
 
     @Test
-    public void testEncode129() {
-        encodeTest(129);
+    public void testDecodeBE() {
+        byte[] encoded = new byte[] {1};
+        ByteBuf encodedByteBuf = Unpooled.wrappedBuffer(encoded);
+
+        Int8 val = new Int8();
+        val.decode(encodedByteBuf, false);
+
+        assertEquals((byte) 1, val.getValue());
     }
 
     @Test
-    public void testEncode255() {
-        encodeTest(255);
-    }
-
-    private void encodeTest(int value) {
-        Int8 uint8 = new Int8(value);
-
-        ByteBuf byteBuf = Unpooled.buffer(10);
-        uint8.encode(byteBuf, true);
-
-        assertEquals(1, byteBuf.writerIndex());
-        assertEquals((byte) value, byteBuf.readByte());
+    public void testLargeValue() {
+        Int8 val = new Int8((byte) 200);
+        assertEquals((byte)-56, val.getValue());
+        assertEquals(200, val.getValueUnsigned());
     }
 }

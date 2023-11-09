@@ -12,21 +12,21 @@ import ca.venom.ceph.protocol.types.auth.CephXRequestHeader;
 import ca.venom.ceph.protocol.types.auth.CephXTicketBlob;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestAuthRequestMoreFrame {
-    private static final String MESSAGE1_PATH = "authrequestmore1.bin";
+    private static final String MESSAGE1_PATH = "frames/authrequestmore1.bin";
     private byte[] message1Bytes;
     private CephProtocolContext ctx;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         InputStream inputStream = TestAuthRequestMoreFrame.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

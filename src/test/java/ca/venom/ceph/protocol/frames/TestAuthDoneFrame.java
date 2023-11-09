@@ -13,8 +13,8 @@ import ca.venom.ceph.protocol.types.auth.CephXResponseHeader;
 import ca.venom.ceph.protocol.types.auth.CephXTicketInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -23,12 +23,12 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class TestAuthDoneFrame {
-    private static final String MESSAGE1_PATH = "authdone1.bin";
+    private static final String MESSAGE1_PATH = "frames/authdone1.bin";
     private static final byte[] SERVICE_TICKET = Base64.getDecoder().decode("91f6n78UK8Lv9tZ0tY6EdZ/YlITihBSgI6SnVOhGvwUNDTWKiSF4AlNv88v7sy93");
     private static final byte[] TICKET = Base64.getDecoder().decode("AQYAAAAAAAAAYAAAAL4rUVLyUZ6U8uLKn2q2KX1BA2ClpaT4dU57vFvBokLJw8tEHY3RpNAN989DhBRrJsctXotAfx9FjlNRddQcpg+B/FOtWmMzPPzJ2ucidvQKtirpr2ovH/IMcLRHnMUEdQ==");
     private static final byte[] ENCRYPTED_SECRET = Base64.getDecoder().decode("UAAAAIsAjSn+TV0HSZPTB58SJ09igR/NHzbUmrNPYuzOshS/FbTTnjaPEOv+L+5kqYn1OEp8DvxFt3St0kq7leB0X1w2jpyupNNY2CnOnTXinu9Y");
@@ -36,7 +36,7 @@ public class TestAuthDoneFrame {
     private byte[] message1Bytes;
     private CephProtocolContext ctx;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         InputStream inputStream = TestAuthDoneFrame.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -58,7 +58,7 @@ public class TestAuthDoneFrame {
     }
 
     @Test
-    public void testDecodeMessage1() throws Exception {
+    public void testDecodeMessage1() {
         AuthDoneFrame parsedMessage = new AuthDoneFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);

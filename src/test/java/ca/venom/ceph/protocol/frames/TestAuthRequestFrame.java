@@ -2,7 +2,6 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.AuthMode;
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.MessageType;
 import ca.venom.ceph.protocol.types.CephString;
 import ca.venom.ceph.protocol.types.Int32;
 import ca.venom.ceph.protocol.types.Int64;
@@ -10,24 +9,23 @@ import ca.venom.ceph.protocol.types.auth.AuthRequestPayload;
 import ca.venom.ceph.protocol.types.auth.EntityName;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestAuthRequestFrame {
-    private static final String MESSAGE1_PATH = "authrequest1.bin";
+    private static final String MESSAGE1_PATH = "frames/authrequest1.bin";
     private byte[] message1Bytes;
     private CephProtocolContext ctx;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         InputStream inputStream = TestAuthRequestFrame.class.getClassLoader().getResourceAsStream(MESSAGE1_PATH);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -49,7 +47,7 @@ public class TestAuthRequestFrame {
     }
 
     @Test
-    public void testDecodeMessage1() throws Exception {
+    public void testDecodeMessage1() {
         AuthRequestFrame parsedMessage = new AuthRequestFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
