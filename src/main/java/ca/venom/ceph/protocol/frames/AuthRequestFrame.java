@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.CephList;
 import ca.venom.ceph.protocol.types.Int32;
 import ca.venom.ceph.protocol.types.auth.AuthRequestPayload;
@@ -58,7 +58,7 @@ public class AuthRequestFrame extends AuthFrameBase {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.AUTH_REQUEST;
+    public ControlFrameType getTag() {
+        return ControlFrameType.AUTH_REQUEST;
     }
 }

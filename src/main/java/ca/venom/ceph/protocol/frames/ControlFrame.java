@@ -1,10 +1,10 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import io.netty.buffer.ByteBuf;
 
 public abstract class ControlFrame {
-    public abstract MessageType getTag();
+    public abstract ControlFrameType getTag();
 
     public abstract void encodeSegment1(ByteBuf byteBuf, boolean le);
 

@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.CephBoolean;
 import ca.venom.ceph.protocol.types.CephList;
 import ca.venom.ceph.protocol.types.Int32;
@@ -44,7 +44,7 @@ public class CompressionRequestFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.COMPRESSION_REQUEST;
+    public ControlFrameType getTag() {
+        return ControlFrameType.COMPRESSION_REQUEST;
     }
 }

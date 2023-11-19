@@ -1,9 +1,8 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.NodeType;
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.Addr;
-import ca.venom.ceph.protocol.types.CephBoolean;
 import ca.venom.ceph.protocol.types.CephEnum;
 import ca.venom.ceph.protocol.types.CephRawByte;
 import io.netty.buffer.ByteBuf;
@@ -46,7 +45,7 @@ public class HelloFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.HELLO;
+    public ControlFrameType getTag() {
+        return ControlFrameType.HELLO;
     }
 }

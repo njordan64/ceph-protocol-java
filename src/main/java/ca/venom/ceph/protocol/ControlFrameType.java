@@ -2,7 +2,7 @@ package ca.venom.ceph.protocol;
 
 import ca.venom.ceph.protocol.frames.*;
 
-public enum MessageType {
+public enum ControlFrameType {
     HELLO(1, HelloFrame.class),
     AUTH_REQUEST(2, AuthRequestFrame.class),
     AUTH_BAD_METHOD(3, AuthBadMethodFrame.class),
@@ -19,7 +19,7 @@ public enum MessageType {
     SESSION_RETRY_GLOBAL(14, RetryGlobalFrame.class),
     SESSION_RECONNECT_OK(15, ReconnectOkFrame.class),
     WAIT(16, WaitFrame.class),
-    MESSAGE(17, null),
+    MESSAGE(17, MessageFrame.class),
     KEEPALIVE2(18, KeepAliveFrame.class),
     KEEPALIVE2_ACK(19, KeepAliveAck.class),
     ACK(20, AckFrame.class),
@@ -29,15 +29,15 @@ public enum MessageType {
     private final int tagNum;
     private final Class<? extends ControlFrame> clazz;
 
-    private MessageType(int tagNum, Class<? extends ControlFrame> clazz) {
+    private ControlFrameType(int tagNum, Class<? extends ControlFrame> clazz) {
         this.tagNum = tagNum;
         this.clazz = clazz;
     }
 
-    public static MessageType getFromTagNum(int tagNum) {
-        for (MessageType messageType : MessageType.values()) {
-            if (messageType.tagNum == tagNum) {
-                return messageType;
+    public static ControlFrameType getFromTagNum(int tagNum) {
+        for (ControlFrameType controlFrameType : ControlFrameType.values()) {
+            if (controlFrameType.tagNum == tagNum) {
+                return controlFrameType;
             }
         }
 

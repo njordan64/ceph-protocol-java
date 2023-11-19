@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.*;
 import io.netty.buffer.ByteBuf;
 
@@ -124,7 +124,7 @@ public class ClientIdentFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.CLIENT_IDENT;
+    public ControlFrameType getTag() {
+        return ControlFrameType.CLIENT_IDENT;
     }
 }

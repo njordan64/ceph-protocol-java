@@ -1,7 +1,7 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.CephBoolean;
 import ca.venom.ceph.protocol.types.CephBytes;
 import ca.venom.ceph.protocol.types.CephList;
@@ -64,7 +64,7 @@ public class TestAuthDoneFrame {
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true);
 
-        assertEquals(MessageType.AUTH_DONE, parsedMessage.getTag());
+        assertEquals(ControlFrameType.AUTH_DONE, parsedMessage.getTag());
         assertEquals(new Int64(new BigInteger("154220")), parsedMessage.getGlobalId());
         assertEquals(new Int32(2), parsedMessage.getConnectionMode());
 

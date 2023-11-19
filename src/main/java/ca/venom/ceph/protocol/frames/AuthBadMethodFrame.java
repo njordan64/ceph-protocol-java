@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.CephList;
 import ca.venom.ceph.protocol.types.Int32;
 import io.netty.buffer.ByteBuf;
@@ -69,7 +69,7 @@ public class AuthBadMethodFrame extends AuthFrameBase {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.AUTH_BAD_METHOD;
+    public ControlFrameType getTag() {
+        return ControlFrameType.AUTH_BAD_METHOD;
     }
 }

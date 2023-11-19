@@ -3,27 +3,27 @@ package ca.venom.ceph.protocol.types;
 import io.netty.buffer.ByteBuf;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class CephList<T extends CephDataType> implements CephDataType {
-    private List<T> values;
+public class CephSet<T extends CephDataType> implements CephDataType {
+    private Set<T> values;
     private final Class<T> clazz;
 
-    public CephList(Class<T> clazz) {
+    public CephSet(Class<T> clazz) {
         this.clazz = clazz;
     }
 
-    public CephList(List<T> values, Class<T> clazz) {
+    public CephSet(Set<T> values, Class<T> clazz) {
         this.values = values;
         this.clazz = clazz;
     }
 
-    public List<T> getValues() {
+    public Set<T> getValues() {
         return values;
     }
 
-    public void setValues(List<T> values) {
+    public void setValues(Set<T> values) {
         this.values = values;
     }
 
@@ -58,7 +58,7 @@ public class CephList<T extends CephDataType> implements CephDataType {
         }
 
         try {
-            values = new ArrayList<>();
+            values = new HashSet<>();
             Constructor<T> constructor = clazz.getConstructor();
             for (int i = 0; i < count; i++) {
                 T value = constructor.newInstance();
@@ -67,7 +67,7 @@ public class CephList<T extends CephDataType> implements CephDataType {
                 values.add(value);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //
         }
     }
 }

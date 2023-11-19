@@ -2,7 +2,7 @@ package ca.venom.ceph.protocol.codecs;
 
 import ca.venom.ceph.CephCRC32C;
 import ca.venom.ceph.protocol.HexFunctions;
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -92,7 +92,7 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
                 break;
             }
 
-            if (frame.getMessageType() == MessageType.AUTH_DONE) {
+            if (frame.getMessageType() == ControlFrameType.AUTH_DONE) {
                 ctx.channel().config().setAutoRead(false);
                 break;
             }
@@ -203,7 +203,7 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
         int lateCrcPosition = getLateCrcOffset(headerByteBuf);
 
         CephPreParsedFrame frame = new CephPreParsedFrame();
-        frame.setMessageType(MessageType.getFromTagNum(headerByteBuf.getByte(0)));
+        frame.setMessageType(ControlFrameType.getFromTagNum(headerByteBuf.getByte(0)));
 
         byte flags = headerByteBuf.getByte(26);
         frame.setEarlyDataCompressed(flags == 1);

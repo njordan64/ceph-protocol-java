@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import io.netty.buffer.ByteBuf;
 
 public class WaitFrame extends ControlFrame {
@@ -13,7 +13,7 @@ public class WaitFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.WAIT;
+    public ControlFrameType getTag() {
+        return ControlFrameType.WAIT;
     }
 }

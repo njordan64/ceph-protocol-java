@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.Int64;
 import io.netty.buffer.ByteBuf;
 
@@ -27,7 +27,7 @@ public class IdentMissingFeaturesFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.IDENT_MISSING_FEATURES;
+    public ControlFrameType getTag() {
+        return ControlFrameType.IDENT_MISSING_FEATURES;
     }
 }

@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.codecs;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import io.netty.buffer.ByteBuf;
 
 public class CephPreParsedFrame {
@@ -29,7 +29,7 @@ public class CephPreParsedFrame {
     }
 
     private ByteBuf headerByteBuf;
-    private MessageType messageType;
+    private ControlFrameType controlFrameType;
     private boolean earlyDataCompressed;
     private Segment segment1;
     private Segment segment2;
@@ -45,12 +45,12 @@ public class CephPreParsedFrame {
         this.headerByteBuf = headerByteBuf;
     }
 
-    public MessageType getMessageType() {
-        return messageType;
+    public ControlFrameType getMessageType() {
+        return controlFrameType;
     }
 
-    public void setMessageType(MessageType messageType) {
-        this.messageType = messageType;
+    public void setMessageType(ControlFrameType controlFrameType) {
+        this.controlFrameType = controlFrameType;
     }
 
     public boolean isEarlyDataCompressed() {

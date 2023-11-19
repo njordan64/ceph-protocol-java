@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.UTime;
 import io.netty.buffer.ByteBuf;
 
@@ -27,7 +27,7 @@ public class KeepAliveFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.KEEPALIVE2;
+    public ControlFrameType getTag() {
+        return ControlFrameType.KEEPALIVE2;
     }
 }

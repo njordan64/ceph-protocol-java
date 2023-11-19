@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.Addr;
 import ca.venom.ceph.protocol.types.CephList;
 import ca.venom.ceph.protocol.types.Int64;
@@ -96,7 +96,7 @@ public class ReconnectFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.SESSION_RECONNECT;
+    public ControlFrameType getTag() {
+        return ControlFrameType.SESSION_RECONNECT;
     }
 }

@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.CephBoolean;
 import io.netty.buffer.ByteBuf;
 
@@ -27,7 +27,7 @@ public class ResetFrame extends ControlFrame {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.SESSION_RESET;
+    public ControlFrameType getTag() {
+        return ControlFrameType.SESSION_RESET;
     }
 }

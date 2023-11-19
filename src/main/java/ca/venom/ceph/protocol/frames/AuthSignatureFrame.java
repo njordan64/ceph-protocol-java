@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.CephRawBytes;
 import io.netty.buffer.ByteBuf;
 
@@ -27,7 +27,7 @@ public class AuthSignatureFrame extends AuthFrameBase {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.AUTH_SIGNATURE;
+    public ControlFrameType getTag() {
+        return ControlFrameType.AUTH_SIGNATURE;
     }
 }

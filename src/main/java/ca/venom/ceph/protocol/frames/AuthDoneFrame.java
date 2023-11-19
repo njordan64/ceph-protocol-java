@@ -1,6 +1,6 @@
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.MessageType;
+import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.types.Int32;
 import ca.venom.ceph.protocol.types.Int64;
 import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
@@ -55,7 +55,7 @@ public class AuthDoneFrame extends AuthFrameBase {
     }
 
     @Override
-    public MessageType getTag() {
-        return MessageType.AUTH_DONE;
+    public ControlFrameType getTag() {
+        return ControlFrameType.AUTH_DONE;
     }
 }
