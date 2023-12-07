@@ -1,71 +1,54 @@
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
-import ca.venom.ceph.protocol.types.CephList;
-import ca.venom.ceph.protocol.types.Int32;
+import ca.venom.ceph.protocol.DecodingException;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.EncodingException;
 import io.netty.buffer.ByteBuf;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 public class AuthBadMethodFrame extends AuthFrameBase {
-    private Int32 method;
-    private Int32 result;
-    private CephList<Int32> allowedMethods;
-    private CephList<Int32> allowedModes;
+    @CephType
+    public static class Segment1 {
+        @Getter
+        @Setter
+        @CephField
+        private int method;
 
-    public Int32 getMethod() {
-        return method;
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        private int result;
+
+        @Getter
+        @Setter
+        @CephField(order = 3)
+        private List<Integer> allowedMethods;
+
+        @Getter
+        @Setter
+        @CephField(order = 4)
+        private List<Integer> allowedModes;
     }
 
-    public void setMethod(Int32 method) {
-        this.method = method;
-    }
+    @Getter
+    @Setter
+    private Segment1 segment1;
 
-    public int getResult() {
-        return result.getValue();
-    }
-
-    public void setResult(int result) {
-        this.result = new Int32(result);
-    }
-
-    public List<Int32> getAllowedMethods() {
-        return allowedMethods.getValues();
-    }
-
-    public void setAllowedMethods(List<Int32> allowedMethods) {
-        this.allowedMethods = new CephList<>(allowedMethods, Int32.class);
-    }
-
-    public List<Int32> getAllowedModes() {
-        return allowedModes.getValues();
-    }
-
-    public void setAllowedModes(List<Int32> allowedModes) {
-        this.allowedModes = new CephList<>(allowedModes, Int32.class);
+    @Override
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+        CephEncoder.encode(segment1, byteBuf, le);
     }
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
-        method.encode(byteBuf, le);
-        result.encode(byteBuf, le);
-        allowedMethods.encode(byteBuf, le);
-        allowedModes.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
-        method = new Int32();
-        method.decode(byteBuf, le);
-
-        result = new Int32();
-        result.decode(byteBuf, le);
-
-        allowedMethods = new CephList<>(Int32.class);
-        allowedMethods.decode(byteBuf, le);
-
-        allowedModes = new CephList<>(Int32.class);
-        allowedModes.decode(byteBuf, le);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
+        segment1 = CephDecoder.decode(byteBuf, le, Segment1.class);
     }
 
     @Override

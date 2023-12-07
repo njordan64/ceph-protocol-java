@@ -1,11 +1,7 @@
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.types.CephBytes;
-import ca.venom.ceph.protocol.types.CephRawBytes;
-import ca.venom.ceph.protocol.types.Int16;
-import ca.venom.ceph.protocol.types.Int32;
-import ca.venom.ceph.protocol.types.Int64;
 import ca.venom.ceph.protocol.types.auth.AuthRequestMorePayload;
 import ca.venom.ceph.protocol.types.auth.CephXAuthenticate;
 import ca.venom.ceph.protocol.types.auth.CephXRequestHeader;
@@ -54,23 +50,23 @@ public class TestAuthRequestMoreFrame {
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true);
 
-        assertEquals(0x100, parsedMessage.getPayload().getRequestHeader().getRequestType().getValue());
+        assertEquals(0x100, parsedMessage.getPayload().getRequestHeader().getRequestType());
         byte[] clientChallenge = new byte[] {
                 (byte) 0x27, (byte) 0x44, (byte) 0x58, (byte) 0xbc,
                 (byte) 0xa0, (byte) 0x12, (byte) 0x94, (byte) 0xae
         };
-        assertArrayEquals(clientChallenge, parsedMessage.getPayload().getAuthenticate().getClientChallenge().getValue());
+        assertArrayEquals(clientChallenge, parsedMessage.getPayload().getAuthenticate().getClientChallenge());
         byte[] keyBytes = new byte[] {
                 (byte) 0x03, (byte) 0x23, (byte) 0xeb, (byte) 0xc7,
                 (byte) 0x3a, (byte) 0xca, (byte) 0xe9, (byte) 0x17
         };
-        assertArrayEquals(keyBytes, parsedMessage.getPayload().getAuthenticate().getKey().getValue());
-        assertEquals(0L, parsedMessage.getPayload().getAuthenticate().getOldTicket().getSecretId().getValue());
-        assertArrayEquals(new byte[0], parsedMessage.getPayload().getAuthenticate().getOldTicket().getBlob().getValue());
-        assertEquals(32L, parsedMessage.getPayload().getAuthenticate().getOtherKeys().getValue());
+        assertArrayEquals(keyBytes, parsedMessage.getPayload().getAuthenticate().getKey());
+        assertEquals(0L, parsedMessage.getPayload().getAuthenticate().getOldTicket().getSecretId());
+        assertArrayEquals(new byte[0], parsedMessage.getPayload().getAuthenticate().getOldTicket().getBlob());
+        assertEquals(32L, parsedMessage.getPayload().getAuthenticate().getOtherKeys());
 
         byteBuf = Unpooled.buffer();
-        parsedMessage.getPayload().getAuthenticate().getClientChallenge().encode(byteBuf, true);
+        CephEncoder.encode(parsedMessage.getPayload().getAuthenticate().getClientChallenge(), byteBuf, true);
     }
 
     @Test
@@ -79,7 +75,7 @@ public class TestAuthRequestMoreFrame {
         AuthRequestMorePayload payload = new AuthRequestMorePayload();
         authRequest.setPayload(payload);
         CephXRequestHeader header = new CephXRequestHeader();
-        header.setRequestType(new Int16((short) 0x100));
+        header.setRequestType((short) 0x100);
         payload.setRequestHeader(header);
 
         byte[] clientChallenge = new byte[] {
@@ -90,17 +86,15 @@ public class TestAuthRequestMoreFrame {
                 (byte) 0x03, (byte) 0x23, (byte) 0xeb, (byte) 0xc7,
                 (byte) 0x3a, (byte) 0xca, (byte) 0xe9, (byte) 0x17
         };
-        Int64 secretId = new Int64(0L);
         CephXTicketBlob ticketBlob = new CephXTicketBlob();
-        ticketBlob.setSecretId(secretId);
-        ticketBlob.setBlob(new CephBytes(new byte[0]));
-        Int32 otherKeys = new Int32(32);
+        ticketBlob.setSecretId(0L);
+        ticketBlob.setBlob(new byte[0]);
         CephXAuthenticate authenticate = new CephXAuthenticate();
         payload.setAuthenticate(authenticate);
-        authenticate.setClientChallenge(new CephRawBytes(clientChallenge));
-        authenticate.setKey(new CephRawBytes(keyBytes));
+        authenticate.setClientChallenge(clientChallenge);
+        authenticate.setKey(keyBytes);
         authenticate.setOldTicket(ticketBlob);
-        authenticate.setOtherKeys(otherKeys);
+        authenticate.setOtherKeys(32);
 
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];

@@ -1,57 +1,48 @@
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
-import ca.venom.ceph.protocol.types.Int32;
-import ca.venom.ceph.protocol.types.Int64;
+import ca.venom.ceph.protocol.DecodingException;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.EncodingException;
 import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
 import io.netty.buffer.ByteBuf;
+import lombok.Getter;
+import lombok.Setter;
 
 public class AuthDoneFrame extends AuthFrameBase {
-    private Int64 globalId;
-    private Int32 connectionMode;
-    private AuthDonePayload payload;
+    @CephType
+    public static class Segment1 {
+        @Getter
+        @Setter
+        @CephField
+        private long globalId;
 
-    public Int64 getGlobalId() {
-        return globalId;
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        private int connectionMode;
+
+        @Getter
+        @Setter
+        @CephField(order = 3)
+        private AuthDonePayload payload;
     }
 
-    public void setGlobalId(Int64 globalId) {
-        this.globalId = globalId;
-    }
+    @Getter
+    @Setter
+    private Segment1 segment1;
 
-    public Int32 getConnectionMode() {
-        return connectionMode;
-    }
-
-    public void setConnectionMode(Int32 connectionMode) {
-        this.connectionMode = connectionMode;
-    }
-
-    public AuthDonePayload getPayload() {
-        return payload;
-    }
-
-    public void setPayload(AuthDonePayload payload) {
-        this.payload = payload;
+    @Override
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+        CephEncoder.encode(segment1, byteBuf, le);
     }
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
-        globalId.encode(byteBuf, le);
-        connectionMode.encode(byteBuf, le);
-        payload.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
-        globalId = new Int64();
-        globalId.decode(byteBuf, le);
-
-        connectionMode = new Int32();
-        connectionMode.decode(byteBuf, le);
-
-        payload = new AuthDonePayload();
-        payload.decode(byteBuf, le);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
+        segment1 = CephDecoder.decode(byteBuf, le, Segment1.class);
     }
 
     @Override

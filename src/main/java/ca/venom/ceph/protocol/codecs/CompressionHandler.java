@@ -14,8 +14,9 @@ public class CompressionHandler extends SimpleChannelInboundHandler<CompressionD
 
     public CompletableFuture<Boolean> start(Channel channel) throws Exception {
         CompressionRequestFrame requestFrame = new CompressionRequestFrame();
-        requestFrame.setCompress(false);
-        requestFrame.setPreferredMethods(Collections.emptyList());
+        requestFrame.setSegment1(new CompressionRequestFrame.Segment1());
+        requestFrame.getSegment1().setCompress(false);
+        requestFrame.getSegment1().setPreferredMethods(Collections.emptyList());
 
         future = new CompletableFuture<>();
         channel.writeAndFlush(requestFrame).sync();
@@ -25,6 +26,6 @@ public class CompressionHandler extends SimpleChannelInboundHandler<CompressionD
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, CompressionDoneFrame compressionDoneFrame) {
-        future.complete(compressionDoneFrame.isCompress());
+        future.complete(compressionDoneFrame.getSegment1().isCompress());
     }
 }

@@ -2,7 +2,7 @@ package ca.venom.ceph.protocol.codecs;
 
 import ca.venom.ceph.NodeType;
 import ca.venom.ceph.protocol.frames.HelloFrame;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.AddrIPv4;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -26,17 +26,15 @@ public class HelloFrameHandler extends SimpleChannelInboundHandler<HelloFrame> {
         LOG.debug(">>> HelloFrameHandler.channelRead0");
 
         HelloFrame reply = new HelloFrame();
-        reply.setNodeType(NodeType.CLIENT);
+        reply.setSegment1(new HelloFrame.Segment1());
+        reply.getSegment1().setNodeType(NodeType.CLIENT);
 
-        Addr addr = new Addr();
-        addr.setType(2);
-        reply.setAddr(addr);
-        addr.setNonce(new byte[4]);
-        Addr.Ipv4Details details = new Addr.Ipv4Details();
-        addr.setAddrDetails(details);
+        AddrIPv4 addr = new AddrIPv4();
+        reply.getSegment1().setAddr(addr);
+        addr.setNonce(0);
         InetSocketAddress inetAddress = (InetSocketAddress) ctx.channel().localAddress();
-        details.setPort(inetAddress.getPort());
-        details.setAddrBytes(inetAddress.getAddress().getAddress());
+        addr.setPort((short) inetAddress.getPort());
+        addr.setAddrBytes(inetAddress.getAddress().getAddress());
 
         ctx.writeAndFlush(reply).sync();
 

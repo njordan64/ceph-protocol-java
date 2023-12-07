@@ -1,107 +1,76 @@
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
-import ca.venom.ceph.protocol.types.*;
+import ca.venom.ceph.protocol.DecodingException;
+import ca.venom.ceph.protocol.types.AddrVec;
+import ca.venom.ceph.protocol.types.annotations.CephEncodingSize;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.EncodingException;
 import io.netty.buffer.ByteBuf;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.BitSet;
 import java.util.List;
 
 public class ServerIdentFrame extends ControlFrame {
-    private CephList<Addr> myAddresses;
-    private Int64 globalId;
-    private Int64 globalSeq;
-    private CephBitSet supportedFeatures;
-    private CephBitSet requiredFeatures;
-    private CephBitSet flags;
-    private Int64 clientCookie;
+    @CephType
+    public static class Segment1 {
+        @Getter
+        @Setter
+        @CephField
+        private AddrVec myAddresses;
 
-    public List<Addr> getMyAddresses() {
-        return myAddresses.getValues();
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        private long globalId;
+
+        @Getter
+        @Setter
+        @CephField(order = 3)
+        private long globalSeq;
+
+        @Getter
+        @Setter
+        @CephField(order = 4)
+        @CephEncodingSize(8)
+        private BitSet supportedFeatures;
+
+        @Getter
+        @Setter
+        @CephField(order = 5)
+        @CephEncodingSize(8)
+        private BitSet requiredFeatures;
+
+        @Getter
+        @Setter
+        @CephField(order = 6)
+        @CephEncodingSize(8)
+        private BitSet flags;
+
+        @Getter
+        @Setter
+        @CephField(order = 7)
+        private long clientCookie;
     }
 
-    public void setMyAddresses(List<Addr> myAddresses) {
-        this.myAddresses = new CephList<>(myAddresses, Addr.class);
-    }
+    @Getter
+    @Setter
+    private Segment1 segment1;
 
-    public long getGlobalId() {
-        return globalId.getValue();
-    }
-
-    public void setGlobalId(long globalId) {
-        this.globalId = new Int64(globalId);
-    }
-
-    public Int64 getGlobalSeq() {
-        return globalSeq;
-    }
-
-    public void setGlobalSeq(Int64 globalSeq) {
-        this.globalSeq = globalSeq;
-    }
-
-    public BitSet getSupportedFeatures() {
-        return supportedFeatures.getValue();
-    }
-
-    public void setSupportedFeatures(BitSet supportedFeatures) {
-        this.supportedFeatures = new CephBitSet(supportedFeatures, 8);
-    }
-
-    public BitSet getRequiredFeatures() {
-        return requiredFeatures.getValue();
-    }
-
-    public void setRequiredFeatures(BitSet requiredFeatures) {
-        this.requiredFeatures = new CephBitSet(requiredFeatures, 8);
-    }
-
-    public BitSet getFlags() {
-        return flags.getValue();
-    }
-
-    public void setFlags(BitSet flags) {
-        this.flags = new CephBitSet(flags, 8);
-    }
-
-    public Int64 getClientCookie() {
-        return clientCookie;
-    }
-
-    public void setClientCookie(Int64 clientCookie) {
-        this.clientCookie = clientCookie;
+    @Override
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+        CephEncoder.encode(segment1, byteBuf, le);
     }
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
-        myAddresses.encode(byteBuf, le);
-        globalId.encode(byteBuf, le);
-        globalSeq.encode(byteBuf, le);
-        supportedFeatures.encode(byteBuf, le);
-        requiredFeatures.encode(byteBuf, le);
-        flags.encode(byteBuf, le);
-        clientCookie.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
-        myAddresses = new CephList<>(Addr.class);
-        myAddresses.decode(byteBuf, le);
-
-        globalId = new Int64();
-        globalId.decode(byteBuf, le);
-
-        supportedFeatures = new CephBitSet(8);
-        supportedFeatures.decode(byteBuf, le);
-
-        requiredFeatures = new CephBitSet(8);
-        requiredFeatures.decode(byteBuf, le);
-
-        flags = new CephBitSet(8);
-        flags.decode(byteBuf, le);
-
-        clientCookie = new Int64();
-        clientCookie.decode(byteBuf, le);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
+        segment1 = CephDecoder.decode(byteBuf, le, Segment1.class);
     }
 
     @Override

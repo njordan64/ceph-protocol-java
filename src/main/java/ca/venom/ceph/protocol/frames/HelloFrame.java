@@ -1,47 +1,47 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.NodeType;
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
+import ca.venom.ceph.protocol.DecodingException;
+import ca.venom.ceph.protocol.types.annotations.CephEncodingSize;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
 import ca.venom.ceph.protocol.types.Addr;
-import ca.venom.ceph.protocol.types.CephEnum;
-import ca.venom.ceph.protocol.types.CephRawByte;
+import ca.venom.ceph.protocol.types.EncodingException;
 import io.netty.buffer.ByteBuf;
+import lombok.Getter;
+import lombok.Setter;
 
 public class HelloFrame extends ControlFrame {
-    private CephEnum<NodeType> nodeType;
-    private CephRawByte constant1 = new CephRawByte((byte) 1);
-    private CephRawByte constant2 = new CephRawByte((byte) 1);
-    private Addr addr;
+    @CephType
+    public static class Segment1 {
+        @Getter
+        @Setter
+        @CephField(order = 1)
+        @CephEncodingSize
+        private NodeType nodeType;
 
-    public NodeType getNodeType() {
-        return nodeType.getValue();
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        @CephEncodingSize
+        private Addr addr;
     }
 
-    public void setNodeType(NodeType nodeType) {
-        this.nodeType = new CephEnum<>(nodeType);
-    }
+    @Getter
+    @Setter
+    private Segment1 segment1;
 
-    public Addr getAddr() {
-        return addr;
-    }
-
-    public void setAddr(Addr addr) {
-        this.addr = addr;
+    @Override
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+        CephEncoder.encode(segment1, Segment1.class, byteBuf, le);
     }
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
-        nodeType.encode(byteBuf, le);
-        addr.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
-        nodeType = new CephEnum<>(NodeType.class);
-        nodeType.decode(byteBuf, le);
-
-        addr = new Addr();
-        addr.decode(byteBuf, le);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
+        segment1 = CephDecoder.decode(byteBuf, le, Segment1.class);
     }
 
     @Override

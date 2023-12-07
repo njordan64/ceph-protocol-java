@@ -1,31 +1,16 @@
 package ca.venom.ceph.protocol.types.auth;
 
-import io.netty.buffer.ByteBuf;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.annotations.CephTypeSize;
+import lombok.Getter;
+import lombok.Setter;
 
-public class AuthReplyMorePayload extends CephDataContainer {
+@CephType
+@CephTypeSize
+public class AuthReplyMorePayload {
+    @Getter
+    @Setter
+    @CephField
     private CephXServerChallenge serverChallenge;
-
-    public CephXServerChallenge getServerChallenge() {
-        return serverChallenge;
-    }
-
-    public void setServerChallenge(CephXServerChallenge serverChallenge) {
-        this.serverChallenge = serverChallenge;
-    }
-
-    @Override
-    protected int getPayloadSize() {
-        return serverChallenge.getSize();
-    }
-
-    @Override
-    protected void encodePayload(ByteBuf byteBuf, boolean le) {
-        serverChallenge.encode(byteBuf, le);
-    }
-
-    @Override
-    protected void decodePayload(ByteBuf byteBuf, boolean le) {
-        serverChallenge = new CephXServerChallenge();
-        serverChallenge.decode(byteBuf, le);
-    }
 }

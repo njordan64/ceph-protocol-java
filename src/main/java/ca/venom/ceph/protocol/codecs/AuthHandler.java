@@ -1,6 +1,7 @@
 package ca.venom.ceph.protocol.codecs;
 
 import ca.venom.ceph.AuthMode;
+import ca.venom.ceph.protocol.CephDecoder;
 import ca.venom.ceph.protocol.HexFunctions;
 import ca.venom.ceph.protocol.frames.AuthDoneFrame;
 import ca.venom.ceph.protocol.frames.AuthFrameBase;
@@ -8,17 +9,11 @@ import ca.venom.ceph.protocol.frames.AuthReplyMoreFrame;
 import ca.venom.ceph.protocol.frames.AuthRequestFrame;
 import ca.venom.ceph.protocol.frames.AuthRequestMoreFrame;
 import ca.venom.ceph.protocol.frames.AuthSignatureFrame;
-import ca.venom.ceph.protocol.types.CephBytes;
-import ca.venom.ceph.protocol.types.CephRawBytes;
-import ca.venom.ceph.protocol.types.CephString;
-import ca.venom.ceph.protocol.types.Int16;
-import ca.venom.ceph.protocol.types.Int32;
-import ca.venom.ceph.protocol.types.Int64;
+import ca.venom.ceph.protocol.types.auth.CephXServiceTicket;
 import ca.venom.ceph.protocol.types.auth.AuthRequestMorePayload;
 import ca.venom.ceph.protocol.types.auth.AuthRequestPayload;
 import ca.venom.ceph.protocol.types.auth.CephXAuthenticate;
 import ca.venom.ceph.protocol.types.auth.CephXRequestHeader;
-import ca.venom.ceph.protocol.types.auth.CephXServiceTicket;
 import ca.venom.ceph.protocol.types.auth.CephXTicketBlob;
 import ca.venom.ceph.protocol.types.auth.CephXTicketInfo;
 import ca.venom.ceph.protocol.types.auth.EntityName;
@@ -97,20 +92,21 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         }
 
         AuthRequestFrame request = new AuthRequestFrame();
-        request.setAuthMethod(new Int32(2));
+        request.setSegment1(new AuthRequestFrame.Segment1());
+        request.getSegment1().setAuthMethod(2);
 
-        List<Int32> preferredModes = new ArrayList<>(2);
-        preferredModes.add(new Int32(2));
-        preferredModes.add(new Int32(1));
-        request.setPreferredModes(preferredModes);
+        List<Integer> preferredModes = new ArrayList<>(2);
+        preferredModes.add(2);
+        preferredModes.add(1);
+        request.getSegment1().setPreferredModes(preferredModes);
 
         AuthRequestPayload authRequestPayload = new AuthRequestPayload();
         authRequestPayload.setAuthMode(AuthMode.MON);
         authRequestPayload.setEntityName(new EntityName());
-        authRequestPayload.getEntityName().setType(new Int32(8));
-        authRequestPayload.getEntityName().setEntityName(new CephString(username));
-        authRequestPayload.setGlobalId(new Int64(0L));
-        request.setPayload(authRequestPayload);
+        authRequestPayload.getEntityName().setType(8);
+        authRequestPayload.getEntityName().setEntityName(username);
+        authRequestPayload.setGlobalId(0L);
+        request.getSegment1().setPayload(authRequestPayload);
 
         state = State.INITIATED;
 
@@ -147,7 +143,7 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         SecureRandom random = new SecureRandom();
         random.nextBytes(clientChallenge);
 
-        byte[] serverChallenge = request.getPayload().getServerChallenge().getServerChallenge().getValue();
+        byte[] serverChallenge = request.getPayload().getServerChallenge().getServerChallenge();
 
         byte[] unencryptedBytes = new byte[32];
         unencryptedBytes[0] = 1;
@@ -173,17 +169,17 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         AuthRequestMorePayload requestMorePayload = new AuthRequestMorePayload();
         requestMore.setPayload(requestMorePayload);
         CephXRequestHeader requestHeader = new CephXRequestHeader();
-        requestHeader.setRequestType(new Int16(0x100));
+        requestHeader.setRequestType((short) 0x100);
         requestMorePayload.setRequestHeader(requestHeader);
 
         CephXTicketBlob blob = new CephXTicketBlob();
-        blob.setSecretId(new Int64(0L));
-        blob.setBlob(new CephBytes(new byte[0]));
+        blob.setSecretId(0L);
+        blob.setBlob(new byte[0]);
         CephXAuthenticate authenticate = new CephXAuthenticate();
-        authenticate.setClientChallenge(new CephRawBytes(clientChallenge));
-        authenticate.setKey(new CephRawBytes(proof));
+        authenticate.setClientChallenge(clientChallenge);
+        authenticate.setKey(proof);
         authenticate.setOldTicket(blob);
-        authenticate.setOtherKeys(new Int32(32));
+        authenticate.setOtherKeys(32);
         requestMorePayload.setAuthenticate(authenticate);
 
         state = State.PROOF_SENT;
@@ -192,29 +188,27 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
     }
 
     private void handleAuthDone(ChannelHandlerContext ctx, AuthDoneFrame request) throws Exception {
-        for (CephXTicketInfo ticketInfo : request.getPayload().getTicketInfos().getValues()) {
+        for (CephXTicketInfo ticketInfo : request.getSegment1().getPayload().getTicketInfos()) {
             byte[] iv = PROOF_IV.getBytes();
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, authKey, new IvParameterSpec(iv));
-            byte[] decryptedBytes = cipher.doFinal(ticketInfo.getServiceTicket().getValue());
+            byte[] decryptedBytes = cipher.doFinal(ticketInfo.getServiceTicket());
 
             ByteBuf decryptedByteBuf = Unpooled.wrappedBuffer(decryptedBytes);
             decryptedByteBuf.skipBytes(9);
-            CephXServiceTicket serviceTicket = new CephXServiceTicket();
-            serviceTicket.decode(decryptedByteBuf, true);
+            CephXServiceTicket serviceTicket = CephDecoder.decode(decryptedByteBuf, true, CephXServiceTicket.class);
 
-            sessionKey = new SecretKeySpec(serviceTicket.getSessionKey().getSecret().getValue(), "AES");
+            sessionKey = new SecretKeySpec(serviceTicket.getSessionKey().getSecret(), "AES");
 
-            if (!ticketInfo.getEncrypted().getValue()) {
-                decryptedByteBuf = Unpooled.wrappedBuffer(ticketInfo.getTicket().getValue());
-                CephXTicketBlob ticketBlob = new CephXTicketBlob();
-                ticketBlob.decode(decryptedByteBuf, true);
+            if (!ticketInfo.isEncrypted()) {
+                decryptedByteBuf = Unpooled.wrappedBuffer(ticketInfo.getTicket());
+                CephXTicketBlob ticketBlob = CephDecoder.decode(decryptedByteBuf, true, CephXTicketBlob.class);
             }
         }
 
         Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, sessionKey, new IvParameterSpec(PROOF_IV.getBytes()));
-        byte[] encryptedSecret = request.getPayload().getEncryptedSecret().getValue();
+        byte[] encryptedSecret = request.getSegment1().getPayload().getEncryptedSecret();
         byte[] decryptedSecret = cipher.doFinal(encryptedSecret, 4, encryptedSecret.length - 4);
 
         SecretKey streamKey = new SecretKeySpec(decryptedSecret, 13, 16, "AES");
@@ -226,7 +220,7 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         state = State.COMPLETE;
 
         CephPreParsedFrameCodec preParsedFrameCodec = ctx.pipeline().get(CephPreParsedFrameCodec.class);
-        if (request.getConnectionMode().getValue() == 2) {
+        if (request.getSegment1().getConnectionMode() == 2) {
             preParsedFrameCodec.enableSecureMode(streamKey, rxNonceBytes, txNonceBytes);
         }
 
@@ -251,7 +245,7 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         sentByteBuf.readBytes(sentBytes);
         HexFunctions.printHexString(sentBytes);
 
-        byte[] expectedSignature = request.getSha256Digest();
+        byte[] expectedSignature = request.getSegment1().getSha256Digest();
         byte[] actualSignature = mac.doFinal(sentBytes);
         for (int i = 0; i < 32; i++) {
             if (expectedSignature[i] != actualSignature[i]) {
@@ -268,7 +262,8 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         receivedByteBuf.readBytes(receivedBytes);
 
         AuthSignatureFrame signatureFrame = new AuthSignatureFrame();
-        signatureFrame.setSha256Digest(mac.doFinal(receivedBytes));
+        signatureFrame.setSegment1(new AuthSignatureFrame.Segment1());
+        signatureFrame.getSegment1().setSha256Digest(mac.doFinal(receivedBytes));
 
         receivedByteBuf = null;
 

@@ -2,7 +2,8 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.NodeType;
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.HexFunctions;
+import ca.venom.ceph.protocol.types.AddrIPv4;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,35 +37,33 @@ public class TestHelloFrame {
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true);
 
-        assertEquals(NodeType.MON, parsedMessage.getNodeType());
+        assertEquals(NodeType.MON, parsedMessage.getSegment1().getNodeType());
 
-        Addr addr = parsedMessage.getAddr();
-        assertArrayEquals(new byte[4], addr.getNonce());
+        AddrIPv4 addr = (AddrIPv4) parsedMessage.getSegment1().getAddr();
+        assertEquals(0, addr.getNonce());
 
-        Addr.Ipv4Details details = (Addr.Ipv4Details) addr.getAddrDetails();
-        assertEquals(60832, details.getPort());
-        assertEquals((byte) 192, details.getAddrBytes()[0]);
-        assertEquals((byte) 168, details.getAddrBytes()[1]);
-        assertEquals((byte) 122, details.getAddrBytes()[2]);
-        assertEquals((byte) 227, details.getAddrBytes()[3]);
+        assertEquals(60832, addr.getPort() & 0xffff);
+        assertArrayEquals(
+                new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227},
+                addr.getAddrBytes()
+        );
+        assertEquals((byte) 192, addr.getAddrBytes()[0]);
     }
 
     @Test
     public void testEncodeMessage1() throws Exception {
         HelloFrame helloFrame = new HelloFrame();
+        helloFrame.setSegment1(new HelloFrame.Segment1());
 
-        helloFrame.setNodeType(NodeType.MON);
+        helloFrame.getSegment1().setNodeType(NodeType.MON);
 
-        Addr addr = new Addr();
-        addr.setType(2);
-        addr.setNonce(new byte[4]);
+        AddrIPv4 addr = new AddrIPv4();
+        addr.setNonce(0);
 
-        Addr.Ipv4Details details = new Addr.Ipv4Details();
-        addr.setAddrDetails(details);
-        details.setPort((short) 60832);
-        details.setAddrBytes(new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227});
+        addr.setPort((short) 60832);
+        addr.setAddrBytes(new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227});
 
-        helloFrame.setAddr(addr);
+        helloFrame.getSegment1().setAddr(addr);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
@@ -73,6 +72,13 @@ public class TestHelloFrame {
 
         byte[] actualSegment = new byte[byteBuf.writerIndex()];
         System.arraycopy(byteBuf.array(), 0, actualSegment, 0, byteBuf.writerIndex());
+
+        System.out.println("--------------------------------------------------");
+        HexFunctions.printHexString(expectedSegment);
+        System.out.println("--------------------------------------------------");
+        HexFunctions.printHexString(actualSegment);
+        System.out.println("--------------------------------------------------");
+
         assertArrayEquals(expectedSegment, actualSegment);
     }
 }

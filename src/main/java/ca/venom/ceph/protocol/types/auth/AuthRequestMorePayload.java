@@ -1,44 +1,21 @@
 package ca.venom.ceph.protocol.types.auth;
 
-import io.netty.buffer.ByteBuf;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.annotations.CephTypeSize;
+import lombok.Getter;
+import lombok.Setter;
 
-public class AuthRequestMorePayload extends CephDataContainer {
+@CephType
+@CephTypeSize
+public class AuthRequestMorePayload {
+    @Getter
+    @Setter
+    @CephField
     private CephXRequestHeader requestHeader;
+
+    @Getter
+    @Setter
+    @CephField(order = 2)
     private CephXAuthenticate authenticate;
-
-    public CephXRequestHeader getRequestHeader() {
-        return requestHeader;
-    }
-
-    public void setRequestHeader(CephXRequestHeader requestHeader) {
-        this.requestHeader = requestHeader;
-    }
-
-    public CephXAuthenticate getAuthenticate() {
-        return authenticate;
-    }
-
-    public void setAuthenticate(CephXAuthenticate authenticate) {
-        this.authenticate = authenticate;
-    }
-
-    @Override
-    protected int getPayloadSize() {
-        return requestHeader.getSize() + authenticate.getSize();
-    }
-
-    @Override
-    protected void encodePayload(ByteBuf byteBuf, boolean le) {
-        requestHeader.encode(byteBuf, le);
-        authenticate.encode(byteBuf, le);
-    }
-
-    @Override
-    protected void decodePayload(ByteBuf byteBuf, boolean le) {
-        requestHeader = new CephXRequestHeader();
-        requestHeader.decode(byteBuf, le);
-
-        authenticate = new CephXAuthenticate();
-        authenticate.decode(byteBuf, le);
-    }
 }

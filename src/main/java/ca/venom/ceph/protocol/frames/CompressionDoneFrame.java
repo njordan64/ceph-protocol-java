@@ -1,43 +1,42 @@
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
-import ca.venom.ceph.protocol.types.CephBoolean;
-import ca.venom.ceph.protocol.types.Int32;
+import ca.venom.ceph.protocol.DecodingException;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.EncodingException;
 import io.netty.buffer.ByteBuf;
+import lombok.Getter;
+import lombok.Setter;
 
 public class CompressionDoneFrame extends ControlFrame {
-    private CephBoolean compress;
-    private Int32 method;
+    @CephType
+    public static class Segment1 {
+        @Getter
+        @Setter
+        @CephField
+        private boolean compress;
 
-    public boolean isCompress() {
-        return compress.getValue();
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        private int method;
     }
 
-    public void setCompress(boolean compress) {
-        this.compress = new CephBoolean(compress);
-    }
+    @Getter
+    @Setter
+    private Segment1 segment1;
 
-    public Int32 getMethod() {
-        return method;
-    }
-
-    public void setMethod(Int32 method) {
-        this.method = method;
+    @Override
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+        CephEncoder.encode(segment1, byteBuf, le);
     }
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
-        compress.encode(byteBuf, le);
-        method.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
-        compress = new CephBoolean();
-        compress.decode(byteBuf, le);
-
-        method = new Int32();
-        method.decode(byteBuf, le);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
+        segment1 = CephDecoder.decode(byteBuf, le, Segment1.class);
     }
 
     @Override

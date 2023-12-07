@@ -1,41 +1,18 @@
 package ca.venom.ceph.protocol.types.auth;
 
-import ca.venom.ceph.protocol.types.CephDataType;
-import ca.venom.ceph.protocol.types.CephRawByte;
-import ca.venom.ceph.protocol.types.CephRawBytes;
-import io.netty.buffer.ByteBuf;
+import ca.venom.ceph.protocol.types.annotations.CephEncodingSize;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.annotations.CephTypeVersion;
+import lombok.Getter;
+import lombok.Setter;
 
-public class CephXServerChallenge implements CephDataType {
-    private CephRawByte version = new CephRawByte((byte) 1);
-    private CephRawBytes serverChallenge;
-
-    public CephRawBytes getServerChallenge() {
-        return serverChallenge;
-    }
-
-    public void setServerChallenge(CephRawBytes serverChallenge) {
-        this.serverChallenge = serverChallenge;
-    }
-
-    @Override
-    public int getSize() {
-        return 9;
-    }
-
-    @Override
-    public void encode(ByteBuf byteBuf, boolean le) {
-        version.encode(byteBuf, le);
-        serverChallenge.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decode(ByteBuf byteBuf, boolean le) {
-        byte versionValue = byteBuf.readByte();
-        if (versionValue != version.getValue()) {
-            throw new IllegalArgumentException("Unsupported version (" + versionValue + ") only 1 is supported");
-        }
-
-        serverChallenge = new CephRawBytes(8);
-        serverChallenge.decode(byteBuf, le);
-    }
+@CephType
+@CephTypeVersion(version = 1)
+public class CephXServerChallenge {
+    @Getter
+    @Setter
+    @CephField
+    @CephEncodingSize(8)
+    private byte[] serverChallenge;
 }

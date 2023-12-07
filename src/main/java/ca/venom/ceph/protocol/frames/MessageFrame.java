@@ -1,82 +1,44 @@
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
+import ca.venom.ceph.protocol.DecodingException;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.EncodingException;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import lombok.Getter;
+import lombok.Setter;
 
 public class MessageFrame extends ControlFrame {
-    private ByteBuf head = Unpooled.buffer();
-    private boolean headLE;
-    private ByteBuf front = Unpooled.buffer();
-    private boolean frontLE;
-    private ByteBuf middle = Unpooled.buffer();
-    private boolean middleLE;
-    private ByteBuf data = Unpooled.buffer();
-    private boolean dataLE;
+    @CephType
+    public static class Segment {
+        @Getter
+        @Setter
+        @CephField(includeSize = true)
+        private byte[] encodedBytes;
 
-    public ByteBuf getHead() {
-        return head;
+        @Getter
+        @Setter
+        private boolean le;
     }
 
-    public void setHead(ByteBuf head) {
-        this.head = head;
-    }
+    @Getter
+    @Setter
+    private Segment head;
 
-    public boolean isHeadLE() {
-        return headLE;
-    }
+    @Getter
+    @Setter
+    private Segment front;
 
-    public void setHeadLE(boolean headLE) {
-        this.headLE = headLE;
-    }
+    @Getter
+    @Setter
+    private Segment middle;
 
-    public ByteBuf getFront() {
-        return front;
-    }
-
-    public void setFront(ByteBuf front) {
-        this.front = front;
-    }
-
-    public boolean isFrontLE() {
-        return frontLE;
-    }
-
-    public void setFrontLE(boolean frontLE) {
-        this.frontLE = frontLE;
-    }
-
-    public ByteBuf getMiddle() {
-        return middle;
-    }
-
-    public void setMiddle(ByteBuf middle) {
-        this.middle = middle;
-    }
-
-    public boolean isMiddleLE() {
-        return middleLE;
-    }
-
-    public void setMiddleLE(boolean middleLE) {
-        this.middleLE = middleLE;
-    }
-
-    public ByteBuf getData() {
-        return data;
-    }
-
-    public void setData(ByteBuf data) {
-        this.data = data;
-    }
-
-    public boolean isDataLE() {
-        return dataLE;
-    }
-
-    public void setDataLE(boolean dataLE) {
-        this.dataLE = dataLE;
-    }
+    @Getter
+    @Setter
+    private Segment data;
 
     @Override
     public ControlFrameType getTag() {
@@ -84,54 +46,58 @@ public class MessageFrame extends ControlFrame {
     }
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
-        if (head.readableBytes() > 0) {
-            head.writeBytes(byteBuf);
+    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+        CephEncoder.encode(head, byteBuf, le);
+    }
+
+    @Override
+    public void encodeSegment2(ByteBuf byteBuf, boolean le) throws EncodingException {
+        if (front != null && front.encodedBytes.length > 0) {
+            CephEncoder.encode(front, byteBuf, le);
         }
     }
 
     @Override
-    public void encodeSegment2(ByteBuf byteBuf, boolean le) {
-        if (front.readableBytes() > 0) {
-            byteBuf.writeBytes(front);
+    public void encodeSegment3(ByteBuf byteBuf, boolean le) throws EncodingException {
+        if (middle != null && middle.encodedBytes.length > 0) {
+            CephEncoder.encode(middle, byteBuf, le);
         }
     }
 
     @Override
-    public void encodeSegment3(ByteBuf byteBuf, boolean le) {
-        if (middle.readableBytes() > 0) {
-            byteBuf.writeBytes(middle);
+    public void encodeSegment4(ByteBuf byteBuf, boolean le) throws EncodingException {
+        if (data != null && data.encodedBytes.length > 0) {
+            CephEncoder.encode(data, byteBuf, le);
         }
     }
 
     @Override
-    public void encodeSegment4(ByteBuf byteBuf, boolean le) {
-        if (data.readableBytes() > 0) {
-            byteBuf.writeBytes(data);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
+        head = CephDecoder.decode(byteBuf, le, Segment.class);
+        head.setLe(le);
+    }
+
+    @Override
+    public void decodeSegment2(ByteBuf byteBuf, boolean le) throws DecodingException {
+        if (byteBuf.readableBytes() > 0) {
+            front = CephDecoder.decode(byteBuf, le, Segment.class);
+            front.setLe(le);
         }
     }
 
     @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
-        byteBuf.writeBytes(head);
-        this.headLE = le;
+    public void decodeSegment3(ByteBuf byteBuf, boolean le) throws DecodingException {
+        if (byteBuf.readableBytes() > 0) {
+            middle = CephDecoder.decode(byteBuf, le, Segment.class);
+            middle.setLe(le);
+        }
     }
 
     @Override
-    public void decodeSegment2(ByteBuf byteBuf, boolean le) {
-        front.writeBytes(byteBuf);
-        this.frontLE = le;
-    }
-
-    @Override
-    public void decodeSegment3(ByteBuf byteBuf, boolean le) {
-        middle.writeBytes(byteBuf);
-        this.middleLE = le;
-    }
-
-    @Override
-    public void decodeSegment4(ByteBuf byteBuf, boolean le) {
-        data.writeBytes(byteBuf);
-        this.dataLE = le;
+    public void decodeSegment4(ByteBuf byteBuf, boolean le) throws DecodingException {
+        if (byteBuf.readableBytes() > 0) {
+            data = CephDecoder.decode(byteBuf, le, Segment.class);
+            data.setLe(le);
+        }
     }
 }

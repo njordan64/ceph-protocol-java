@@ -4,7 +4,7 @@ import ca.venom.ceph.protocol.AttributeKeys;
 import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.frames.ClientIdentFrame;
 import ca.venom.ceph.protocol.frames.ServerIdentFrame;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.AddrIPv4;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -24,45 +24,39 @@ public class ServerIdentHandler extends SimpleChannelInboundHandler<ServerIdentF
 
     public CompletableFuture<Boolean> start(Channel channel) {
         ClientIdentFrame clientIdentFrame = new ClientIdentFrame();
-        clientIdentFrame.setGlobalId(-1);
-        clientIdentFrame.setGlobalSeq(1);
+        clientIdentFrame.setSegment1(new ClientIdentFrame.Segment1());
+        clientIdentFrame.getSegment1().setGlobalId(-1);
+        clientIdentFrame.getSegment1().setGlobalSeq(1);
 
         SecureRandom random = new SecureRandom();
-        clientIdentFrame.setClientCookie(random.nextLong());
+        clientIdentFrame.getSegment1().setClientCookie(random.nextLong());
 
-        clientIdentFrame.setSupportedFeatures(CephFeatures.ALL);
+        clientIdentFrame.getSegment1().setSupportedFeatures(CephFeatures.ALL);
         BitSet requiredFeatures = new BitSet();
         CephFeatures.MSG_ADDR2.enable(requiredFeatures);
-        clientIdentFrame.setRequiredFeatures(requiredFeatures);
-        clientIdentFrame.setFlags(new BitSet(64));
+        clientIdentFrame.getSegment1().setRequiredFeatures(requiredFeatures);
+        clientIdentFrame.getSegment1().setFlags(new BitSet(64));
 
-        byte[] addrNonce = new byte[4];
-        random.nextBytes(addrNonce);
+        int addrNonce = random.nextInt();
         channel.attr(AttributeKeys.ADDR_NONCE).set(addrNonce);
 
-        Addr myAddr = new Addr();
+        AddrIPv4 myAddr = new AddrIPv4();
         myAddr.setNonce(addrNonce);
-        myAddr.setType(2);
-        Addr.Ipv4Details details = new Addr.Ipv4Details();
-        myAddr.setAddrDetails(details);
         InetSocketAddress inetSocketAddress = (InetSocketAddress) channel.localAddress();
-        details.setPort(inetSocketAddress.getPort());
-        details.setAddrBytes(inetSocketAddress.getAddress().getAddress());
-        clientIdentFrame.setMyAddresses(Collections.singletonList(myAddr));
+        myAddr.setPort((short) inetSocketAddress.getPort());
+        myAddr.setAddrBytes(inetSocketAddress.getAddress().getAddress());
+        clientIdentFrame.getSegment1().setMyAddresses(Collections.singletonList(myAddr));
 
-        Addr targetAddr = new Addr();
-        clientIdentFrame.setTargetAddress(targetAddr);
-        targetAddr.setNonce(new byte[4]);
-        targetAddr.setType(2);
-        details = new Addr.Ipv4Details();
-        targetAddr.setAddrDetails(details);
+        AddrIPv4 targetAddr = new AddrIPv4();
+        clientIdentFrame.getSegment1().setTargetAddress(targetAddr);
+        targetAddr.setNonce(0);
 
         inetSocketAddress = (InetSocketAddress) channel.remoteAddress();
         String overrideServerPort = System.getenv("OVERRIDE_SERVER_PORT");
         if (overrideServerPort != null) {
-            details.setPort(Integer.parseInt(overrideServerPort));
+            targetAddr.setPort((short) Integer.parseInt(overrideServerPort));
         } else {
-            details.setPort(inetSocketAddress.getPort());
+            targetAddr.setPort((short) inetSocketAddress.getPort());
         }
         String overrideServerHost = System.getenv("OVERRIDE_SERVER_HOST");
         if (overrideServerHost != null) {
@@ -71,9 +65,9 @@ public class ServerIdentHandler extends SimpleChannelInboundHandler<ServerIdentF
             for (int i = 0; i < 4; i++) {
                 ip[i] = (byte) Integer.parseInt(ipParts[i]);
             }
-            details.setAddrBytes(ip);
+            targetAddr.setAddrBytes(ip);
         } else {
-            details.setAddrBytes(inetSocketAddress.getAddress().getAddress());
+            targetAddr.setAddrBytes(inetSocketAddress.getAddress().getAddress());
         }
 
         channel.writeAndFlush(clientIdentFrame);

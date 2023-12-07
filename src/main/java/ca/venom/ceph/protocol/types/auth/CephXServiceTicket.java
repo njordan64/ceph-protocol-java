@@ -1,54 +1,22 @@
 package ca.venom.ceph.protocol.types.auth;
 
-import ca.venom.ceph.protocol.types.CephDataType;
-import ca.venom.ceph.protocol.types.Int8;
 import ca.venom.ceph.protocol.types.UTime;
-import io.netty.buffer.ByteBuf;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.annotations.CephTypeVersion;
+import lombok.Getter;
+import lombok.Setter;
 
-public class CephXServiceTicket implements CephDataType {
-    private Int8 version = new Int8((byte) 1);
+@CephType
+@CephTypeVersion(version = 1)
+public class CephXServiceTicket {
+    @Getter
+    @Setter
+    @CephField
     private CryptoKey sessionKey;
+
+    @Getter
+    @Setter
+    @CephField(order = 2)
     private UTime validity;
-
-    public CryptoKey getSessionKey() {
-        return sessionKey;
-    }
-
-    public void setSessionKey(CryptoKey sessionKey) {
-        this.sessionKey = sessionKey;
-    }
-
-    public UTime getValidity() {
-        return validity;
-    }
-
-    public void setValidity(UTime validity) {
-        this.validity = validity;
-    }
-
-    @Override
-    public int getSize() {
-        return 1 + sessionKey.getSize() + validity.getSize();
-    }
-
-    @Override
-    public void encode(ByteBuf byteBuf, boolean le) {
-        version.encode(byteBuf, le);
-        sessionKey.encode(byteBuf, le);
-        validity.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decode(ByteBuf byteBuf, boolean le) {
-        byte versionValue = byteBuf.readByte();
-        if (versionValue != version.getValue()) {
-            throw new IllegalArgumentException("Unsupported version (" + versionValue + ") only 1 is supported");
-        }
-
-        sessionKey = new CryptoKey();
-        sessionKey.decode(byteBuf, le);
-
-        validity = new UTime();
-        validity.decode(byteBuf, le);
-    }
 }

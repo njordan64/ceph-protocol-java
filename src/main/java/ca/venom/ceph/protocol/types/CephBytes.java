@@ -1,48 +1,20 @@
 package ca.venom.ceph.protocol.types;
 
-import io.netty.buffer.ByteBuf;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.nio.ByteBuffer;
-
-public class CephBytes implements CephDataType {
+@CephType
+public class CephBytes {
+    @Getter
+    @Setter
     private byte[] bytes;
 
-    public CephBytes() {
-    }
-
-    public CephBytes(byte[] bytes) {
-        this.bytes = bytes;
-    }
-
-    public byte[] getValue() {
-        return bytes;
-    }
-
-    @Override
     public int getSize() {
-        return 4 + bytes.length;
-    }
-
-    @Override
-    public void encode(ByteBuf byteBuf, boolean le) {
-        if (le) {
-            byteBuf.writeIntLE(bytes.length);
+        if (bytes == null) {
+            return 0;
         } else {
-            byteBuf.writeInt(bytes.length);
+            return bytes.length;
         }
-        byteBuf.writeBytes(bytes);
-    }
-
-    @Override
-    public void decode(ByteBuf byteBuf, boolean le) {
-        int length;
-        if (le) {
-            length = byteBuf.readIntLE();
-        } else {
-            length = byteBuf.readInt();
-        }
-
-        bytes = new byte[length];
-        byteBuf.readBytes(bytes);
     }
 }

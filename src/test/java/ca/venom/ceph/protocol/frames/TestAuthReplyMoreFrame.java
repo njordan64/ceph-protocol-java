@@ -1,7 +1,7 @@
 package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.types.CephRawBytes;
+import ca.venom.ceph.protocol.types.EncodingException;
 import ca.venom.ceph.protocol.types.auth.AuthReplyMorePayload;
 import ca.venom.ceph.protocol.types.auth.CephXServerChallenge;
 import io.netty.buffer.ByteBuf;
@@ -41,7 +41,7 @@ public class TestAuthReplyMoreFrame {
     }
 
     @Test
-    public void testDecodeMessage1() {
+    public void testDecodeMessage1() throws Exception {
         AuthReplyMoreFrame parsedMessage = new AuthReplyMoreFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
@@ -51,11 +51,11 @@ public class TestAuthReplyMoreFrame {
                 (byte) 0x2b, (byte) 0x33, (byte) 0x2f, (byte) 0x91,
                 (byte) 0xd0, (byte) 0x47, (byte) 0xbc, (byte) 0xad
         };
-        assertArrayEquals(serverChallenge, parsedMessage.getPayload().getServerChallenge().getServerChallenge().getValue());
+        assertArrayEquals(serverChallenge, parsedMessage.getPayload().getServerChallenge().getServerChallenge());
     }
 
     @Test
-    public void testEncodeMessage1() {
+    public void testEncodeMessage1() throws EncodingException {
         AuthReplyMoreFrame authReplyMore = new AuthReplyMoreFrame();
         AuthReplyMorePayload payload = new AuthReplyMorePayload();
         authReplyMore.setPayload(payload);
@@ -64,7 +64,7 @@ public class TestAuthReplyMoreFrame {
                 (byte) 0xd0, (byte) 0x47, (byte) 0xbc, (byte) 0xad
         };
         CephXServerChallenge serverChallenge = new CephXServerChallenge();
-        serverChallenge.setServerChallenge(new CephRawBytes(serverChallengeBytes));
+        serverChallenge.setServerChallenge(serverChallengeBytes);
         payload.setServerChallenge(serverChallenge);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];

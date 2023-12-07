@@ -1,79 +1,40 @@
 package ca.venom.ceph.protocol.types.auth;
 
-import ca.venom.ceph.protocol.types.CephBytes;
-import ca.venom.ceph.protocol.types.CephList;
-import ca.venom.ceph.protocol.types.CephRawByte;
-import io.netty.buffer.ByteBuf;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.annotations.CephTypeSize;
+import lombok.Getter;
+import lombok.Setter;
 
-public class AuthDonePayload extends CephDataContainer {
+import java.util.List;
+
+@CephType
+@CephTypeSize
+public class AuthDonePayload {
+    @Getter
+    @Setter
+    @CephField
     private CephXResponseHeader responseHeader;
-    private CephRawByte version = new CephRawByte((byte) 1);
-    private CephList<CephXTicketInfo> ticketInfos;
-    private CephBytes encryptedSecret;
-    private CephBytes extra;
 
-    public CephXResponseHeader getResponseHeader() {
-        return responseHeader;
-    }
+    @Getter
+    @CephField(order = 2)
+    private byte version = 1;
 
-    public void setResponseHeader(CephXResponseHeader responseHeader) {
-        this.responseHeader = responseHeader;
-    }
+    @Getter
+    @Setter
+    @CephField(order = 3)
+    private List<CephXTicketInfo> ticketInfos;
 
-    public CephList<CephXTicketInfo> getTicketInfos() {
-        return ticketInfos;
-    }
+    @Getter
+    @Setter
+    @CephField(order = 4, includeSize = true)
+    private byte[] encryptedSecret;
 
-    public void setTicketInfos(CephList<CephXTicketInfo> ticketInfos) {
-        this.ticketInfos = ticketInfos;
-    }
+    @Getter
+    @Setter
+    @CephField(order = 5, includeSize = true)
+    private byte[] extra;
 
-    public CephBytes getEncryptedSecret() {
-        return encryptedSecret;
-    }
-
-    public void setEncryptedSecret(CephBytes encryptedSecret) {
-        this.encryptedSecret = encryptedSecret;
-    }
-
-    public CephBytes getExtra() {
-        return extra;
-    }
-
-    public void setExtra(CephBytes extra) {
-        this.extra = extra;
-    }
-
-    @Override
-    protected int getPayloadSize() {
-        return 1 + responseHeader.getSize() + ticketInfos.getSize() + encryptedSecret.getSize() + extra.getSize();
-    }
-
-    @Override
-    public void encodePayload(ByteBuf byteBuf, boolean le) {
-        responseHeader.encode(byteBuf, le);
-        version.encode(byteBuf, le);
-        ticketInfos.encode(byteBuf, le);
-        encryptedSecret.encode(byteBuf, le);
-        extra.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decodePayload(ByteBuf byteBuf, boolean le) {
-        responseHeader = new CephXResponseHeader();
-        responseHeader.decode(byteBuf, le);
-
-        byte versionValue = byteBuf.readByte();
-        if (versionValue != version.getValue()) {
-            throw new IllegalArgumentException("Unsupported version (" + versionValue + ") only 1 is supported");
-        }
-
-        ticketInfos = new CephList<>(CephXTicketInfo.class);
-        ticketInfos.decode(byteBuf, le);
-
-        encryptedSecret = new CephBytes();
-        encryptedSecret.decode(byteBuf, le);
-        extra = new CephBytes();
-        extra.decode(byteBuf, le);
+    public void setVersion(byte version) {
     }
 }

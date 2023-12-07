@@ -2,9 +2,6 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.AuthMode;
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.types.CephString;
-import ca.venom.ceph.protocol.types.Int32;
-import ca.venom.ceph.protocol.types.Int64;
 import ca.venom.ceph.protocol.types.auth.AuthRequestPayload;
 import ca.venom.ceph.protocol.types.auth.EntityName;
 import io.netty.buffer.ByteBuf;
@@ -47,43 +44,44 @@ public class TestAuthRequestFrame {
     }
 
     @Test
-    public void testDecodeMessage1() {
+    public void testDecodeMessage1() throws Exception {
         AuthRequestFrame parsedMessage = new AuthRequestFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true);
 
-        assertEquals(2L, parsedMessage.getAuthMethod().getValue());
+        assertEquals(2L, parsedMessage.getSegment1().getAuthMethod());
 
-        assertEquals(2, parsedMessage.getPreferredModes().size());
-        assertEquals(2, parsedMessage.getPreferredModes().get(0).getValue());
-        assertEquals(1, parsedMessage.getPreferredModes().get(1).getValue());
+        assertEquals(2, parsedMessage.getSegment1().getPreferredModes().size());
+        assertEquals(2, parsedMessage.getSegment1().getPreferredModes().get(0));
+        assertEquals(1, parsedMessage.getSegment1().getPreferredModes().get(1));
 
-        assertEquals(AuthMode.MON, parsedMessage.getPayload().getAuthMode());
-        assertEquals(8L, parsedMessage.getPayload().getEntityName().getType().getValue());
-        assertEquals("admin", parsedMessage.getPayload().getEntityName().getEntityName().getValue());
-        assertEquals(0L, parsedMessage.getPayload().getGlobalId().getValue());
+        assertEquals(AuthMode.MON, parsedMessage.getSegment1().getPayload().getAuthMode());
+        assertEquals(8L, parsedMessage.getSegment1().getPayload().getEntityName().getType());
+        assertEquals("admin", parsedMessage.getSegment1().getPayload().getEntityName().getEntityName());
+        assertEquals(0L, parsedMessage.getSegment1().getPayload().getGlobalId());
     }
 
     @Test
     public void testEncodeMessage1() throws Exception {
         AuthRequestFrame authRequestFrame = new AuthRequestFrame();
+        authRequestFrame.setSegment1(new AuthRequestFrame.Segment1());
 
-        authRequestFrame.setAuthMethod(new Int32(2));
+        authRequestFrame.getSegment1().setAuthMethod(2);
 
-        List<Int32> preferredModes = new ArrayList<>();
-        preferredModes.add(new Int32(2));
-        preferredModes.add(new Int32(1));
-        authRequestFrame.setPreferredModes(preferredModes);
+        List<Integer> preferredModes = new ArrayList<>();
+        preferredModes.add(2);
+        preferredModes.add(1);
+        authRequestFrame.getSegment1().setPreferredModes(preferredModes);
 
         AuthRequestPayload payload = new AuthRequestPayload();
         payload.setAuthMode(AuthMode.MON);
         EntityName entityName = new EntityName();
-        entityName.setType(new Int32(8));
-        entityName.setEntityName(new CephString("admin"));
+        entityName.setType(8);
+        entityName.setEntityName("admin");
         payload.setEntityName(entityName);
-        payload.setGlobalId(new Int64(0));
-        authRequestFrame.setPayload(payload);
+        payload.setGlobalId(0);
+        authRequestFrame.getSegment1().setPayload(payload);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);

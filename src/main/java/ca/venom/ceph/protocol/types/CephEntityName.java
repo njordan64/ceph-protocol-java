@@ -1,43 +1,19 @@
 package ca.venom.ceph.protocol.types;
 
-import io.netty.buffer.ByteBuf;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import lombok.Getter;
+import lombok.Setter;
 
-public class CephEntityName implements CephDataType {
-    private Int8 type;
-    private Int64 num;
+@CephType
+public class CephEntityName {
+    @Getter
+    @Setter
+    @CephField(order = 1)
+    private byte type;
 
-    public byte getType() {
-        return type.getValue();
-    }
-
-    public void setType(byte type) {
-        this.type = new Int8(type);
-    }
-
-    public long getNum() {
-        return num.getValue();
-    }
-
-    public void setNum(long num) {
-        this.num = new Int64(num);
-    }
-
-    @Override
-    public int getSize() {
-        return 7;
-    }
-
-    @Override
-    public void encode(ByteBuf byteBuf, boolean le) {
-        type.encode(byteBuf, le);
-        num.encode(byteBuf, le);
-    }
-
-    @Override
-    public void decode(ByteBuf byteBuf, boolean le) {
-        type = new Int8();
-        type.decode(byteBuf, le);
-        num = new Int64();
-        num.decode(byteBuf, le);
-    }
+    @Getter
+    @Setter
+    @CephField(order = 2)
+    private long num;
 }

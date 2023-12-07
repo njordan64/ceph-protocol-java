@@ -1,69 +1,64 @@
 package ca.venom.ceph.protocol.messages;
 
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
+import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.frames.MessageFrame;
-import ca.venom.ceph.protocol.types.CephMap;
-import ca.venom.ceph.protocol.types.CephString;
-import ca.venom.ceph.protocol.types.MonSubscribeItem;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.EncodingException;
+import ca.venom.ceph.protocol.types.mon.MonSubscribeItem;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class MonGetMap extends MessageBase {
-    private CephMap<CephString, MonSubscribeItem> what;
-    private CephString hostname;
+    @CephType
+    public static class Payload {
+        @Getter
+        @Setter
+        @CephField
+        private Map<String, MonSubscribeItem> what = new HashMap<>();
+
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        private String hostname;
+    }
+
+    @Getter
+    @Setter
+    private Payload payload;
 
     @Override
     protected MessageType getType() {
         return MessageType.CEPH_MSG_MON_GET_MAP;
     }
 
-    public Map<String, MonSubscribeItem> getWhat() {
-        Map<String, MonSubscribeItem> simplified = new HashMap<>();
-        for (Map.Entry<CephString, MonSubscribeItem> entry : what.getMap().entrySet()) {
-            simplified.put(entry.getKey().getValue(), entry.getValue());
-        }
-
-        return simplified;
-    }
-
-    public void setWhat(Map<String, MonSubscribeItem> what) {
-        this.what = new CephMap<>(CephString.class, MonSubscribeItem.class);
-        Map<CephString, MonSubscribeItem> stored = new HashMap<>();
-        this.what.setMap(stored);
-
-        for (Map.Entry<String, MonSubscribeItem> entry : what.entrySet()) {
-            stored.put(new CephString(entry.getKey()), entry.getValue());
-        }
-    }
-
-    public String getHostname() {
-        return hostname.getValue();
-    }
-
-    public void setHostname(String hostname) {
-        this.hostname = new CephString(hostname);
-    }
-
     @Override
-    protected void encodePayload(MessageFrame messageFrame) {
+    protected void encodePayload(MessageFrame messageFrame) throws EncodingException {
         ByteBuf byteBuf = Unpooled.buffer();
-        what.encode(byteBuf, true);
-        hostname.encode(byteBuf, true);
+        CephEncoder.encode(payload, byteBuf, true);
 
-        messageFrame.setFront(byteBuf);
-        messageFrame.setFrontLE(true);
+        byte[] bytes = new byte[byteBuf.writerIndex()];
+        byteBuf.readBytes(bytes);
+
+        MessageFrame.Segment segment = new MessageFrame.Segment();
+        segment.setEncodedBytes(bytes);
+        segment.setLe(true);
+        messageFrame.setFront(segment);
     }
 
     @Override
-    protected void decodePayload(MessageFrame messageFrame) {
-        ByteBuf byteBuf = messageFrame.getFront();
-        boolean le = messageFrame.isFrontLE();
-
-        what = new CephMap<>(CephString.class, MonSubscribeItem.class);
-        what.decode(byteBuf, le);
-        hostname = new CephString();
-        hostname.decode(byteBuf, le);
+    protected void decodePayload(MessageFrame messageFrame) throws DecodingException {
+        payload = CephDecoder.decode(
+                Unpooled.wrappedBuffer(messageFrame.getFront().getEncodedBytes()),
+                messageFrame.getFront().isLe(),
+                Payload.class
+        );
     }
 }

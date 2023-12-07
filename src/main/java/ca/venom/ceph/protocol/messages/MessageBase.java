@@ -1,145 +1,104 @@
 package ca.venom.ceph.protocol.messages;
 
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
+import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.frames.MessageFrame;
-import ca.venom.ceph.protocol.types.CephBitSet;
-import ca.venom.ceph.protocol.types.Int16;
-import ca.venom.ceph.protocol.types.Int64;
-import ca.venom.ceph.protocol.types.mon.MessagePriority;
+import ca.venom.ceph.protocol.types.annotations.CephEncodingSize;
+import ca.venom.ceph.protocol.types.annotations.CephField;
+import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.protocol.types.EncodingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.BitSet;
 
 public abstract class MessageBase {
-    private Int64 seq;
-    private Int64 tid;
-    private Int16 priority;
-    private Int16 version;
-    private Int64 ackSeq;
-    private CephBitSet flags;
-    private Int16 compatVersion;
-    private Int16 reserved;
+    @CephType
+    public static class MessageHead {
+        @Getter
+        @Setter
+        @CephField
+        private long seq;
 
-    public long getSeq() {
-        return seq.getValue();
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        private long tid;
+
+        @Getter
+        @Setter
+        @CephField(order = 3)
+        private short priority;
+
+        @Getter
+        @Setter
+        @CephField(order = 4)
+        private short version;
+
+        @Getter
+        @Setter
+        @CephField(order = 5)
+        private int prePaddingLen;
+
+        @Getter
+        @Setter
+        @CephField(order = 6)
+        private short dataOffset;
+
+        @Getter
+        @Setter
+        @CephField(order = 7)
+        private long ackSeq;
+
+        @Getter
+        @Setter
+        @CephField(order = 8)
+        @CephEncodingSize(1)
+        private BitSet flags;
+
+        @Getter
+        @Setter
+        @CephField(order = 9)
+        private short compatVersion;
+
+        @Getter
+        @Setter
+        @CephField(order = 10)
+        private short reserved;
     }
 
-    public void setSeq(long seq) {
-        this.seq = new Int64(seq);
-    }
-
-    public long getTid() {
-        return tid.getValue();
-    }
-
-    public void setTid(long tid) {
-        this.tid = new Int64(tid);
-    }
+    @Getter
+    @Setter
+    private MessageHead messageHead;
 
     protected abstract MessageType getType();
 
-    public MessagePriority getPriority() {
-        return MessagePriority.getFromValue(priority.getValue());
+    public void encode(MessageFrame messageFrame) throws EncodingException {
+        ByteBuf byteBuf = Unpooled.buffer();
+        CephEncoder.encode(messageHead, byteBuf, true);
+
+        MessageFrame.Segment segment = new MessageFrame.Segment();
+        byte[] bytes = new byte[byteBuf.writerIndex()];
+        byteBuf.readBytes(bytes);
+        segment.setEncodedBytes(bytes);
+        segment.setLe(true);
+
+        messageFrame.setHead(segment);
     }
 
-    public void setPriority(MessagePriority priority) {
-        this.priority = new Int16(priority.getValue());
+    public void decode(MessageFrame messageFrame) throws DecodingException {
+        messageHead = CephDecoder.decode(
+                Unpooled.wrappedBuffer(messageFrame.getHead().getEncodedBytes()),
+                messageFrame.getHead().isLe(),
+                MessageHead.class);
     }
 
-    public Int16 getVersion() {
-        return version;
+    protected void encodePayload(MessageFrame messageFrame) throws EncodingException {
     }
 
-    public void setVersion(Int16 version) {
-        this.version = version;
-    }
-
-    public Int64 getAckSeq() {
-        return ackSeq;
-    }
-
-    public void setAckSeq(Int64 ackSeq) {
-        this.ackSeq = ackSeq;
-    }
-
-    public CephBitSet getFlags() {
-        return flags;
-    }
-
-    public void setFlags(CephBitSet flags) {
-        this.flags = flags;
-    }
-
-    public Int16 getCompatVersion() {
-        return compatVersion;
-    }
-
-    public void setCompatVersion(Int16 compatVersion) {
-        this.compatVersion = compatVersion;
-    }
-
-    public Int16 getReserved() {
-        return reserved;
-    }
-
-    public void setReserved(Int16 reserved) {
-        this.reserved = reserved;
-    }
-
-    public void encode(MessageFrame messageFrame) {
-        ByteBuf byteBuf = Unpooled.buffer(41);
-        seq.encode(byteBuf, true);
-        tid.encode(byteBuf, true);
-        new Int16(getType().getTagNum()).encode(byteBuf, true);
-        priority.encode(byteBuf, true);
-        version.encode(byteBuf, true);
-
-        byteBuf.writeZero(6);
-
-        ackSeq.encode(byteBuf, true);
-        flags.encode(byteBuf, true);
-        compatVersion.encode(byteBuf, true);
-        reserved.encode(byteBuf, true);
-
-        messageFrame.setHead(byteBuf);
-        messageFrame.setHeadLE(true);
-    }
-
-    public void decode(MessageFrame messageFrame) {
-        ByteBuf byteBuf = messageFrame.getHead();
-        boolean le = messageFrame.isHeadLE();
-
-        seq = new Int64();
-        seq.decode(byteBuf, le);
-        tid = new Int64();
-        tid.decode(byteBuf, le);
-        byteBuf.skipBytes(2);
-        priority = new Int16();
-        priority.decode(byteBuf, le);
-        version = new Int16();
-        version.decode(byteBuf, le);
-
-        int dataPrePaddingLen;
-        short dataOff;
-        if (le) {
-            dataPrePaddingLen = byteBuf.readIntLE();
-            dataOff = byteBuf.readShortLE();
-        } else {
-            dataPrePaddingLen = byteBuf.readInt();
-            dataOff = byteBuf.readShort();
-        }
-
-        ackSeq = new Int64();
-        ackSeq.decode(byteBuf, le);
-        flags = new CephBitSet(1);
-        flags.decode(byteBuf, le);
-        compatVersion = new Int16();
-        compatVersion.decode(byteBuf, le);
-        reserved = new Int16();
-        reserved.decode(byteBuf, le);
-    }
-
-    protected void encodePayload(MessageFrame messageFrame) {
-    }
-
-    protected void decodePayload(MessageFrame messageFrame) {
+    protected void decodePayload(MessageFrame messageFrame) throws DecodingException {
     }
 }

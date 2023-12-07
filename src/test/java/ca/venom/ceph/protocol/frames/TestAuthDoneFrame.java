@@ -2,12 +2,6 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.ControlFrameType;
-import ca.venom.ceph.protocol.types.CephBoolean;
-import ca.venom.ceph.protocol.types.CephBytes;
-import ca.venom.ceph.protocol.types.CephList;
-import ca.venom.ceph.protocol.types.Int16;
-import ca.venom.ceph.protocol.types.Int32;
-import ca.venom.ceph.protocol.types.Int64;
 import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
 import ca.venom.ceph.protocol.types.auth.CephXResponseHeader;
 import ca.venom.ceph.protocol.types.auth.CephXTicketInfo;
@@ -18,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -58,53 +51,52 @@ public class TestAuthDoneFrame {
     }
 
     @Test
-    public void testDecodeMessage1() {
+    public void testDecodeMessage1() throws Exception {
         AuthDoneFrame parsedMessage = new AuthDoneFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true);
 
         assertEquals(ControlFrameType.AUTH_DONE, parsedMessage.getTag());
-        assertEquals(new Int64(new BigInteger("154220")), parsedMessage.getGlobalId());
-        assertEquals(new Int32(2), parsedMessage.getConnectionMode());
+        assertEquals(154220L, parsedMessage.getSegment1().getGlobalId());
+        assertEquals(2, parsedMessage.getSegment1().getConnectionMode());
 
-        assertEquals(0x100, parsedMessage.getPayload().getResponseHeader().getResponseType().getValue());
-        assertEquals(0, parsedMessage.getPayload().getResponseHeader().getStatus().getValue());
-        assertEquals(1, parsedMessage.getPayload().getTicketInfos().getValues().size());
-        assertEquals(32L, parsedMessage.getPayload().getTicketInfos().getValues().get(0).getServiceId().getValue());
-        assertArrayEquals(SERVICE_TICKET, parsedMessage.getPayload().getTicketInfos().getValues().get(0).getServiceTicket().getValue());
-        assertFalse(parsedMessage.getPayload().getTicketInfos().getValues().get(0).getEncrypted().getValue());
-        assertArrayEquals(TICKET, parsedMessage.getPayload().getTicketInfos().getValues().get(0).getTicket().getValue());
-        assertArrayEquals(ENCRYPTED_SECRET, parsedMessage.getPayload().getEncryptedSecret().getValue());
-        assertArrayEquals(new byte[0], parsedMessage.getPayload().getExtra().getValue());
+        assertEquals(0x100, parsedMessage.getSegment1().getPayload().getResponseHeader().getResponseType());
+        assertEquals(0, parsedMessage.getSegment1().getPayload().getResponseHeader().getStatus());
+        assertEquals(1, parsedMessage.getSegment1().getPayload().getTicketInfos().size());
+        assertEquals(32L, parsedMessage.getSegment1().getPayload().getTicketInfos().get(0).getServiceId());
+        assertArrayEquals(SERVICE_TICKET, parsedMessage.getSegment1().getPayload().getTicketInfos().get(0).getServiceTicket());
+        assertFalse(parsedMessage.getSegment1().getPayload().getTicketInfos().get(0).isEncrypted());
+        assertArrayEquals(TICKET, parsedMessage.getSegment1().getPayload().getTicketInfos().get(0).getTicket());
+        assertArrayEquals(ENCRYPTED_SECRET, parsedMessage.getSegment1().getPayload().getEncryptedSecret());
+        assertArrayEquals(new byte[0], parsedMessage.getSegment1().getPayload().getExtra());
     }
 
     @Test
-    public void testEncodeMessage1() {
+    public void testEncodeMessage1() throws Exception {
         AuthDoneFrame authDoneFrame = new AuthDoneFrame();
-        authDoneFrame.setGlobalId(new Int64(new BigInteger("154220")));
-        authDoneFrame.setConnectionMode(new Int32(2));
+        authDoneFrame.setSegment1(new AuthDoneFrame.Segment1());
+        authDoneFrame.getSegment1().setGlobalId(154220L);
+        authDoneFrame.getSegment1().setConnectionMode(2);
 
         AuthDonePayload payload = new AuthDonePayload();
-        authDoneFrame.setPayload(payload);
+        authDoneFrame.getSegment1().setPayload(payload);
         CephXResponseHeader responseHeader = new CephXResponseHeader();
-        responseHeader.setResponseType(new Int16((short) 0x100));
-        responseHeader.setStatus(new Int32(0));
+        responseHeader.setResponseType((short) 0x100);
+        responseHeader.setStatus(0);
         payload.setResponseHeader(responseHeader);
 
         CephXTicketInfo ticketInfo = new CephXTicketInfo();
-        ticketInfo.setServiceId(new Int32(32));
-        ticketInfo.setServiceTicket(new CephBytes(SERVICE_TICKET));
-        ticketInfo.setEncrypted(new CephBoolean(false));
-        ticketInfo.setTicket(new CephBytes(TICKET));
+        ticketInfo.setServiceId(32);
+        ticketInfo.setServiceTicket(SERVICE_TICKET);
+        ticketInfo.setEncrypted(false);
+        ticketInfo.setTicket(TICKET);
         List<CephXTicketInfo> ticketInfoList = new ArrayList<>();
         ticketInfoList.add(ticketInfo);
-        CephList<CephXTicketInfo> ticketInfoCephList = new CephList<>(CephXTicketInfo.class);
-        ticketInfoCephList.setValues(ticketInfoList);
-        payload.setTicketInfos(ticketInfoCephList);
+        payload.setTicketInfos(ticketInfoList);
 
-        payload.setEncryptedSecret(new CephBytes(ENCRYPTED_SECRET));
-        payload.setExtra(new CephBytes(new byte[0]));
+        payload.setEncryptedSecret(ENCRYPTED_SECRET);
+        payload.setExtra(new byte[0]);
 
         byte[] expectedPayload = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedPayload, 0, message1Bytes.length - 36);
