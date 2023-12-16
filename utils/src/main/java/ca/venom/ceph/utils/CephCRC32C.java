@@ -1,7 +1,41 @@
+/*
+ * Copyright:
+ *   Copyright (c) 2001-2007, by Cisco Systems, Inc. All rights reserved.
+ *   Copyright (c) 2004-2006 Intel Corporation - All Rights Reserved
+ * License:
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are met:
+ *
+ *   a) Redistributions of source code must retain the above copyright notice,
+ *      this list of conditions and the following disclaimer.
+ *
+ *   b) Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in
+ *      the documentation and/or other materials provided with the distribution.
+ *
+ *   c) Neither the name of Cisco Systems, Inc. nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ *   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ *   THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 package ca.venom.ceph.utils;
 
-import io.netty.buffer.ByteBuf;
-
+/**
+ * A Java port of the "sctp_crc32.c" file. Used to calculate CRC-32C values of byte strings that are compatible
+ * with Ceph.
+ */
 public class CephCRC32C {
     private static final long[] SCTP_CRC_TABLEIL8_O32 = new long[]
     {
@@ -316,10 +350,24 @@ public class CephCRC32C {
                (long) (buffer[offset] & 255);
     }
 
+    /**
+     * Updates the CRC-32C checksum with the specified array of bytes.
+     *
+     * @param buffer the byte array to update the checksum with
+     * @return the current checksum value
+     */
     public long update(byte[] buffer) {
         return update(buffer, 0, buffer.length);
     }
 
+    /**
+     * Updates the CRC-32C checksum with the specified array of bytes.
+     *
+     * @param buffer the byte array to update the checksum with
+     * @param offset the start offset of the data
+     * @param length the number of bytes to use for the update
+     * @return the current checksum value
+     */
     public long update(byte[] buffer, int offset, int length) {
         long term1, term2;
         int running_length;
@@ -358,6 +406,11 @@ public class CephCRC32C {
         return crc;
     }
 
+    /**
+     * Returns CRC-32C value.
+     *
+     * @return the current checksum value
+     */
     public long getValue() {
         return crc;
     }
