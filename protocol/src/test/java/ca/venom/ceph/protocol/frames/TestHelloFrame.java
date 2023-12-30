@@ -72,13 +72,6 @@ public class TestHelloFrame {
 
         byte[] actualSegment = new byte[byteBuf.writerIndex()];
         System.arraycopy(byteBuf.array(), 0, actualSegment, 0, byteBuf.writerIndex());
-
-        System.out.println("--------------------------------------------------");
-        HexFunctions.printHexString(expectedSegment);
-        System.out.println("--------------------------------------------------");
-        HexFunctions.printHexString(actualSegment);
-        System.out.println("--------------------------------------------------");
-
         assertArrayEquals(expectedSegment, actualSegment);
     }
 }

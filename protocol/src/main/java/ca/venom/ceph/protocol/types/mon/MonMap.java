@@ -9,12 +9,12 @@
  */
 package ca.venom.ceph.protocol.types.mon;
 
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeSize;
+import ca.venom.ceph.encoding.annotations.CephTypeVersion;
 import ca.venom.ceph.protocol.CephRelease;
 import ca.venom.ceph.protocol.EnumWithIntValue;
-import ca.venom.ceph.protocol.types.annotations.CephField;
-import ca.venom.ceph.protocol.types.annotations.CephType;
-import ca.venom.ceph.protocol.types.annotations.CephTypeSize;
-import ca.venom.ceph.protocol.types.annotations.CephTypeVersion;
 import ca.venom.ceph.protocol.types.CephUUID;
 import ca.venom.ceph.protocol.types.UTime;
 import lombok.Getter;

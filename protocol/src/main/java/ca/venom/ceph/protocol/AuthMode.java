@@ -26,7 +26,7 @@ public enum AuthMode implements EnumWithIntValue {
         return valueInt;
     }
 
-    public static AuthMode getFromTypeNum(int valueInt) {
+    public static AuthMode getFromValueInt(int valueInt) {
         for (AuthMode authMode : values()) {
             if (authMode.valueInt == valueInt) {
                 return authMode;

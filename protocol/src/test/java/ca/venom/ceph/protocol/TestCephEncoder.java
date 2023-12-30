@@ -1,8 +1,8 @@
 package ca.venom.ceph.protocol;
 
-import ca.venom.ceph.protocol.types.annotations.CephEncodingSize;
-import ca.venom.ceph.protocol.types.annotations.CephField;
-import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephEncodingSize;
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephType;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
@@ -65,6 +65,7 @@ public class TestCephEncoder {
         @Getter
         @Setter
         @CephField
+        @CephEncodingSize(3)
         private byte[] value;
     }
 
@@ -146,42 +147,42 @@ public class TestCephEncoder {
     }
 
     @Test
-    public void testEncodeByte() throws Exception {
+    public void testEncodeByte() {
         EncodeByteTest sample = new EncodeByteTest();
         sample.setValue((byte) 3);
         byte[] expectedBytes = new byte[] {(byte) 3};
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeShort() throws Exception {
+    public void testEncodeShort() {
         EncodeShortTest sample = new EncodeShortTest();
         sample.setValue((short) 3);
         byte[] expectedBytes = new byte[] {(byte) 3, (byte) 0};
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeInt() throws Exception {
+    public void testEncodeInt() {
         EncodeIntTest sample = new EncodeIntTest();
         sample.setValue(3);
         byte[] expectedBytes = new byte[] {(byte) 3, (byte) 0, (byte) 0, (byte) 0};
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeLong() throws Exception {
+    public void testEncodeLong() {
         EncodeLongTest sample = new EncodeLongTest();
         sample.setValue(3L);
         byte[] expectedBytes = new byte[] {
                 (byte) 3, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 0, (byte) 0, (byte) 0, (byte) 0
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeString() throws Exception {
+    public void testEncodeString() {
         EncodeStringTest sample = new EncodeStringTest();
         sample.setValue("Hello");
         byte[] expectedBytes = new byte[] {
@@ -189,75 +190,79 @@ public class TestCephEncoder {
                 (byte) 72, (byte) 101, (byte) 108, (byte) 108,
                 (byte) 111
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeRawBytes() throws Exception {
+    public void testEncodeRawBytes() {
         EncodeRawBytesTest sample = new EncodeRawBytesTest();
         sample.setValue(new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4});
         byte[] expectedBytes = new byte[] {
                 (byte) 1, (byte) 2, (byte) 3, (byte) 4
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeBytesWithSize() throws Exception {
+    public void testEncodeBytesWithSize() {
         EncodeBytesTest sample = new EncodeBytesTest();
         sample.setValue(new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4});
         byte[] expectedBytes = new byte[] {
                 (byte) 4, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 1, (byte) 2, (byte) 3, (byte) 4
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeBytesFixed() throws Exception {
+    public void testEncodeBytesFixed() {
         EncodeBytesFixedTest sample = new EncodeBytesFixedTest();
+        sample.setValue(new byte[] {
+                (byte) 0, (byte) 0, (byte) 0, (byte) 0,
+                (byte) 0, (byte) 0, (byte) 0, (byte) 0
+        });
         byte[] expectedBytes = new byte[] {
                 (byte) 0, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 0, (byte) 0, (byte) 0, (byte) 0
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeEnum1Byte() throws Exception {
+    public void testEncodeEnum1Byte() {
         EncodeEnum1Byte sample = new EncodeEnum1Byte();
         sample.value = NodeType.MON;
         byte[] expectedBytes = new byte[] {(byte) 1};
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeEnum2Byte() throws Exception {
+    public void testEncodeEnum2Byte() {
         EncodeEnum2Byte sample = new EncodeEnum2Byte();
         sample.value = NodeType.MON;
         byte[] expectedBytes = new byte[] {(byte) 1, (byte) 0};
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeEnum4Byte() throws Exception {
+    public void testEncodeEnum4Byte() {
         EncodeEnum4Byte sample = new EncodeEnum4Byte();
         sample.value = NodeType.MON;
         byte[] expectedBytes = new byte[] {(byte) 1, (byte) 0, (byte) 0, (byte) 0};
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeBitSet() throws Exception {
+    public void testEncodeBitSet() {
         EncodeBitSetTest sample = new EncodeBitSetTest();
         sample.value = new BitSet();
         sample.value.set(0, true);
         byte[] expectedBytes = new byte[] {(byte) 1, (byte) 0, (byte) 0, (byte) 0};
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeSet() throws Exception {
+    public void testEncodeSet() {
         EncodeSetTest sample = new EncodeSetTest();
         sample.value = new HashSet<>();
         sample.value.add(1);
@@ -267,11 +272,11 @@ public class TestCephEncoder {
                 (byte) 1, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 2, (byte) 0, (byte) 0, (byte) 0
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeList() throws Exception {
+    public void testEncodeList() {
         EncodeListTest sample = new EncodeListTest();
         sample.value = new ArrayList<>();
         sample.value.add(1);
@@ -281,11 +286,11 @@ public class TestCephEncoder {
                 (byte) 1, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 2, (byte) 0, (byte) 0, (byte) 0
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
     @Test
-    public void testEncodeMap() throws Exception {
+    public void testEncodeMap() {
         EncodeMapTest sample = new EncodeMapTest();
         sample.value = new HashMap<>();
         sample.value.put("a", 1);
@@ -297,10 +302,10 @@ public class TestCephEncoder {
                 (byte) 1, (byte) 0, (byte) 0, (byte) 0, (byte) 98,
                 (byte) 2, (byte) 0, (byte) 0, (byte) 0
         };
-        validateEncoding(sample, expectedBytes, true);
+        validateEncoding2(sample, expectedBytes, true);
     }
 
-    private void validateEncoding(Object toEncode, byte[] expectedBytes, boolean le) throws EncodingException {
+    private void validateEncoding2(Object toEncode, byte[] expectedBytes, boolean le) {
         ByteBuf byteBuf = Unpooled.buffer();
         CephEncoder.encode(toEncode, byteBuf, le);
 

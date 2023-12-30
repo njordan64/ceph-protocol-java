@@ -9,9 +9,9 @@
  */
 package ca.venom.ceph.protocol.types.auth;
 
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.protocol.types.UTime;
-import ca.venom.ceph.protocol.types.annotations.CephField;
-import ca.venom.ceph.protocol.types.annotations.CephType;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -7,7 +7,7 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.protocol.types.annotations;
+package ca.venom.ceph.encoding.annotations;
 
 public enum ByteOrderPreference {
     LE,

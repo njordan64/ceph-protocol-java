@@ -9,13 +9,13 @@
  */
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.protocol.CephDecoder;
 import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.annotations.CephField;
-import ca.venom.ceph.protocol.types.annotations.CephType;
 import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;

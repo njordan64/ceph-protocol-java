@@ -9,15 +9,15 @@
  */
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.encoding.annotations.CephEncodingSize;
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeVersion;
 import ca.venom.ceph.protocol.CephDecoder;
 import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.annotations.CephEncodingSize;
-import ca.venom.ceph.protocol.types.annotations.CephField;
-import ca.venom.ceph.protocol.types.annotations.CephType;
-import ca.venom.ceph.protocol.types.annotations.CephTypeVersion;
 import ca.venom.ceph.protocol.types.Addr;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;

@@ -7,18 +7,19 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.protocol.types.annotations;
+package ca.venom.ceph.encoding.annotations;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(CephChildTypes.class)
-public @interface CephChildType {
-    int typeValue();
-    Class<?> typeClass();
+public @interface CephField {
+    int order() default 1;
+    ByteOrderPreference byteOrderPreference() default ByteOrderPreference.NONE;
+    boolean includeSize() default false;
+
+    int sizeLength() default 4;
 }

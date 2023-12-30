@@ -28,7 +28,7 @@ public enum NodeType implements EnumWithIntValue {
         return valueInt;
     }
 
-    public static NodeType getFromTypeNum(int valueInt) {
+    public static NodeType getFromValueInt(int valueInt) {
         for (NodeType nodeType : values()) {
             if (nodeType.valueInt == valueInt) {
                 return nodeType;

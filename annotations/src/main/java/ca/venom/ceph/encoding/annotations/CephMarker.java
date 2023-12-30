@@ -7,7 +7,7 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.protocol.types.annotations;
+package ca.venom.ceph.encoding.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -18,7 +18,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-public @interface CephTypeVersion {
-    byte version();
-    byte compatVersion() default 0;
+public @interface CephMarker {
+    byte value();
 }

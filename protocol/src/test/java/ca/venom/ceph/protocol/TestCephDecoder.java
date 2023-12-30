@@ -1,8 +1,8 @@
 package ca.venom.ceph.protocol;
 
-import ca.venom.ceph.protocol.types.annotations.CephEncodingSize;
-import ca.venom.ceph.protocol.types.annotations.CephField;
-import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephEncodingSize;
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephType;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
 import lombok.Setter;

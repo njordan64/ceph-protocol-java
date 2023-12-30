@@ -9,12 +9,12 @@
  */
 package ca.venom.ceph.protocol.types;
 
-import ca.venom.ceph.protocol.types.annotations.CephChildType;
-import ca.venom.ceph.protocol.types.annotations.CephMarker;
-import ca.venom.ceph.protocol.types.annotations.CephParentType;
-import ca.venom.ceph.protocol.types.annotations.CephType;
-import ca.venom.ceph.protocol.types.annotations.CephTypeSize;
-import ca.venom.ceph.protocol.types.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephChildType;
+import ca.venom.ceph.encoding.annotations.CephMarker;
+import ca.venom.ceph.encoding.annotations.CephParentType;
+import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeSize;
+import ca.venom.ceph.encoding.annotations.CephTypeVersion;
 
 @CephType
 @CephMarker(1)

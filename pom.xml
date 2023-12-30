@@ -78,6 +78,8 @@ Foundation.  See file COPYING.
   </dependencyManagement>
 
   <modules>
+    <module>annotations</module>
+    <module>encoding-annotation-processor</module>
     <module>utils</module>
     <module>protocol</module>
     <module>client</module>

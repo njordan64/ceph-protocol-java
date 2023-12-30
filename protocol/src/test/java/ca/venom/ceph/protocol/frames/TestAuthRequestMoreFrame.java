@@ -64,9 +64,6 @@ public class TestAuthRequestMoreFrame {
         assertEquals(0L, parsedMessage.getPayload().getAuthenticate().getOldTicket().getSecretId());
         assertArrayEquals(new byte[0], parsedMessage.getPayload().getAuthenticate().getOldTicket().getBlob());
         assertEquals(32L, parsedMessage.getPayload().getAuthenticate().getOtherKeys());
-
-        byteBuf = Unpooled.buffer();
-        CephEncoder.encode(parsedMessage.getPayload().getAuthenticate().getClientChallenge(), byteBuf, true);
     }
 
     @Test

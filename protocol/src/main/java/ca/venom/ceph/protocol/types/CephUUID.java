@@ -9,9 +9,10 @@
  */
 package ca.venom.ceph.protocol.types;
 
-import ca.venom.ceph.protocol.types.annotations.ByteOrderPreference;
-import ca.venom.ceph.protocol.types.annotations.CephField;
-import ca.venom.ceph.protocol.types.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.ByteOrderPreference;
+import ca.venom.ceph.encoding.annotations.CephEncodingSize;
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephType;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class CephUUID {
     @Getter
     @Setter
     @CephField(byteOrderPreference = ByteOrderPreference.BE)
+    @CephEncodingSize(16)
     private byte[] bytes;
 
     public UUID getUUID() {
