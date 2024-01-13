@@ -453,6 +453,12 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
             outputByteBuf.readerIndex(readerIndex);
         }
 
+        int readerIndex = outputByteBuf.readerIndex();
+        byte[] bytes = new byte[outputByteBuf.writerIndex()];
+        outputByteBuf.readBytes(bytes);
+        outputByteBuf.readerIndex(readerIndex);
+        LOG.trace("Encoded message:\n" + HexFunctions.hexToString(bytes));
+
         byteBuf.writeBytes(outputByteBuf);
     }
 

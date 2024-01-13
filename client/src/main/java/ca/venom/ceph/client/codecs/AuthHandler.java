@@ -46,7 +46,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
+public class AuthHandler extends InitializationHandler<AuthFrameBase> {
     private static final Logger LOG = LoggerFactory.getLogger(AuthHandler.class);
     private static final byte[] MAGIC_BYTES = new byte[] {
             (byte) 0x55, (byte) 0xaa, (byte) 0x26, (byte) 0x88,
@@ -67,7 +67,6 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
     private SecretKeySpec sessionKey;
     private ByteBuf sentByteBuf;
     private ByteBuf receivedByteBuf;
-    private CompletableFuture<Void> authFinished;
 
     public AuthHandler(String username, String keyString) {
         this.username = username;
@@ -76,28 +75,11 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         authKey = new SecretKeySpec(keyBytes, 12, 16, "AES");
     }
 
-    public CompletableFuture<Void> start(Channel channel) {
+    public void start(Channel channel) {
         LOG.debug(">>> AuthHandler.start");
 
-        synchronized (this) {
-            if (authFinished != null) {
-                CompletableFuture<Void> authInProgress = new CompletableFuture<>();
-                authInProgress.completeExceptionally(new IllegalStateException("Auth in progress"));
-                return authInProgress;
-            } else {
-                authFinished = new CompletableFuture<>();
-            }
-        }
-
         if (state == State.COMPLETE) {
-            authFinished.complete(null);
-            CompletableFuture<Void> toReturn = authFinished;
-
-            synchronized (this) {
-                authFinished = null;
-            }
-
-            return toReturn;
+            triggerNextHandler(channel);
         }
 
         AuthRequestFrame request = new AuthRequestFrame();
@@ -120,8 +102,6 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
         state = State.INITIATED;
 
         channel.writeAndFlush(request);
-
-        return authFinished;
     }
 
     @Override
@@ -278,9 +258,6 @@ public class AuthHandler extends SimpleChannelInboundHandler<AuthFrameBase> {
 
         ctx.writeAndFlush(signatureFrame).sync();
 
-        authFinished.complete(null);
-        synchronized (this) {
-            authFinished = null;
-        }
+        triggerNextHandler(ctx.channel());
     }
 }

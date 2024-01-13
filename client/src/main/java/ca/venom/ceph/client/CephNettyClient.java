@@ -68,9 +68,9 @@ public class CephNettyClient {
                               CompletableFuture<Channel> channelReady) {
         ctx.pipeline().addLast("Frame-Preparser", new CephPreParsedFrameCodec(receivedByteBuf, sentByteBuf));
         ctx.pipeline().addLast("Frame-Codec", new CephFrameCodec());
-        ctx.pipeline().addLast("Hello-Handler", new HelloFrameHandler(channelReady));
+        ctx.pipeline().addLast("Hello-Handler", new HelloFrameHandler());
         ctx.pipeline().addLast("Auth-Handler", new AuthHandler(username, keyString));
         ctx.pipeline().addLast("Compression-Handler", new CompressionHandler());
-        ctx.pipeline().addLast("ServerIdent-Handler", new ServerIdentHandler());
+        ctx.pipeline().addLast("ServerIdent-Handler", new ServerIdentHandler(channelReady));
     }
 }

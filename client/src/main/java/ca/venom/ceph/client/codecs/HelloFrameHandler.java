@@ -21,13 +21,11 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 
-public class HelloFrameHandler extends SimpleChannelInboundHandler<HelloFrame> {
+public class HelloFrameHandler extends InitializationHandler<HelloFrame> {
     private static final Logger LOG = LoggerFactory.getLogger(HelloFrameHandler.class);
 
-    private final CompletableFuture<Channel> channelReady;
-
-    public HelloFrameHandler(CompletableFuture<Channel> channelReady) {
-        this.channelReady = channelReady;
+    @Override
+    public void start(Channel channel) {
     }
 
     @Override
@@ -47,6 +45,6 @@ public class HelloFrameHandler extends SimpleChannelInboundHandler<HelloFrame> {
 
         ctx.writeAndFlush(reply).sync();
 
-        channelReady.complete(ctx.channel());
+        triggerNextHandler(ctx.channel());
     }
 }

@@ -26,12 +26,16 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-public class ServerIdentHandler extends SimpleChannelInboundHandler<ServerIdentFrame> {
+public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> {
     private static final Logger LOG = LoggerFactory.getLogger(ServerIdentHandler.class);
 
-    private CompletableFuture<Boolean> future;
+    private CompletableFuture<Channel> future;
 
-    public CompletableFuture<Boolean> start(Channel channel) {
+    public ServerIdentHandler(CompletableFuture<Channel> future) {
+        this.future = future;
+    }
+
+    public void start(Channel channel) {
         ClientIdentFrame clientIdentFrame = new ClientIdentFrame();
         clientIdentFrame.setSegment1(new ClientIdentFrame.Segment1());
         clientIdentFrame.getSegment1().setGlobalId(-1);
@@ -80,14 +84,11 @@ public class ServerIdentHandler extends SimpleChannelInboundHandler<ServerIdentF
         }
 
         channel.writeAndFlush(clientIdentFrame);
-
-        future = new CompletableFuture<>();
-        return future;
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerIdentFrame serverIdentFrame) {
         LOG.debug(">>> Received ServerIdent");
-        future.complete(true);
+        future.complete(ctx.channel());
     }
 }
