@@ -3,6 +3,7 @@ package ca.venom.ceph.annotation.processor.fields;
 import ca.venom.ceph.annotation.processor.CodeGenerationContext;
 import ca.venom.ceph.annotation.processor.EncodableField;
 
+import javax.tools.Diagnostic;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,7 +67,7 @@ public abstract class FieldCodeGenerator {
         }
 
         if (field.getInterfaces() != null &&
-                field.getInterfaces().contains("ca.venom.ceph.protocol.EnumWithIntValue")) {
+                field.getInterfaces().contains("ca.venom.ceph.types.EnumWithIntValue")) {
             return context.getFieldCodeGenerators().get("Enum");
         }
 
@@ -93,4 +94,7 @@ public abstract class FieldCodeGenerator {
                                                 int indentation,
                                                 String variableName,
                                                 String typeName);
+
+    public void setTypeCode(String typeCode) {
+    }
 }

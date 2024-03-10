@@ -100,7 +100,7 @@ public class AuthTest {
 
     private static void processBanner(Socket socket) throws IOException {
         BannerFrame bannerFrame = new BannerFrame();
-        bannerFrame.decode(socket.getInputStream());
+        //bannerFrame.decode(socket.getInputStream());
 
         if (!bannerFrame.isRevision1Supported()) {
             throw new IOException("Only revision message version 2.1 is supported");

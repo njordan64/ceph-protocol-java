@@ -31,6 +31,11 @@ Foundation.  See file COPYING.
     <dependencies>
         <dependency>
             <groupId>ca.venom.ceph</groupId>
+            <artifactId>protocol-types</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>ca.venom.ceph</groupId>
             <artifactId>annotations</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <scope>compile</scope>

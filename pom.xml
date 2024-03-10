@@ -19,7 +19,7 @@ Foundation.  See file COPYING.
   <packaging>pom</packaging>
 
   <properties>
-    <netty.version>4.1.101.Final</netty.version>
+    <netty.version>4.1.107.Final</netty.version>
     <logback.version>1.4.14</logback.version>
   </properties>
 
@@ -78,11 +78,13 @@ Foundation.  See file COPYING.
   </dependencyManagement>
 
   <modules>
+    <module>types</module>
     <module>annotations</module>
     <module>encoding-annotation-processor</module>
     <module>utils</module>
     <module>protocol</module>
     <module>client</module>
+    <module>analysis</module>
   </modules>
 
 </project>

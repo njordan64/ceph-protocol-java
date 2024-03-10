@@ -9,6 +9,8 @@
  */
 package ca.venom.ceph.protocol;
 
+import ca.venom.ceph.types.EnumWithIntValue;
+
 public enum NodeType implements EnumWithIntValue {
     MON(0x01),
     MDS(0x02),

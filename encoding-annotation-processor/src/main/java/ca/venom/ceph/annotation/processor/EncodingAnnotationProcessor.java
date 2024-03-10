@@ -14,10 +14,12 @@ import ca.venom.ceph.encoding.annotations.CephChildTypes;
 import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephMarker;
+import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephParentType;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
 import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.types.MessageType;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ClassType;
 
@@ -73,6 +75,12 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
                     encodableClass);
         }
 
+        Map<MessageType, String> messageTypeClasses = new HashMap<>();
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephMessagePayload.class)) {
+            CephMessagePayload messagePayload = element.getAnnotation(CephMessagePayload.class);
+            messageTypeClasses.put(messagePayload.value(), element.asType().toString());
+        }
+
         for (Element element : roundEnv.getElementsAnnotatedWith(CephField.class)) {
             TypeMirror elementType = element.asType();
             EncodableClass encodableClass = encodableClasses.get(element.getEnclosingElement().asType().toString());
@@ -126,6 +134,7 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
 
         CodeGenerator codeGenerator = new CodeGenerator(filer, messager);
         codeGenerator.setEncodableClasses(encodableClasses);
+        codeGenerator.setMessageTypeClasses(messageTypeClasses);
 
         try {
             codeGenerator.generateEncodingSources();

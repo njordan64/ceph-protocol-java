@@ -9,7 +9,7 @@
  */
 package ca.venom.ceph.protocol;
 
-import ca.venom.ceph.protocol.types.mon.MonMap;
+import ca.venom.ceph.protocol.messages.MonMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 

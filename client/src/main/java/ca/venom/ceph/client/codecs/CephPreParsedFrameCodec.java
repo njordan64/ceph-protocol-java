@@ -150,6 +150,8 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
                     decryptChunk(byteBuf, offset, decryptedChunkSize + paddingLen, parseByteBuf);
                     parseByteBuf.writerIndex(parseByteBuf.writerIndex() - paddingLen);
                     offset += remainingChunkSizes[0];
+                } else if (segment1Size < 48) {
+                    parseByteBuf.writerIndex(parseByteBuf.writerIndex() - (48 - segment1Size) - 4);
                 }
 
                 if (remainingChunkSizes[1] > 0) {
@@ -298,7 +300,7 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
         GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, rxNonceBytes);
 
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        cipher.init(Cipher.DECRYPT_MODE, streamKey,gcmParameterSpec);
+        cipher.init(Cipher.DECRYPT_MODE, streamKey, gcmParameterSpec);
 
         byte[] encryptedBytes = new byte[length + 16];
         byteBuf.getBytes(byteBuf.readerIndex() + offset, encryptedBytes);

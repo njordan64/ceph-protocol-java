@@ -109,7 +109,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         LOG.debug(">>> AuthHandler.channelRead0: " + frame.getClass().getName());
 
         if (frame instanceof AuthReplyMoreFrame replyMoreFrame) {
-            handeAuthRequestMore(ctx, replyMoreFrame);
+            handeAuthReplyMore(ctx, replyMoreFrame);
         } else if (frame instanceof AuthDoneFrame authDoneFrame) {
             handleAuthDone(ctx, authDoneFrame);
         } else if (frame instanceof AuthSignatureFrame authSignatureFrame) {
@@ -117,7 +117,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         }
     }
 
-    private void handeAuthRequestMore(ChannelHandlerContext ctx, AuthReplyMoreFrame request) throws Exception {
+    private void handeAuthReplyMore(ChannelHandlerContext ctx, AuthReplyMoreFrame request) throws Exception {
         switch (state) {
             case NONE:
                 LOG.debug("Unexpected auth request more frame");

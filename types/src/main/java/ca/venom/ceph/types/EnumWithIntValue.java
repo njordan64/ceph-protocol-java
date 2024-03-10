@@ -7,7 +7,7 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.protocol;
+package ca.venom.ceph.types;
 
 public interface EnumWithIntValue {
     int getValueInt();

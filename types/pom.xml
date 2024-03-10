@@ -18,8 +18,8 @@ Foundation.  See file COPYING.
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
-    <name>Ceph Encoding Annotations</name>
-    <artifactId>annotations</artifactId>
+    <name>Ceph Protocol Types</name>
+    <artifactId>protocol-types</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -30,9 +30,13 @@ Foundation.  See file COPYING.
 
     <dependencies>
         <dependency>
-            <groupId>ca.venom.ceph</groupId>
-            <artifactId>protocol-types</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -52,4 +56,5 @@ Foundation.  See file COPYING.
             </plugin>
         </plugins>
     </build>
+
 </project>

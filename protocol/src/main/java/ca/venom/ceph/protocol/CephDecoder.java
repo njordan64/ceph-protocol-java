@@ -43,4 +43,22 @@ public class CephDecoder {
             return null;
         }
     }
+
+    public static <T> T decode(ByteBuf byteBuf, boolean le, Class<T> valueClass, int typeCode) throws DecodingException {
+        String packageName = getEncodingPackageName(valueClass.getName());
+        String className = valueClass.getSimpleName() + "Encodable";
+
+        try {
+            Class<?> decodingClass = valueClass.getClassLoader().loadClass(packageName + "." + className);
+            Method decodeMethod = decodingClass.getMethod("decode", ByteBuf.class, Boolean.TYPE, Integer.TYPE);
+            return (T) decodeMethod.invoke(null, byteBuf, le, typeCode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e.getCause() instanceof DecodingException decodingException) {
+                throw decodingException;
+            }
+
+            return null;
+        }
+    }
 }

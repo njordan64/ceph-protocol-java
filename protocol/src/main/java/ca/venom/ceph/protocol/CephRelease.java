@@ -9,6 +9,8 @@
  */
 package ca.venom.ceph.protocol;
 
+import ca.venom.ceph.types.EnumWithIntValue;
+
 public enum CephRelease implements EnumWithIntValue {
     UNKNOWN(0),
     ARGONAUT(1),

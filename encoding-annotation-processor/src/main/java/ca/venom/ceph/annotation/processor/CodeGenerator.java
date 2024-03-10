@@ -19,6 +19,7 @@ import ca.venom.ceph.annotation.processor.fields.SetCodeGenerator;
 import ca.venom.ceph.annotation.processor.fields.ShortCodeGenerator;
 import ca.venom.ceph.annotation.processor.fields.ShortPrimitiveCodeGenerator;
 import ca.venom.ceph.annotation.processor.fields.StringCodeGenerator;
+import ca.venom.ceph.types.MessageType;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -93,6 +95,10 @@ public class CodeGenerator {
         return encodingPackageName;
     }
 
+    public void setMessageTypeClasses(Map<MessageType, String> messageTypeClasses) {
+        context.setMessageTypeClasses(messageTypeClasses);
+    }
+
     /**
      * Generate the source code files for the encoding/decoding.
      * @throws IOException
@@ -120,7 +126,11 @@ public class CodeGenerator {
         try (PrintWriter out = new PrintWriter(sourceFile.openWriter())) {
             String encodeMethod;
             String decodeMethod;
-            if (encodableClass.getParentType() != null) {
+            if ("ca.venom.ceph.protocol.messages.MessagePayload"
+                    .equals(encodableClass.getPackageName() + "." + encodableClass.getClassName())) {
+                encodeMethod = generateMessagePayloadEncodeMethod(encodableClass);
+                decodeMethod = generateMessagePayloadDecodeMethod(encodableClass);
+            } else if (encodableClass.getParentType() != null) {
                 encodeMethod = generateAbstractEncodeMethod(encodableClass);
                 decodeMethod = generateAbstractDecodeMethod(encodableClass);
             } else {
@@ -224,13 +234,75 @@ public class CodeGenerator {
         }
 
         if (isFirst) {
-            sb.append("        throw new DecodingException(\"Unknown type code read\");");
+            sb.append("        throw new IllegalArgumentException(\"Unknown type code read\");");
         } else {
             sb.append("        } else {\n");
-            sb.append("            throw new DecodingException(\"Unknown type code read\");\n");
+            sb.append("            throw new IllegalArgumentException(\"Unknown type code read\");\n");
             sb.append("        }\n");
         }
 
+        sb.append("    }\n");
+
+        return sb.toString();
+    }
+
+    private String generateMessagePayloadEncodeMethod(EncodableClass encodableClass) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("    public static void encode(");
+        sb.append(encodableClass.getPackageName());
+        sb.append(".");
+        sb.append(encodableClass.getClassName());
+        sb.append(" toEncode, ByteBuf byteBuf, boolean le) {\n");
+
+        boolean first = true;
+        for (Map.Entry<MessageType, String> messageTypeClass : context.getMessageTypeClasses().entrySet()) {
+            if (first) {
+                first = false;
+                sb.append("        ");
+            } else {
+                sb.append("        } else ");
+            }
+            sb.append(String.format("if (toEncode instanceof %s) {\n", messageTypeClass.getValue()));
+
+            String packageName = messageTypeClass.getValue().substring(0, messageTypeClass.getValue().lastIndexOf('.'));
+            String className = messageTypeClass.getValue().substring(packageName.length() + 1);
+            packageName = getEncodingPackageName(packageName);
+            sb.append(String.format("            %s.%sEncodable.encode((%s) toEncode, byteBuf, le);\n",
+                    packageName,
+                    className,
+                    messageTypeClass.getValue()));
+        }
+
+        if (!first) {
+            sb.append("        }\n");
+        }
+
+        sb.append("    }\n");
+
+        return sb.toString();
+    }
+
+    private String generateMessagePayloadDecodeMethod(EncodableClass encodableClass) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("    public static ca.venom.ceph.protocol.messages.MessagePayload ");
+        sb.append("decode(ByteBuf byteBuf, boolean le, int typeCode) throws DecodingException {\n");
+        sb.append("        switch (ca.venom.ceph.types.MessageType.getFromCode(typeCode)) {\n");
+
+        for (Map.Entry<MessageType, String> messageTypeClass : context.getMessageTypeClasses().entrySet()) {
+            String packageName = messageTypeClass.getValue().substring(0, messageTypeClass.getValue().lastIndexOf('.'));
+            String className = messageTypeClass.getValue().substring(packageName.length() + 1);
+            packageName = getEncodingPackageName(packageName);
+
+            sb.append(String.format("        case %s:\n", messageTypeClass.getKey().name()));
+            sb.append(String.format("            return %s.%sEncodable.decode(byteBuf, le);\n",
+                    packageName,
+                    className));
+        }
+
+        sb.append("        }\n");
+        sb.append("        return null;\n");
         sb.append("    }\n");
 
         return sb.toString();
@@ -273,15 +345,35 @@ public class CodeGenerator {
         sb.append("        }\n");
         sb.append("\n");
 
+        if ("ca.venom.ceph.protocol.frames.MessageFrame"
+                .equals(encodableClass.getPackageName() + "." + encodableClass.getClassName())) {
+            boolean first = true;
+
+            for (Map.Entry<MessageType, String> messageTypeClass : context.getMessageTypeClasses().entrySet()) {
+                if (first) {
+                    first = false;
+                    sb.append("        ");
+                } else {
+                    sb.append("        } else ");
+                }
+
+                sb.append(String.format("if (toEncode instanceof %s) {\n", messageTypeClass.getValue()));
+                sb.append(String.format("            toEncode.getHead().setType((short) %s.getValueInt());\n",
+                        messageTypeClass.getKey()));
+            }
+
+            if (!first) {
+                sb.append("        }\n");
+            }
+        }
+
         for (EncodableField field : encodableClass.getFields()) {
             FieldCodeGenerator fieldCodeGenerator = FieldCodeGenerator.getFieldCodeGenerator(
                     context,
                     field,
                     field.getType()
             );
-            if (fieldCodeGenerator == null) {
-                context.getMessager().printMessage(Diagnostic.Kind.ERROR, "Unable to encode field");
-            } else {
+            if (fieldCodeGenerator != null) {
                 fieldCodeGenerator.generateEncodeJavaCode(
                         sb,
                         field,

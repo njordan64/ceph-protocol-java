@@ -18,7 +18,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CephField {
     int order() default 1;
+
     ByteOrderPreference byteOrderPreference() default ByteOrderPreference.NONE;
+
     boolean includeSize() default false;
 
     int sizeLength() default 4;

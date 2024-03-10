@@ -9,6 +9,8 @@
  */
 package ca.venom.ceph.protocol.frames;
 
+import io.netty.buffer.ByteBuf;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,16 +41,13 @@ public class BannerFrame {
         stream.write(flagBytes);
     }
 
-    public void decode(InputStream stream) throws IOException {
-        byte[] bytes = new byte[EXPECTED_SIZE];
-        int offset = 0;
-        while (offset < EXPECTED_SIZE) {
-            int bytesRead = stream.read(bytes, offset, EXPECTED_SIZE - offset);
-            if (bytesRead == -1) {
-                throw new IOException("Unable to read message");
-            }
-            offset += bytesRead;
+    public void decode(ByteBuf byteBuf) throws IOException {
+        if (byteBuf.readableBytes() < EXPECTED_SIZE) {
+            throw new IOException("Unable to read message");
         }
+
+        byte[] bytes = new byte[EXPECTED_SIZE];
+        byteBuf.readBytes(bytes);
 
         final byte[] expectedBytes = BANNER_TEXT.getBytes();
         final byte[] bannerTextBytes = new byte[expectedBytes.length];

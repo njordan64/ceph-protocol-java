@@ -1,6 +1,7 @@
 package ca.venom.ceph.annotation.processor;
 
 import ca.venom.ceph.annotation.processor.fields.FieldCodeGenerator;
+import ca.venom.ceph.types.MessageType;
 
 import javax.annotation.processing.Messager;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ public class CodeGenerationContext {
     private Messager messager;
     private Map<String, FieldCodeGenerator> fieldCodeGenerators;
     private Map<String, EncodableClass> encodableClasses;
+    private Map<MessageType, String> messageTypeClasses;
     private Set<String> imports = new HashSet<>();
 
     /**
@@ -61,6 +63,14 @@ public class CodeGenerationContext {
      */
     public void setEncodableClasses(Map<String, EncodableClass> encodableClasses) {
         this.encodableClasses = encodableClasses;
+    }
+
+    public Map<MessageType, String> getMessageTypeClasses() {
+        return messageTypeClasses;
+    }
+
+    public void setMessageTypeClasses(Map<MessageType, String> messageTypeClasses) {
+        this.messageTypeClasses = messageTypeClasses;
     }
 
     /**

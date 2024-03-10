@@ -16,11 +16,73 @@ import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
+import ca.venom.ceph.protocol.messages.MessagePayload;
+import ca.venom.ceph.protocol.messages.MonGetMap;
+import ca.venom.ceph.protocol.messages.MonMap;
+import ca.venom.ceph.types.MessageType;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
 public class MessageFrame extends ControlFrame {
+    @CephType
+    public static class Header {
+        @Getter
+        @Setter
+        @CephField
+        private long seq;
+
+        @Getter
+        @Setter
+        @CephField(order = 2)
+        private long tid;
+
+        @Getter
+        @Setter
+        @CephField(order = 3)
+        private short type;
+
+        @Getter
+        @Setter
+        @CephField(order = 4)
+        private short priority;
+
+        @Getter
+        @Setter
+        @CephField(order = 5)
+        private short version;
+
+        @Getter
+        @Setter
+        @CephField(order = 6)
+        private int dataPrePaddingLen;
+
+        @Getter
+        @Setter
+        @CephField(order = 7)
+        private short dataOff;
+
+        @Getter
+        @Setter
+        @CephField(order = 8)
+        private long ackSeq;
+
+        @Getter
+        @Setter
+        @CephField(order = 9)
+        private byte flags;
+
+        @Getter
+        @Setter
+        @CephField(order = 10)
+        private short compatVersion;
+
+        @Getter
+        @Setter
+        @CephField(order = 11)
+        private short reserved;
+    }
+
     @CephType
     public static class Segment {
         @Getter
@@ -35,11 +97,11 @@ public class MessageFrame extends ControlFrame {
 
     @Getter
     @Setter
-    private Segment head;
+    private Header head;
 
     @Getter
     @Setter
-    private Segment front;
+    private MessagePayload front;
 
     @Getter
     @Setter
@@ -56,12 +118,13 @@ public class MessageFrame extends ControlFrame {
 
     @Override
     public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+        head.setType(getMessageTypeCode());
         CephEncoder.encode(head, byteBuf, le);
     }
 
     @Override
     public void encodeSegment2(ByteBuf byteBuf, boolean le) throws EncodingException {
-        if (front != null && front.encodedBytes.length > 0) {
+        if (front != null) {
             CephEncoder.encode(front, byteBuf, le);
         }
     }
@@ -82,22 +145,24 @@ public class MessageFrame extends ControlFrame {
 
     @Override
     public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
-        head = CephDecoder.decode(byteBuf, le, Segment.class);
-        head.setLe(le);
+        head = CephDecoder.decode(byteBuf, le, Header.class);
     }
 
     @Override
     public void decodeSegment2(ByteBuf byteBuf, boolean le) throws DecodingException {
         if (byteBuf.readableBytes() > 0) {
-            front = CephDecoder.decode(byteBuf, le, Segment.class);
-            front.setLe(le);
+            front = CephDecoder.decode(byteBuf, le, MessagePayload.class, head.getType());
+            head.setType(getMessageTypeCode());
         }
     }
 
     @Override
     public void decodeSegment3(ByteBuf byteBuf, boolean le) throws DecodingException {
         if (byteBuf.readableBytes() > 0) {
-            middle = CephDecoder.decode(byteBuf, le, Segment.class);
+            byte[] bytes = new byte[byteBuf.readableBytes()];
+            byteBuf.getBytes(0, bytes);
+            middle = new Segment();
+            middle.setEncodedBytes(bytes);
             middle.setLe(le);
         }
     }
@@ -105,8 +170,23 @@ public class MessageFrame extends ControlFrame {
     @Override
     public void decodeSegment4(ByteBuf byteBuf, boolean le) throws DecodingException {
         if (byteBuf.readableBytes() > 0) {
-            data = CephDecoder.decode(byteBuf, le, Segment.class);
+            byte[] bytes = new byte[byteBuf.readableBytes()];
+            byteBuf.getBytes(0, bytes);
+            data = new Segment();
+            data.setEncodedBytes(bytes);
             data.setLe(le);
         }
+    }
+
+    private short getMessageTypeCode() {
+        if (front != null) {
+            if (front instanceof MonMap) {
+                return (short) MessageType.CEPH_MSG_MON_MAP.getValueInt();
+            } else if (front instanceof MonGetMap) {
+                return (short) MessageType.CEPH_MSG_MON_GET_MAP.getValueInt();
+            }
+        }
+
+        return (short) 0;
     }
 }

@@ -9,6 +9,8 @@
  */
 package ca.venom.ceph.protocol;
 
+import ca.venom.ceph.types.EnumWithIntValue;
+
 public enum AuthMode implements EnumWithIntValue {
     NONE(0),
     AUTHORIZER(1),
