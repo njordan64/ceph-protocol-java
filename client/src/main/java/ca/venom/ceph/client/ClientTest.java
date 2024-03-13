@@ -9,9 +9,16 @@
  */
 package ca.venom.ceph.client;
 
+import ca.venom.ceph.client.codecs.RequestWithFuture;
+import ca.venom.ceph.protocol.frames.ControlFrame;
+import ca.venom.ceph.protocol.frames.MessageFrame;
+import ca.venom.ceph.protocol.messages.MonMap;
+import ca.venom.ceph.types.MessageType;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+
+import java.util.concurrent.CompletableFuture;
 
 public class ClientTest {
     public static void main(String[] args) throws Exception {
@@ -19,6 +26,8 @@ public class ClientTest {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             Channel clientChannel = client.start(workerGroup).get();
+            CompletableFuture<MonMap> monMapFuture = client.getMonMap();
+            MonMap monMap = monMapFuture.get();
 
             clientChannel.closeFuture().sync();
         } finally {

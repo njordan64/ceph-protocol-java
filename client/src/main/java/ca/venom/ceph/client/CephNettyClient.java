@@ -14,8 +14,14 @@ import ca.venom.ceph.client.codecs.BannerHandler;
 import ca.venom.ceph.client.codecs.CephFrameCodec;
 import ca.venom.ceph.client.codecs.CephPreParsedFrameCodec;
 import ca.venom.ceph.client.codecs.CompressionHandler;
+import ca.venom.ceph.client.codecs.GeneralMessageHandler;
 import ca.venom.ceph.client.codecs.HelloFrameHandler;
+import ca.venom.ceph.client.codecs.RequestWithFuture;
 import ca.venom.ceph.client.codecs.ServerIdentHandler;
+import ca.venom.ceph.protocol.frames.ControlFrame;
+import ca.venom.ceph.protocol.frames.MessageFrame;
+import ca.venom.ceph.protocol.messages.MonMap;
+import ca.venom.ceph.types.MessageType;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -33,6 +39,7 @@ public class CephNettyClient {
     private final int port;
     private final String username;
     private final String keyString;
+    private Channel channel;
 
     public CephNettyClient(String hostname, int port, String username, String keyString) {
         this.hostname = hostname;
@@ -62,6 +69,32 @@ public class CephNettyClient {
         return channelReady;
     }
 
+    public CompletableFuture<MonMap> getMonMap() {
+        final MessageFrame getMonMapFrame = new MessageFrame();
+        getMonMapFrame.setHead(new MessageFrame.Header());
+        getMonMapFrame.getHead().setSeq(1L);
+        getMonMapFrame.getHead().setType((short) MessageType.CEPH_MSG_MON_GET_MAP.getValueInt());
+        getMonMapFrame.getHead().setPriority((short) 127);
+        getMonMapFrame.getHead().setVersion((short) 1);
+        getMonMapFrame.getHead().setFlags((byte) 3);
+        getMonMapFrame.getHead().setCompatVersion((short) 1);
+
+        final CompletableFuture<ControlFrame> responseFuture = new CompletableFuture<>();
+        channel.writeAndFlush(
+                new RequestWithFuture(
+                        getMonMapFrame,
+                        responseFuture
+                )
+        );
+
+        final CompletableFuture<MonMap> monMapFuture = new CompletableFuture<>();
+        responseFuture.thenAccept(frame -> {
+            monMapFuture.complete((MonMap) ((MessageFrame) frame).getFront());
+        });
+
+        return monMapFuture;
+    }
+
     private void initPipeline(ChannelHandlerContext ctx,
                               ByteBuf receivedByteBuf,
                               ByteBuf sentByteBuf,
@@ -72,5 +105,8 @@ public class CephNettyClient {
         ctx.pipeline().addLast("Auth-Handler", new AuthHandler(username, keyString));
         ctx.pipeline().addLast("Compression-Handler", new CompressionHandler());
         ctx.pipeline().addLast("ServerIdent-Handler", new ServerIdentHandler(channelReady));
+        ctx.pipeline().addLast("RequestResponse-Handler", new GeneralMessageHandler());
+
+        channel = ctx.channel();
     }
 }

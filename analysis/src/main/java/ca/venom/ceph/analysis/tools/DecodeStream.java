@@ -15,15 +15,9 @@ import ca.venom.ceph.protocol.frames.ControlFrame;
 import ca.venom.ceph.protocol.frames.HelloFrame;
 import ca.venom.ceph.protocol.frames.MessageFrame;
 import ca.venom.ceph.protocol.frames.ServerIdentFrame;
-import ca.venom.ceph.protocol.messages.MonMap;
-import ca.venom.ceph.protocol.types.Addr;
-import ca.venom.ceph.protocol.types.AddrIPv4;
-import ca.venom.ceph.protocol.types.AddrIPv6;
 import ca.venom.ceph.protocol.types.auth.CephXServiceTicket;
 import ca.venom.ceph.protocol.types.auth.CephXTicketInfo;
-import ca.venom.ceph.protocol.types.mon.MonInfo;
 import ca.venom.ceph.utils.CephCRC32C;
-import ca.venom.ceph.utils.HexFunctions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -35,7 +29,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.util.Base64;
-import java.util.Map;
 
 public class DecodeStream {
     private static final String PROOF_IV = "cephsageyudagreg";
@@ -370,7 +363,7 @@ public class DecodeStream {
                     headerByteBuf.getShortLE(6) == 8,
                     offset + segmentLength);
             frame.setSegment1(segment);
-            offset += segmentLength + 4;
+            offset += segmentLength;
         }
 
         segmentLength = headerByteBuf.getIntLE(8);

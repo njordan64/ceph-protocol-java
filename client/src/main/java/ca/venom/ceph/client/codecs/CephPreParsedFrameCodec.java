@@ -124,7 +124,7 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
 
             headerByteBuf = Unpooled.buffer(80);
             decryptChunk(byteBuf, 0, 80, headerByteBuf);
-            int segment1Size = headerByteBuf.getIntLE(2);
+            int segment1Size = headerByteBuf.getIntLE(2) + 4;
             int segment2Size = headerByteBuf.getIntLE(8);
             int segment3Size = headerByteBuf.getIntLE(14);
             int segment4Size = headerByteBuf.getIntLE(20);
@@ -151,7 +151,7 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
                     parseByteBuf.writerIndex(parseByteBuf.writerIndex() - paddingLen);
                     offset += remainingChunkSizes[0];
                 } else if (segment1Size < 48) {
-                    parseByteBuf.writerIndex(parseByteBuf.writerIndex() - (48 - segment1Size) - 4);
+                    parseByteBuf.writerIndex(parseByteBuf.writerIndex() - (48 - segment1Size));
                 }
 
                 if (remainingChunkSizes[1] > 0) {
@@ -312,30 +312,38 @@ public class CephPreParsedFrameCodec extends ByteToMessageCodec<CephPreParsedFra
     private int[] getEncryptedChunkSizes(ByteBuf headerByteBuf) {
         int[] chunkSizes = new int[4];
 
-        int segmentSize = headerByteBuf.getIntLE(2);
-        if (segmentSize > 48) {
-            chunkSizes[0] = ((79 + segmentSize - 48) / 80) * 96;
+        int segment1Size = headerByteBuf.getIntLE(2);
+        if (segment1Size > 48) {
+            chunkSizes[0] = ((79 + segment1Size - 48) / 80) * 96;
         } else {
             chunkSizes[0] = 0;
         }
 
-        segmentSize = headerByteBuf.getIntLE(8);
-        if (segmentSize > 0) {
-            chunkSizes[1] = ((79 + segmentSize) / 80) * 96;
+        int segment2Size = headerByteBuf.getIntLE(8);
+        int segment3Size = headerByteBuf.getIntLE(14);
+        int segment4Size = headerByteBuf.getIntLE(20);
+        if (segment2Size > 0) {
+            if (segment3Size == 0 && segment4Size == 0) {
+                segment2Size += 13;
+            }
+
+            chunkSizes[1] = ((15 + segment2Size) / 16) * 16 + 16;
         } else {
             chunkSizes[1] = 0;
         }
 
-        segmentSize = headerByteBuf.getIntLE(14);
-        if (segmentSize > 0) {
-            chunkSizes[2] = ((79 + segmentSize) / 80) * 96;
+        if (segment3Size > 0) {
+            if (segment4Size == 0) {
+                segment3Size += 13;
+            }
+
+            chunkSizes[2] = ((15 + segment3Size) / 16) * 16 + 16;
         } else {
             chunkSizes[2] = 0;
         }
 
-        segmentSize = headerByteBuf.getIntLE(20);
-        if (segmentSize > 0) {
-            chunkSizes[3] = ((79 + segmentSize) / 80) * 96;
+        if (segment4Size > 0) {
+            chunkSizes[3] = ((15 + 13 + segment4Size) / 16) * 16 + 16;
         } else {
             chunkSizes[3] = 0;
         }

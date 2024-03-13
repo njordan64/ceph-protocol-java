@@ -118,7 +118,9 @@ public class MessageFrame extends ControlFrame {
 
     @Override
     public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
-        head.setType(getMessageTypeCode());
+        if (front != null) {
+            head.setType(getMessageTypeCode());
+        }
         CephEncoder.encode(head, byteBuf, le);
     }
 
@@ -151,6 +153,9 @@ public class MessageFrame extends ControlFrame {
     @Override
     public void decodeSegment2(ByteBuf byteBuf, boolean le) throws DecodingException {
         if (byteBuf.readableBytes() > 0) {
+            // Skip over the length
+            byteBuf.readerIndex(byteBuf.readerIndex() + 4);
+
             front = CephDecoder.decode(byteBuf, le, MessagePayload.class, head.getType());
             head.setType(getMessageTypeCode());
         }
