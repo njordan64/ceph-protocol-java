@@ -9,30 +9,15 @@
  */
 package ca.venom.ceph.protocol.types.auth;
 
-import ca.venom.ceph.encoding.annotations.CephEncodingSize;
-import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephChildType;
+import ca.venom.ceph.encoding.annotations.CephParentType;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
-import ca.venom.ceph.protocol.AuthMode;
-import lombok.Getter;
-import lombok.Setter;
 
 @CephType
 @CephTypeSize
+@CephParentType(typeSize = 1, typeOffset = 4)
+@CephChildType(typeValue = 1, typeClass = AuthRequestAuthorizerPayload.class)
+@CephChildType(typeValue = 10, typeClass = AuthRequestMonPayload.class)
 public class AuthRequestPayload {
-    @Getter
-    @Setter
-    @CephField
-    @CephEncodingSize
-    private AuthMode authMode;
-
-    @Getter
-    @Setter
-    @CephField(order = 2)
-    private EntityName entityName;
-
-    @Getter
-    @Setter
-    @CephField(order = 3)
-    private long globalId;
 }

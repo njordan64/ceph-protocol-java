@@ -12,12 +12,10 @@ package ca.venom.ceph.protocol.types.auth;
 import ca.venom.ceph.encoding.annotations.CephChildType;
 import ca.venom.ceph.encoding.annotations.CephParentType;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeSize;
 
 @CephType
-@CephTypeSize
-@CephParentType(typeSize = 1, typeOffset = 4)
-@CephChildType(typeValue = 1, typeClass = AuthRequestMoreAuthorizerPayload.class)
-@CephChildType(typeValue = 0, typeClass = AuthRequestMoreMonPayload.class)
-public class AuthRequestMorePayload {
+@CephParentType(typeSize = 1, typeOffset = 0)
+@CephChildType(typeValue = 1, typeClass = CephXAuthorizeReplyV1.class)
+@CephChildType(typeValue = 2, typeClass = CephXAuthorizeReplyV2.class)
+public class CephXAuthorizeReply {
 }

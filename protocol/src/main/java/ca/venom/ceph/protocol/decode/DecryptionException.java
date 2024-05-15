@@ -7,10 +7,14 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.encoding.annotations;
+package ca.venom.ceph.protocol.decode;
 
-import ca.venom.ceph.types.MessageType;
+public class DecryptionException extends Exception {
+    public DecryptionException(String msg) {
+        super(msg);
+    }
 
-public @interface CephMessagePayload {
-    MessageType value();
+    public DecryptionException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }

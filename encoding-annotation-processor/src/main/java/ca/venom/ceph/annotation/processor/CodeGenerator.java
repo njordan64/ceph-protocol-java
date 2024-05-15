@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2023 Norman Jordan <norman.jordan@gmail.com>
+ *
+ * This is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License version 2.1, as published by the Free Software
+ * Foundation.  See file COPYING.
+ *
+ */
 package ca.venom.ceph.annotation.processor;
 
 import ca.venom.ceph.annotation.processor.fields.BitSetCodeGenerator;
@@ -29,7 +38,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -200,7 +208,7 @@ public class CodeGenerator {
 
         switch (encodableClass.getParentType().typeSize()) {
             case 1 -> sb.append(String.format(
-                    "        int typeCode = byteBuf.getByte(byteBuf.readerIndex() + %d);",
+                    "        int typeCode = byteBuf.getByte(byteBuf.readerIndex() + %d);\n",
                     encodableClass.getParentType().typeOffset()
             ));
             case 2 -> sb.append(String.format(
@@ -237,7 +245,7 @@ public class CodeGenerator {
             sb.append("        throw new IllegalArgumentException(\"Unknown type code read\");");
         } else {
             sb.append("        } else {\n");
-            sb.append("            throw new IllegalArgumentException(\"Unknown type code read\");\n");
+            sb.append("            throw new IllegalArgumentException(\"Unknown type code read: \" + typeCode);\n");
             sb.append("        }\n");
         }
 

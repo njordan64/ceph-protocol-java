@@ -16,7 +16,7 @@ import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.auth.AuthDonePayload;
+import ca.venom.ceph.protocol.types.auth.AuthDoneMonPayload;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,8 +36,8 @@ public class AuthDoneFrame extends AuthFrameBase {
 
         @Getter
         @Setter
-        @CephField(order = 3)
-        private AuthDonePayload payload;
+        @CephField(order = 3, includeSize = true)
+        private byte[] payload;
     }
 
     @Getter

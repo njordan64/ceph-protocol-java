@@ -7,29 +7,24 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.protocol.messages;
+package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.encoding.annotations.CephField;
-import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.protocol.types.mon.MonSubscribeItem;
-import ca.venom.ceph.types.MessageType;
+import ca.venom.ceph.encoding.annotations.CephTypeVersion;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @CephType
-@CephMessagePayload(MessageType.MSG_MON_GET_MAP)
-public class MonGetMap implements MessagePayload {
+@CephTypeVersion(version = 1)
+public class AuthCapsInfo {
     @Getter
     @Setter
     @CephField
-    private Map<String, MonSubscribeItem> what = new HashMap<>();
+    private boolean allowAll;
 
     @Getter
     @Setter
-    @CephField(order = 2)
-    private String hostname;
+    @CephField(order = 2, includeSize = true)
+    private byte[] caps;
 }

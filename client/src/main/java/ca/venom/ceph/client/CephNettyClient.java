@@ -73,7 +73,7 @@ public class CephNettyClient {
         final MessageFrame getMonMapFrame = new MessageFrame();
         getMonMapFrame.setHead(new MessageFrame.Header());
         getMonMapFrame.getHead().setSeq(1L);
-        getMonMapFrame.getHead().setType((short) MessageType.CEPH_MSG_MON_GET_MAP.getValueInt());
+        getMonMapFrame.getHead().setType((short) MessageType.MSG_MON_GET_MAP.getValueInt());
         getMonMapFrame.getHead().setPriority((short) 127);
         getMonMapFrame.getHead().setVersion((short) 1);
         getMonMapFrame.getHead().setFlags((byte) 3);
@@ -93,6 +93,32 @@ public class CephNettyClient {
         });
 
         return monMapFuture;
+    }
+
+    public void ping() {
+        final MessageFrame pingFrame = new MessageFrame();
+        pingFrame.setHead(new MessageFrame.Header());
+        pingFrame.getHead().setSeq(1L);
+        pingFrame.getHead().setType((short) MessageType.MSG_PING.getValueInt());
+        pingFrame.getHead().setPriority((short) 127);
+        pingFrame.getHead().setVersion((short) 1);
+        pingFrame.getHead().setFlags((byte) 3);
+        pingFrame.getHead().setCompatVersion((short) 1);
+
+        final CompletableFuture<ControlFrame> responseFuture = new CompletableFuture<>();
+        channel.writeAndFlush(
+                new RequestWithFuture(
+                        pingFrame,
+                        responseFuture
+                )
+        );
+
+        try {
+            ControlFrame responseFrame = responseFuture.get();
+            responseFrame = null;
+        } catch (Exception e) {
+            //
+        }
     }
 
     private void initPipeline(ChannelHandlerContext ctx,

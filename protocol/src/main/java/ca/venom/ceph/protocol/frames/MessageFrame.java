@@ -157,7 +157,7 @@ public class MessageFrame extends ControlFrame {
             byteBuf.readerIndex(byteBuf.readerIndex() + 4);
 
             front = CephDecoder.decode(byteBuf, le, MessagePayload.class, head.getType());
-            head.setType(getMessageTypeCode());
+            //head.setType(getMessageTypeCode());
         }
     }
 
@@ -186,9 +186,9 @@ public class MessageFrame extends ControlFrame {
     private short getMessageTypeCode() {
         if (front != null) {
             if (front instanceof MonMap) {
-                return (short) MessageType.CEPH_MSG_MON_MAP.getValueInt();
+                return (short) MessageType.MSG_MON_MAP.getValueInt();
             } else if (front instanceof MonGetMap) {
-                return (short) MessageType.CEPH_MSG_MON_GET_MAP.getValueInt();
+                return (short) MessageType.MSG_MON_GET_MAP.getValueInt();
             }
         }
 

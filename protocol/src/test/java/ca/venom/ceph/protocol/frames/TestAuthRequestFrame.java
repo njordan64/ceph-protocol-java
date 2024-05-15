@@ -1,8 +1,16 @@
+/*
+ * Copyright (C) 2023 Norman Jordan <norman.jordan@gmail.com>
+ *
+ * This is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License version 2.1, as published by the Free Software
+ * Foundation.  See file COPYING.
+ *
+ */
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.AuthMode;
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.types.auth.AuthRequestPayload;
+import ca.venom.ceph.protocol.types.auth.AuthRequestMonPayload;
 import ca.venom.ceph.protocol.types.auth.EntityName;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -16,6 +24,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 public class TestAuthRequestFrame {
     private static final String MESSAGE1_PATH = "frames/authrequest1.bin";
@@ -56,10 +65,12 @@ public class TestAuthRequestFrame {
         assertEquals(2, parsedMessage.getSegment1().getPreferredModes().get(0));
         assertEquals(1, parsedMessage.getSegment1().getPreferredModes().get(1));
 
-        assertEquals(AuthMode.MON, parsedMessage.getSegment1().getPayload().getAuthMode());
-        assertEquals(8L, parsedMessage.getSegment1().getPayload().getEntityName().getType());
-        assertEquals("admin", parsedMessage.getSegment1().getPayload().getEntityName().getEntityName());
-        assertEquals(0L, parsedMessage.getSegment1().getPayload().getGlobalId());
+        assertInstanceOf(AuthRequestMonPayload.class, parsedMessage.getSegment1().getPayload());
+        AuthRequestMonPayload payload = (AuthRequestMonPayload) parsedMessage.getSegment1().getPayload();
+
+        assertEquals(8L, payload.getEntityName().getType());
+        assertEquals("admin", payload.getEntityName().getEntityName());
+        assertEquals(0L, payload.getGlobalId());
     }
 
     @Test
@@ -74,8 +85,7 @@ public class TestAuthRequestFrame {
         preferredModes.add(1);
         authRequestFrame.getSegment1().setPreferredModes(preferredModes);
 
-        AuthRequestPayload payload = new AuthRequestPayload();
-        payload.setAuthMode(AuthMode.MON);
+        AuthRequestMonPayload payload = new AuthRequestMonPayload();
         EntityName entityName = new EntityName();
         entityName.setType(8);
         entityName.setEntityName("admin");

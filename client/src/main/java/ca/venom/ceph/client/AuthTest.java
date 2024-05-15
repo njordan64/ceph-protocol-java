@@ -21,8 +21,9 @@ import ca.venom.ceph.protocol.frames.AuthSignatureFrame;
 import ca.venom.ceph.protocol.frames.BannerFrame;
 import ca.venom.ceph.protocol.frames.HelloFrame;
 import ca.venom.ceph.protocol.types.AddrIPv4;
-import ca.venom.ceph.protocol.types.auth.AuthRequestMorePayload;
-import ca.venom.ceph.protocol.types.auth.AuthRequestPayload;
+import ca.venom.ceph.protocol.types.auth.AuthDoneMonPayload;
+import ca.venom.ceph.protocol.types.auth.AuthRequestMoreMonPayload;
+import ca.venom.ceph.protocol.types.auth.AuthRequestMonPayload;
 import ca.venom.ceph.protocol.types.auth.CephXAuthenticate;
 import ca.venom.ceph.protocol.types.auth.CephXRequestHeader;
 import ca.venom.ceph.protocol.types.auth.CephXTicketBlob;
@@ -142,7 +143,7 @@ public class AuthTest {
         preferredModes.add(1);
         authRequestFrame.getSegment1().setPreferredModes(preferredModes);
 
-        AuthRequestPayload authRequestPayload = new AuthRequestPayload();
+        AuthRequestMonPayload authRequestPayload = new AuthRequestMonPayload();
         authRequestPayload.setAuthMode(AuthMode.MON);
         authRequestPayload.setEntityName(new EntityName());
         authRequestPayload.getEntityName().setType(8);
@@ -192,7 +193,7 @@ public class AuthTest {
         }
 
         AuthRequestMoreFrame requestMore = new AuthRequestMoreFrame();
-        AuthRequestMorePayload requestMorePayload = new AuthRequestMorePayload();
+        AuthRequestMoreMonPayload requestMorePayload = new AuthRequestMoreMonPayload();
         requestMore.setPayload(requestMorePayload);
         CephXRequestHeader requestHeader = new CephXRequestHeader();
         requestHeader.setRequestType((short) 0x100);
@@ -224,13 +225,14 @@ public class AuthTest {
 
         AuthDoneFrame authDone = new AuthDoneFrame();
         //authDone.decode(socket.getInputStream(), ctx);
+        AuthDoneMonPayload payload = null;
         System.out.println(">>> Global ID: " + authDone.getSegment1().getGlobalId());
         System.out.println(">>> Connection Mode: " + authDone.getSegment1().getConnectionMode());
-        System.out.println(">>> Response Type: " + authDone.getSegment1().getPayload().getResponseHeader().getResponseType());
-        System.out.println(">>> Status: " + authDone.getSegment1().getPayload().getResponseHeader().getStatus());
+        System.out.println(">>> Response Type: " + payload.getResponseHeader().getResponseType());
+        System.out.println(">>> Status: " + payload.getResponseHeader().getStatus());
 
         SecretKeySpec sessionKey = null;
-        for (CephXTicketInfo ticketInfo : authDone.getSegment1().getPayload().getTicketInfos()) {
+        for (CephXTicketInfo ticketInfo : payload.getTicketInfos()) {
             System.out.println("  >>> Service ID: " + ticketInfo.getServiceId());
 
             SecretKeySpec secretKey = new SecretKeySpec(Base64.getDecoder().decode(userKey), 12, 16, "AES");
@@ -256,7 +258,7 @@ public class AuthTest {
         Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, sessionKey, new IvParameterSpec(PROOF_IV.getBytes()));
         System.out.println(">>> Extra:");
-        byte[] encryptedSecret = authDone.getSegment1().getPayload().getEncryptedSecret();
+        byte[] encryptedSecret = payload.getEncryptedSecret();
         byte[] decryptedSecret = cipher.doFinal(encryptedSecret, 4, encryptedSecret.length - 4);
 
         streamKey = new SecretKeySpec(decryptedSecret, 13, 16, "AES");

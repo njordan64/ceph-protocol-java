@@ -17,9 +17,11 @@ import ca.venom.ceph.protocol.frames.AuthReplyMoreFrame;
 import ca.venom.ceph.protocol.frames.AuthRequestFrame;
 import ca.venom.ceph.protocol.frames.AuthRequestMoreFrame;
 import ca.venom.ceph.protocol.frames.AuthSignatureFrame;
+import ca.venom.ceph.protocol.types.auth.AuthDoneMonPayload;
+import ca.venom.ceph.protocol.types.auth.CephXServerChallenge;
 import ca.venom.ceph.protocol.types.auth.CephXServiceTicket;
-import ca.venom.ceph.protocol.types.auth.AuthRequestMorePayload;
-import ca.venom.ceph.protocol.types.auth.AuthRequestPayload;
+import ca.venom.ceph.protocol.types.auth.AuthRequestMoreMonPayload;
+import ca.venom.ceph.protocol.types.auth.AuthRequestMonPayload;
 import ca.venom.ceph.protocol.types.auth.CephXAuthenticate;
 import ca.venom.ceph.protocol.types.auth.CephXRequestHeader;
 import ca.venom.ceph.protocol.types.auth.CephXTicketBlob;
@@ -30,7 +32,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class AuthHandler extends InitializationHandler<AuthFrameBase> {
     private static final Logger LOG = LoggerFactory.getLogger(AuthHandler.class);
@@ -91,7 +91,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         preferredModes.add(1);
         request.getSegment1().setPreferredModes(preferredModes);
 
-        AuthRequestPayload authRequestPayload = new AuthRequestPayload();
+        AuthRequestMonPayload authRequestPayload = new AuthRequestMonPayload();
         authRequestPayload.setAuthMode(AuthMode.MON);
         authRequestPayload.setEntityName(new EntityName());
         authRequestPayload.getEntityName().setType(8);
@@ -132,12 +132,16 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         SecureRandom random = new SecureRandom();
         random.nextBytes(clientChallenge);
 
-        byte[] serverChallenge = request.getPayload().getServerChallenge().getServerChallenge();
+        CephXServerChallenge serverChallenge = CephDecoder.decode(
+                Unpooled.wrappedBuffer(request.getPayload().getPayload()),
+                true,
+                CephXServerChallenge.class
+        );
 
         byte[] unencryptedBytes = new byte[32];
         unencryptedBytes[0] = 1;
         System.arraycopy(MAGIC_BYTES, 0, unencryptedBytes, 1, 8);
-        System.arraycopy(serverChallenge, 0, unencryptedBytes, 9, 8);
+        System.arraycopy(serverChallenge.getServerChallenge(), 0, unencryptedBytes, 9, 8);
         System.arraycopy(clientChallenge, 0, unencryptedBytes, 17, 8);
         Arrays.fill(unencryptedBytes, 25, 32, (byte) (32 - 25));
 
@@ -155,7 +159,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         }
 
         AuthRequestMoreFrame requestMore = new AuthRequestMoreFrame();
-        AuthRequestMorePayload requestMorePayload = new AuthRequestMorePayload();
+        AuthRequestMoreMonPayload requestMorePayload = new AuthRequestMoreMonPayload();
         requestMore.setPayload(requestMorePayload);
         CephXRequestHeader requestHeader = new CephXRequestHeader();
         requestHeader.setRequestType((short) 0x100);
@@ -177,7 +181,12 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
     }
 
     private void handleAuthDone(ChannelHandlerContext ctx, AuthDoneFrame request) throws Exception {
-        for (CephXTicketInfo ticketInfo : request.getSegment1().getPayload().getTicketInfos()) {
+        AuthDoneMonPayload payload = CephDecoder.decode(
+                Unpooled.wrappedBuffer(request.getSegment1().getPayload()),
+                true,
+                AuthDoneMonPayload.class
+        );
+        for (CephXTicketInfo ticketInfo : payload.getTicketInfos()) {
             byte[] iv = PROOF_IV.getBytes();
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, authKey, new IvParameterSpec(iv));
@@ -197,7 +206,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
 
         Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, sessionKey, new IvParameterSpec(PROOF_IV.getBytes()));
-        byte[] encryptedSecret = request.getSegment1().getPayload().getEncryptedSecret();
+        byte[] encryptedSecret = payload.getEncryptedSecret();
         byte[] decryptedSecret = cipher.doFinal(encryptedSecret, 4, encryptedSecret.length - 4);
 
         SecretKey streamKey = new SecretKeySpec(decryptedSecret, 13, 16, "AES");

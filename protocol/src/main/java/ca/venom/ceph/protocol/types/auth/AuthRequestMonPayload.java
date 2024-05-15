@@ -9,41 +9,28 @@
  */
 package ca.venom.ceph.protocol.types.auth;
 
+import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeSize;
+import ca.venom.ceph.protocol.AuthMode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @CephType
-@CephTypeSize
-public class AuthDonePayload {
+public class AuthRequestMonPayload extends AuthRequestPayload {
     @Getter
     @Setter
     @CephField
-    private CephXResponseHeader responseHeader;
+    @CephEncodingSize
+    private AuthMode authMode = AuthMode.MON;
 
     @Getter
+    @Setter
     @CephField(order = 2)
-    private byte version = 1;
+    private EntityName entityName;
 
     @Getter
     @Setter
     @CephField(order = 3)
-    private List<CephXTicketInfo> ticketInfos;
-
-    @Getter
-    @Setter
-    @CephField(order = 4, includeSize = true)
-    private byte[] encryptedSecret;
-
-    @Getter
-    @Setter
-    @CephField(order = 5, includeSize = true)
-    private byte[] extra;
-
-    public void setVersion(byte version) {
-    }
+    private long globalId;
 }

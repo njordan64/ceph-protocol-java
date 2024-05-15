@@ -1,8 +1,17 @@
+/*
+ * Copyright (C) 2023 Norman Jordan <norman.jordan@gmail.com>
+ *
+ * This is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License version 2.1, as published by the Free Software
+ * Foundation.  See file COPYING.
+ *
+ */
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.auth.AuthReplyMorePayload;
 import ca.venom.ceph.protocol.types.auth.CephXServerChallenge;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -48,24 +57,28 @@ public class TestAuthReplyMoreFrame {
         parsedMessage.decodeSegment1(byteBuf, true);
 
         byte[] serverChallenge = new byte[] {
-                (byte) 0x2b, (byte) 0x33, (byte) 0x2f, (byte) 0x91,
-                (byte) 0xd0, (byte) 0x47, (byte) 0xbc, (byte) 0xad
+                (byte) 0x01, (byte) 0x2b, (byte) 0x33, (byte) 0x2f,
+                (byte) 0x91, (byte) 0xd0, (byte) 0x47, (byte) 0xbc,
+                (byte) 0xad
         };
-        assertArrayEquals(serverChallenge, parsedMessage.getPayload().getServerChallenge().getServerChallenge());
+        assertArrayEquals(serverChallenge, parsedMessage.getPayload().getPayload());
     }
 
     @Test
     public void testEncodeMessage1() throws EncodingException {
         AuthReplyMoreFrame authReplyMore = new AuthReplyMoreFrame();
-        AuthReplyMorePayload payload = new AuthReplyMorePayload();
-        authReplyMore.setPayload(payload);
+        authReplyMore.setPayload(new AuthReplyMoreFrame.Segment1());
         byte[] serverChallengeBytes = new byte[] {
                 (byte) 0x2b, (byte) 0x33, (byte) 0x2f, (byte) 0x91,
                 (byte) 0xd0, (byte) 0x47, (byte) 0xbc, (byte) 0xad
         };
         CephXServerChallenge serverChallenge = new CephXServerChallenge();
         serverChallenge.setServerChallenge(serverChallengeBytes);
-        payload.setServerChallenge(serverChallenge);
+        ByteBuf serverChallengeByteBuf = Unpooled.buffer();
+        CephEncoder.encode(serverChallenge, serverChallengeByteBuf, true);
+        byte[] encodedBytes = new byte[serverChallengeByteBuf.writerIndex()];
+        serverChallengeByteBuf.getBytes(0, encodedBytes);
+        authReplyMore.getPayload().setPayload(encodedBytes);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);

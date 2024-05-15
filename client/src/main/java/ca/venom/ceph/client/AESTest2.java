@@ -15,6 +15,7 @@ import ca.venom.ceph.protocol.frames.AuthReplyMoreFrame;
 import ca.venom.ceph.protocol.frames.AuthRequestFrame;
 import ca.venom.ceph.protocol.frames.AuthRequestMoreFrame;
 import ca.venom.ceph.protocol.frames.AuthSignatureFrame;
+import ca.venom.ceph.protocol.types.auth.AuthDoneMonPayload;
 import ca.venom.ceph.protocol.types.auth.CephXServiceTicket;
 import ca.venom.ceph.utils.HexFunctions;
 import io.netty.buffer.ByteBuf;
@@ -352,11 +353,17 @@ public class AESTest2 {
         byteBuf = Unpooled.wrappedBuffer(AUTH_DONE_1_BYTES, 32, AUTH_DONE_1_BYTES.length - 32);
         authDoneFrame.decodeSegment1(byteBuf, true);
 
+        AuthDoneMonPayload payload = CephDecoder.decode(
+                Unpooled.wrappedBuffer(authDoneFrame.getSegment1().getPayload()),
+                true,
+                AuthDoneMonPayload.class
+        );
+
         SecretKeySpec authKey = new SecretKeySpec(KEY_BYTES, "AES");
         byte[] iv = PROOF_IV.getBytes();
         Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, authKey, new IvParameterSpec(iv));
-        byte[] decryptedBytes = cipher.doFinal(authDoneFrame.getSegment1().getPayload().getTicketInfos().get(0).getServiceTicket());
+        byte[] decryptedBytes = cipher.doFinal(payload.getTicketInfos().get(0).getServiceTicket());
 
         ByteBuf decryptedByteBuf = Unpooled.wrappedBuffer(decryptedBytes);
         decryptedByteBuf.skipBytes(9);
@@ -366,7 +373,7 @@ public class AESTest2 {
 
         cipher = Cipher.getInstance("AES/CBC/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, sessionKey, new IvParameterSpec(PROOF_IV.getBytes()));
-        byte[] encryptedSecret = authDoneFrame.getSegment1().getPayload().getEncryptedSecret();
+        byte[] encryptedSecret = payload.getEncryptedSecret();
         byte[] decryptedSecret = cipher.doFinal(encryptedSecret, 4, encryptedSecret.length - 4);
 
         SecretKey streamKey = new SecretKeySpec(decryptedSecret, 13, 16, "AES");

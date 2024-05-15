@@ -1,8 +1,16 @@
+/*
+ * Copyright (C) 2023 Norman Jordan <norman.jordan@gmail.com>
+ *
+ * This is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License version 2.1, as published by the Free Software
+ * Foundation.  See file COPYING.
+ *
+ */
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.CephProtocolContext;
-import ca.venom.ceph.protocol.types.auth.AuthRequestMorePayload;
+import ca.venom.ceph.protocol.types.auth.AuthRequestMoreMonPayload;
 import ca.venom.ceph.protocol.types.auth.CephXAuthenticate;
 import ca.venom.ceph.protocol.types.auth.CephXRequestHeader;
 import ca.venom.ceph.protocol.types.auth.CephXTicketBlob;
@@ -50,26 +58,27 @@ public class TestAuthRequestMoreFrame {
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true);
 
-        assertEquals(0x100, parsedMessage.getPayload().getRequestHeader().getRequestType());
+        AuthRequestMoreMonPayload payload = (AuthRequestMoreMonPayload) parsedMessage.getPayload();
+        assertEquals(0x100, payload.getRequestHeader().getRequestType());
         byte[] clientChallenge = new byte[] {
                 (byte) 0x27, (byte) 0x44, (byte) 0x58, (byte) 0xbc,
                 (byte) 0xa0, (byte) 0x12, (byte) 0x94, (byte) 0xae
         };
-        assertArrayEquals(clientChallenge, parsedMessage.getPayload().getAuthenticate().getClientChallenge());
+        assertArrayEquals(clientChallenge, payload.getAuthenticate().getClientChallenge());
         byte[] keyBytes = new byte[] {
                 (byte) 0x03, (byte) 0x23, (byte) 0xeb, (byte) 0xc7,
                 (byte) 0x3a, (byte) 0xca, (byte) 0xe9, (byte) 0x17
         };
-        assertArrayEquals(keyBytes, parsedMessage.getPayload().getAuthenticate().getKey());
-        assertEquals(0L, parsedMessage.getPayload().getAuthenticate().getOldTicket().getSecretId());
-        assertArrayEquals(new byte[0], parsedMessage.getPayload().getAuthenticate().getOldTicket().getBlob());
-        assertEquals(32L, parsedMessage.getPayload().getAuthenticate().getOtherKeys());
+        assertArrayEquals(keyBytes, payload.getAuthenticate().getKey());
+        assertEquals(0L, payload.getAuthenticate().getOldTicket().getSecretId());
+        assertArrayEquals(new byte[0], payload.getAuthenticate().getOldTicket().getBlob());
+        assertEquals(32L, payload.getAuthenticate().getOtherKeys());
     }
 
     @Test
     public void testEncodeMessage1() throws Exception {
         AuthRequestMoreFrame authRequest = new AuthRequestMoreFrame();
-        AuthRequestMorePayload payload = new AuthRequestMorePayload();
+        AuthRequestMoreMonPayload payload = new AuthRequestMoreMonPayload();
         authRequest.setPayload(payload);
         CephXRequestHeader header = new CephXRequestHeader();
         header.setRequestType((short) 0x100);
