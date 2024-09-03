@@ -45,6 +45,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.util.Base64;
 
+/**
+ * Decodes client and server streams to enable analysis of the traffic.
+ */
 public class DecodeStream {
     private static final String PROOF_IV = "cephsageyudagreg";
 
