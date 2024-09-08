@@ -20,8 +20,6 @@ import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
 import ca.venom.ceph.encoding.annotations.CephTypeVersion;
 import ca.venom.ceph.types.MessageType;
-import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Type.ClassType;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -33,7 +31,9 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -58,11 +58,13 @@ import java.util.stream.Collectors;
 public class EncodingAnnotationProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
+    private Types typeUtils;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         this.filer = processingEnv.getFiler();
         this.messager = processingEnv.getMessager();
+        this.typeUtils = processingEnv.getTypeUtils();
     }
 
     @Override
@@ -93,13 +95,14 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
             encodableField.setType(element.asType().toString());
 
             try {
-                if (elementType instanceof ClassType) {
-                    com.sun.tools.javac.util.List<com.sun.tools.javac.code.Type> interfaces = ((ClassType) elementType).interfaces_field;
+                if (elementType instanceof DeclaredType) {
+                    List<? extends TypeMirror> interfaces = typeUtils.directSupertypes(elementType);
                     if (interfaces != null) {
                         encodableField.setInterfaces(
                                 interfaces
                                         .stream()
-                                        .map(Type::toString)
+                                        .filter(t -> t instanceof DeclaredType)
+                                        .map(TypeMirror::toString)
                                         .collect(Collectors.toList())
                         );
                     }
