@@ -19,7 +19,7 @@ Foundation.  See file COPYING.
     </parent>
     <name>Ceph Protocol Analysis Tools</name>
     <artifactId>analysis</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${ceph.java.version}</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -31,22 +31,20 @@ Foundation.  See file COPYING.
         <dependency>
             <groupId>ca.venom.ceph</groupId>
             <artifactId>protocol-java</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+	    <version>${ceph.java.version}</version>
         </dependency>
         <dependency>
             <groupId>ca.venom.ceph</groupId>
             <artifactId>protocol-utils</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+	    <version>${ceph.java.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.16.1</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.16.1</version>
         </dependency>
     </dependencies>
 

@@ -19,7 +19,7 @@ Foundation.  See file COPYING.
     </parent>
     <name>Ceph Java Client</name>
     <artifactId>client-java</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${ceph.java.version}</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -31,12 +31,12 @@ Foundation.  See file COPYING.
         <dependency>
             <groupId>ca.venom.ceph</groupId>
             <artifactId>protocol-java</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+	    <version>${ceph.java.version}</version>
         </dependency>
         <dependency>
             <groupId>ca.venom.ceph</groupId>
             <artifactId>protocol-utils</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+	    <version>${ceph.java.version}</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
@@ -98,12 +98,12 @@ Foundation.  See file COPYING.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.2</version>
+		<version>${maven.surefire.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
                         <artifactId>junit-jupiter-engine</artifactId>
-                        <version>5.10.1</version>
+			<version>${junit5.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
