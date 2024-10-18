@@ -16,6 +16,9 @@ import ca.venom.ceph.encoding.annotations.CephTypeVersion;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/auth/cephx/CephxProtocol.h#L120
+ */
 @CephType
 @CephTypeVersion(version = 3)
 public class CephXAuthenticate {

@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/mon/MonMap.h#L96
+ */
 @CephType
 @CephTypeVersion(version = 9, compatVersion = 6)
 @CephTypeSize

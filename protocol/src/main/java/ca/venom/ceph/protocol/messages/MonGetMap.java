@@ -20,6 +20,9 @@ import lombok.Setter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MMonSubscribe.h#L32
+ */
 @CephType
 @CephMessagePayload(MessageType.MSG_MON_GET_MAP)
 public class MonGetMap implements MessagePayload {

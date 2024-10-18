@@ -15,6 +15,9 @@ import ca.venom.ceph.encoding.annotations.CephTypeVersion;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/auth/Auth.h#L75
+ */
 @CephType
 @CephTypeVersion(version = 1)
 public class AuthCapsInfo {

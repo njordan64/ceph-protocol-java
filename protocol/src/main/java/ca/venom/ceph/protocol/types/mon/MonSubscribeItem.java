@@ -17,6 +17,9 @@ import lombok.Setter;
 
 import java.util.BitSet;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/include/ceph_fs.h#L268
+ */
 @CephType
 public class MonSubscribeItem {
     @Getter

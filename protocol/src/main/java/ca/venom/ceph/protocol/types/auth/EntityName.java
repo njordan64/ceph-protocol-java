@@ -14,6 +14,9 @@ import ca.venom.ceph.encoding.annotations.CephType;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/common/entity_name.h#L29
+ */
 @CephType
 public class EntityName {
     @Getter

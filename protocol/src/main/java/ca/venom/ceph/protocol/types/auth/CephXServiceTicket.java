@@ -16,6 +16,9 @@ import ca.venom.ceph.protocol.types.UTime;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/auth/cephx/CephxProtocol.h#L338
+ */
 @CephType
 @CephTypeVersion(version = 1)
 public class CephXServiceTicket {

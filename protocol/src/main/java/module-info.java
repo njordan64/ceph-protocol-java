@@ -13,6 +13,7 @@ module ca.venom.ceph.protocol.protocol {
     requires ca.venom.ceph.protocol.annotations;
     requires ca.venom.ceph.protocol.types;
     requires ca.venom.ceph.protocol.utils;
+    requires org.slf4j;
 
     exports ca.venom.ceph.protocol;
     exports ca.venom.ceph.protocol.decode;

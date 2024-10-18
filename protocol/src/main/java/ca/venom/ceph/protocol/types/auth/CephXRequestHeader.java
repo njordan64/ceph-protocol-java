@@ -14,6 +14,9 @@ import ca.venom.ceph.encoding.annotations.CephType;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/auth/cephx/CephxProtocol.h#L64
+ */
 @CephType
 public class CephXRequestHeader {
     @Getter
