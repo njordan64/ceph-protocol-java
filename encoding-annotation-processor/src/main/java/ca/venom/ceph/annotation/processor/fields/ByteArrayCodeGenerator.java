@@ -130,10 +130,53 @@ public class ByteArrayCodeGenerator extends FieldCodeGenerator {
             }
         }
 
-        sb.append(String.format(
-                "%sbyteBuf.writeBytes(bytesToWrite);\n",
-                getIndentString(indentation + 1)
-        ));
+        if (field.getSizeProperty() != null && !field.getSizeProperty().isEmpty()) {
+            sb.append(String.format(
+                    "%sif (%s.%s > bytesToWrite.length) {\n",
+                    getIndentString(indentation + 1),
+                    variableName,
+                    field.getSizeProperty()
+            ));
+            sb.append(String.format(
+                    "%sbyteBuf.writeBytes(bytesToWrite);\n",
+                    getIndentString(indentation + 2)
+            ));
+            sb.append(String.format(
+                    "%sbyteBuf.writeZero(%s.%s - bytesToWrite.length);\n",
+                    getIndentString(indentation + 2),
+                    variableName,
+                    field.getSizeProperty()
+            ));
+            sb.append(String.format(
+                    "%s} else if (%s.%s < bytesToWrite.length) {\n",
+                    getIndentString(indentation + 1),
+                    variableName,
+                    field.getSizeProperty()
+            ));
+            sb.append(String.format(
+                    "%sbyteBuf.writeBytes(bytesToWrite, 0, bytesToWrite.length - %s.%s);\n",
+                    getIndentString(indentation + 2),
+                    variableName,
+                    field.getSizeProperty()
+            ));
+            sb.append(String.format(
+                    "%s} else {\n",
+                    getIndentString(indentation + 1)
+            ));
+            sb.append(String.format(
+                    "%sbyteBuf.writeBytes(bytesToWrite);\n",
+                    getIndentString(indentation + 2)
+            ));
+            sb.append(String.format(
+                    "%s}",
+                    getIndentString(indentation + 1)
+            ));
+        } else {
+            sb.append(String.format(
+                    "%sbyteBuf.writeBytes(bytesToWrite);\n",
+                    getIndentString(indentation + 1)
+            ));
+        }
 
         if (field.isIncludeSize()) {
             sb.append(String.format(
@@ -213,6 +256,13 @@ public class ByteArrayCodeGenerator extends FieldCodeGenerator {
                     "%sint size = %d;\n",
                     getIndentString(indentation + 1),
                     field.getEncodingSize()
+            ));
+        } else if (field.getSizeProperty() != null && !field.getSizeProperty().isEmpty()) {
+            sb.append(String.format(
+                    "%sint size = %s.%s;\n",
+                    getIndentString(indentation + 1),
+                    variableName,
+                    field.getSizeProperty()
             ));
         } else {
             context.getMessager().printMessage(Diagnostic.Kind.ERROR, "Byte array without included size or encoding size");

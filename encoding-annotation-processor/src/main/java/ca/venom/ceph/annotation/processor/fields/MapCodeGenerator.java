@@ -74,22 +74,31 @@ public class MapCodeGenerator extends FieldCodeGenerator {
 
             String keyType = matcher.group(1);
             String valueType = matcher.group(2);
+            int itemNum = context.incrementMapNesting();
+            String itemName = "item" + itemNum;
             sb.append(String.format(
-                    "%sfor (Map.Entry<%s, %s> item : %s.entrySet()) {\n",
+                    "%sfor (Map.Entry<%s, %s> %s : %s.entrySet()) {\n",
                     getIndentString(indentation + 1),
                     keyType,
                     valueType,
+                    itemName,
                     getter
             ));
+            String keyName = "key" + itemNum;
             sb.append(String.format(
-                    "%s%s key = item.getKey();\n",
+                    "%s%s %s = %s.getKey();\n",
                     getIndentString(indentation + 2),
-                    keyType
+                    keyType,
+                    keyName,
+                    itemName
             ));
+            String valueName = "value" + itemNum;
             sb.append(String.format(
-                    "%s%s value = item.getValue();\n",
+                    "%s%s %s = %s.getValue();\n",
                     getIndentString(indentation + 2),
-                    valueType
+                    valueType,
+                    valueName,
+                    itemName
             ));
 
             FieldCodeGenerator keyCodeGenerator = getFieldCodeGenerator(context, field, keyType);
@@ -99,14 +108,14 @@ public class MapCodeGenerator extends FieldCodeGenerator {
                         sb,
                         field,
                         indentation + 2,
-                        "key",
+                        keyName,
                         keyType
                 );
                 valueCodeGenerator.generateEncodeJavaCode(
                         sb,
                         field,
                         indentation + 2,
-                        "value",
+                        valueName,
                         valueType
                 );
             } else {
@@ -117,6 +126,7 @@ public class MapCodeGenerator extends FieldCodeGenerator {
                     "%s}\n",
                     getIndentString(indentation + 1)
             ));
+            context.decrementMapNesting();
         }
 
         sb.append(String.format(
@@ -135,9 +145,12 @@ public class MapCodeGenerator extends FieldCodeGenerator {
                 "%s{\n",
                 getIndentString(indentation)
         ));
+        int itemNum = context.incrementMapNesting();
+        String mapSizeName = "mapSize" + itemNum;
         sb.append(String.format(
-                "%sint mapSize = le ? byteBuf.readIntLE() : byteBuf.readInt();\n",
-                getIndentString(indentation + 1)
+                "%sint %s = le ? byteBuf.readIntLE() : byteBuf.readInt();\n",
+                getIndentString(indentation + 1),
+                mapSizeName
         ));
 
         Pattern pattern = Pattern.compile("^java\\.util\\.Map<([^,]+)\\s*,\\s*(.*)>$");
@@ -148,47 +161,61 @@ public class MapCodeGenerator extends FieldCodeGenerator {
 
             String keyType = matcher.group(1);
             String valueType = matcher.group(2);
+            String mapName = "decodedMap" + itemNum;
             sb.append(String.format(
-                    "%sMap<%s, %s> decodedMap = new java.util.HashMap<>();\n",
+                    "%sMap<%s, %s> %s = new java.util.HashMap<>();\n",
                     getIndentString(indentation + 1),
                     keyType,
-                    valueType
+                    valueType,
+                    mapName
             ));
+            String iteratorName = "i" + itemNum;
             sb.append(String.format(
-                    "%sfor (int i = 0; i < mapSize; i++) {\n",
-                    getIndentString(indentation + 1)
+                    "%sfor (int %s = 0; %s < %s; %s++) {\n",
+                    getIndentString(indentation + 1),
+                    iteratorName,
+                    iteratorName,
+                    mapSizeName,
+                    iteratorName
             ));
 
             FieldCodeGenerator keyCodeGenerator = getFieldCodeGenerator(context, field, keyType);
             FieldCodeGenerator valueCodeGenerator = getFieldCodeGenerator(context, field, valueType);
             if (keyCodeGenerator != null && valueCodeGenerator != null) {
+                String keyName = "key" + itemNum;
                 sb.append(String.format(
-                        "%s%s key;\n",
+                        "%s%s %s;\n",
                         getIndentString(indentation + 2),
-                        keyType
+                        keyType,
+                        keyName
                 ));
                 keyCodeGenerator.generateDecodeJavaCode(
                         sb,
                         field,
                         indentation + 2,
-                        "key",
+                        keyName,
                         keyType
                 );
+                String valueName = "value" + itemNum;
                 sb.append(String.format(
-                        "%s%s value;\n",
+                        "%s%s %s;\n",
                         getIndentString(indentation + 2),
-                        valueType
+                        valueType,
+                        valueName
                 ));
                 valueCodeGenerator.generateDecodeJavaCode(
                         sb,
                         field,
                         indentation + 2,
-                        "value",
+                        valueName,
                         valueType
                 );
                 sb.append(String.format(
-                        "%sdecodedMap.put(key, value);\n",
-                        getIndentString(indentation + 2)
+                        "%s%s.put(%s, %s);\n",
+                        getIndentString(indentation + 2),
+                        mapName,
+                        keyName,
+                        valueName
                 ));
             } else {
                 context.getMessager().printMessage(Diagnostic.Kind.ERROR, "Unable to decode key/value type");
@@ -202,7 +229,7 @@ public class MapCodeGenerator extends FieldCodeGenerator {
                     typeName,
                     variableName,
                     field.getName(),
-                    "decodedMap"
+                    mapName
             );
             sb.append(getIndentString(indentation + 1));
             sb.append(setter);
@@ -210,6 +237,8 @@ public class MapCodeGenerator extends FieldCodeGenerator {
         } else {
             context.getMessager().printMessage(Diagnostic.Kind.ERROR, "Unable to determine key/value types for map");
         }
+
+        context.decrementMapNesting();
 
         sb.append(String.format(
                 "%s}\n",

@@ -103,7 +103,4 @@ public abstract class FieldCodeGenerator {
                                                 int indentation,
                                                 String variableName,
                                                 String typeName);
-
-    public void setTypeCode(String typeCode) {
-    }
 }

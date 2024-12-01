@@ -18,13 +18,13 @@ import lombok.Setter;
 @CephType
 @CephTypeVersion(version = 2)
 public class CephXAuthorizeReplyV2 extends CephXAuthorizeReply {
-    @CephField
     @Getter
     @Setter
+    @CephField
     private long noncePlusOne;
 
-    @CephField(order = 2, includeSize = true)
     @Getter
     @Setter
+    @CephField(order = 2, includeSize = true)
     private byte[] connectionSecret;
 }

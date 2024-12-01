@@ -20,7 +20,8 @@ import ca.venom.ceph.client.codecs.RequestWithFuture;
 import ca.venom.ceph.client.codecs.ServerIdentHandler;
 import ca.venom.ceph.protocol.frames.ControlFrame;
 import ca.venom.ceph.protocol.frames.MessageFrame;
-import ca.venom.ceph.protocol.messages.MonMap;
+import ca.venom.ceph.protocol.messages.CephMsgHeader2;
+import ca.venom.ceph.protocol.messages.MMonMap;
 import ca.venom.ceph.types.MessageType;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -69,9 +70,9 @@ public class CephNettyClient {
         return channelReady;
     }
 
-    public CompletableFuture<MonMap> getMonMap() {
+    public CompletableFuture<MMonMap> getMonMap() {
         final MessageFrame getMonMapFrame = new MessageFrame();
-        getMonMapFrame.setHead(new MessageFrame.Header());
+        getMonMapFrame.setHead(new CephMsgHeader2());
         getMonMapFrame.getHead().setSeq(1L);
         getMonMapFrame.getHead().setType((short) MessageType.MSG_MON_GET_MAP.getValueInt());
         getMonMapFrame.getHead().setPriority((short) 127);
@@ -87,9 +88,9 @@ public class CephNettyClient {
                 )
         );
 
-        final CompletableFuture<MonMap> monMapFuture = new CompletableFuture<>();
+        final CompletableFuture<MMonMap> monMapFuture = new CompletableFuture<>();
         responseFuture.thenAccept(frame -> {
-            monMapFuture.complete((MonMap) ((MessageFrame) frame).getFront());
+            monMapFuture.complete((MMonMap) ((MessageFrame) frame).getPayload());
         });
 
         return monMapFuture;
@@ -97,7 +98,7 @@ public class CephNettyClient {
 
     public void ping() {
         final MessageFrame pingFrame = new MessageFrame();
-        pingFrame.setHead(new MessageFrame.Header());
+        pingFrame.setHead(new CephMsgHeader2());
         pingFrame.getHead().setSeq(1L);
         pingFrame.getHead().setType((short) MessageType.MSG_PING.getValueInt());
         pingFrame.getHead().setPriority((short) 127);

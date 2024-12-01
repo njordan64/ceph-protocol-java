@@ -21,4 +21,6 @@ import java.lang.annotation.Target;
 public @interface CephChildType {
     int typeValue();
     Class<?> typeClass();
+
+    boolean isDefault() default false;
 }

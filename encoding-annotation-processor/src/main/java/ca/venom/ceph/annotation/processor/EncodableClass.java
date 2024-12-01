@@ -25,9 +25,11 @@ public class EncodableClass {
     private Byte marker;
     private Byte version;
     private Byte compatVersion;
+    private String padToSizeOfClass;
     private CephParentType parentType;
     private List<ChildTypeSimple> childTypes;
     private List<EncodableField> fields = new ArrayList<>();
+    private boolean useTypeCodeParameter;
 
     /**
      * Get the package that the class is in
@@ -123,6 +125,22 @@ public class EncodableClass {
      */
     public void setCompatVersion(Byte compatVersion) {
         this.compatVersion = compatVersion;
+    }
+
+    public String getPadToSizeOfClass() {
+        return padToSizeOfClass;
+    }
+
+    public void setPadToSizeOfClass(String className) {
+        this.padToSizeOfClass = className;
+    }
+
+    public boolean isUseTypeCodeParameter() {
+        return useTypeCodeParameter;
+    }
+
+    public void setUseTypeCodeParameter(boolean useTypeCodeParameter) {
+        this.useTypeCodeParameter = useTypeCodeParameter;
     }
 
     /**

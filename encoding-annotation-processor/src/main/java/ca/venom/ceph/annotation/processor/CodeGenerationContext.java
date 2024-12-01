@@ -26,6 +26,7 @@ public class CodeGenerationContext {
     private Map<String, EncodableClass> encodableClasses;
     private Map<MessageType, String> messageTypeClasses;
     private Set<String> imports = new HashSet<>();
+    private int mapNesting = 1;
 
     /**
      * Creates a new CodeGenerationContext object.
@@ -88,5 +89,15 @@ public class CodeGenerationContext {
      */
     public Set<String> getImports() {
         return imports;
+    }
+
+    public int incrementMapNesting() {
+        int valueToReturn = mapNesting;
+        mapNesting++;
+        return valueToReturn;
+    }
+
+    public void decrementMapNesting() {
+        mapNesting--;
     }
 }

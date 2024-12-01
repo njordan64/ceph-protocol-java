@@ -14,6 +14,7 @@ module ca.venom.ceph.protocol.protocol {
     requires ca.venom.ceph.protocol.types;
     requires ca.venom.ceph.protocol.utils;
     requires org.slf4j;
+    requires io.netty.buffer;
 
     exports ca.venom.ceph.protocol;
     exports ca.venom.ceph.protocol.decode;

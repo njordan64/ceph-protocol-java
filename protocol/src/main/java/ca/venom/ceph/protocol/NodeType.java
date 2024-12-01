@@ -22,7 +22,7 @@ public enum NodeType implements EnumWithIntValue {
 
     private final int valueInt;
 
-    private NodeType(int valueInt) {
+    NodeType(int valueInt) {
         this.valueInt = valueInt;
     }
 

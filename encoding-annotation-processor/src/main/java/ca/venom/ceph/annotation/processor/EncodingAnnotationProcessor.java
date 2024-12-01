@@ -11,14 +11,17 @@ package ca.venom.ceph.annotation.processor;
 
 import ca.venom.ceph.encoding.annotations.CephChildType;
 import ca.venom.ceph.encoding.annotations.CephChildTypes;
+import ca.venom.ceph.encoding.annotations.CephCondition;
 import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephMarker;
 import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephParentType;
+import ca.venom.ceph.encoding.annotations.CephParentTypeValue;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
 import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephZeroPadToSizeOf;
 import ca.venom.ceph.types.MessageType;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -121,6 +124,7 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
             encodableField.setByteOrderPreference(field.byteOrderPreference());
             encodableField.setIncludeSize(field.includeSize());
             encodableField.setSizeLength(field.sizeLength());
+            encodableField.setSizeProperty(field.sizeProperty());
 
             CephEncodingSize encodingSize = element.getAnnotation(CephEncodingSize.class);
             if (encodingSize != null) {
@@ -130,6 +134,20 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
             CephTypeSize typeSize = element.getAnnotation(CephTypeSize.class);
             if (typeSize != null) {
                 encodableField.setIncludeSize(true);
+            }
+
+            CephCondition cephCondition = element.getAnnotation(CephCondition.class);
+            if (cephCondition != null) {
+                encodableField.setCondition(new EncodableField.Condition(
+                        cephCondition.operator(),
+                        cephCondition.property(),
+                        cephCondition.values()
+                ));
+            }
+
+            CephParentTypeValue parentTypeValue = element.getAnnotation(CephParentTypeValue.class);
+            if (parentTypeValue != null) {
+                encodableField.setParentTypeValue(parentTypeValue.value());
             }
 
             encodableClass.getFields().add(encodableField);
@@ -169,6 +187,7 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
         CephParentType parentType = element.getAnnotation(CephParentType.class);
         if (parentType != null) {
             encodableClass.setParentType(parentType);
+            encodableClass.setUseTypeCodeParameter(parentType.useParameter());
         }
         CephChildTypes childTypes = element.getAnnotation(CephChildTypes.class);
         if (childTypes != null) {
@@ -176,6 +195,7 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
             for (CephChildType childType : childTypes.value()) {
                 ChildTypeSimple childTypeSimple = new ChildTypeSimple();
                 childTypeSimple.setTypeCode(childType.typeValue());
+                childTypeSimple.setDefault(childType.isDefault());
                 Pattern pattern = Pattern.compile(".*, typeClass=(.*)\\.class\\)$");
                 Matcher matcher = pattern.matcher(childType.toString());
                 if (matcher.matches()) {
@@ -202,6 +222,15 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
             encodableClass.setVersion(typeVersion.version());
             if (typeVersion.compatVersion() > 0) {
                 encodableClass.setCompatVersion(typeVersion.compatVersion());
+            }
+        }
+
+        CephZeroPadToSizeOf zeroPadToSizeOf = element.getAnnotation(CephZeroPadToSizeOf.class);
+        if (zeroPadToSizeOf != null) {
+            Pattern pattern = Pattern.compile(".* value=(.*)\\.class\\)$");
+            Matcher matcher = pattern.matcher(zeroPadToSizeOf.toString());
+            if (matcher.matches()) {
+                encodableClass.setPadToSizeOfClass(matcher.group(1));
             }
         }
 

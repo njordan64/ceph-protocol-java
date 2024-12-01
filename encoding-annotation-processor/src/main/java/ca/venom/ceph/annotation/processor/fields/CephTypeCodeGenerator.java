@@ -14,15 +14,9 @@ import ca.venom.ceph.annotation.processor.EncodableField;
 
 public class CephTypeCodeGenerator extends FieldCodeGenerator {
     private CodeGenerationContext context;
-    private String typeCode;
 
     public CephTypeCodeGenerator(CodeGenerationContext context) {
         this.context = context;
-    }
-
-    @Override
-    public void setTypeCode(String typeCode) {
-        this.typeCode = typeCode;
     }
 
     @Override
@@ -69,8 +63,8 @@ public class CephTypeCodeGenerator extends FieldCodeGenerator {
         packageName = getEncodingPackageName(packageName);
 
         String typeCodeParam = "";
-        if (typeCode != null) {
-            typeCodeParam = ", " + typeCode;
+        if (field.getParentTypeValue() != null) {
+            typeCodeParam = String.format(", %s.%s", variableName, field.getParentTypeValue());
         }
 
         String value = String.format(

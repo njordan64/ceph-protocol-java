@@ -118,6 +118,81 @@ public class CodeGenerator {
         }
     }
 
+    private Integer getFixedSize(String targetClassName) {
+        EncodableClass encodableClass = context.getEncodableClasses().get(targetClassName);
+        if (encodableClass == null) {
+            return null;
+        }
+
+        int size = 0;
+        if (encodableClass.getMarker() != null) {
+            size++;
+        }
+        if (encodableClass.getVersion() != null) {
+            size++;
+            if (encodableClass.getCompatVersion() != null) {
+                size++;
+            }
+        }
+        if (encodableClass.isIncludeSize()) {
+            size += 4;
+        }
+
+        for (EncodableField field : encodableClass.getFields()) {
+            Integer fieldSize = null;
+            switch (field.getType()) {
+                case "boolean":
+                case "java.lang.Boolean":
+                case "byte":
+                case "java.lang.Byte":
+                    fieldSize = 1;
+                    break;
+                case "short":
+                case "java.lang.Short":
+                    fieldSize = 2;
+                    break;
+                case "int":
+                case "java.lang.Integer":
+                    fieldSize = 4;
+                    break;
+                case "long":
+                case "java.lang.Long":
+                    fieldSize = 8;
+                    break;
+            }
+
+            if (fieldSize != null) {
+                size += fieldSize;
+                continue;
+            }
+
+            if (context.getEncodableClasses().containsKey(field.getType())) {
+                fieldSize = getFixedSize(field.getType());
+                if (fieldSize == null) {
+                    return null;
+                }
+
+                size += fieldSize;
+                continue;
+            }
+
+            if (field.getInterfaces() != null &&
+                    field.getInterfaces().contains("ca.venom.ceph.types.EnumWithIntValue")) {
+                if (field.getEncodingSize() == null) {
+                    size++;
+                } else {
+                    size += field.getEncodingSize();
+                }
+
+                continue;
+            }
+
+            return null;
+        }
+
+        return size;
+    }
+
     private void generateEncodingSource(EncodableClass encodableClass) throws IOException {
         packageName = getEncodingPackageName(encodableClass.getPackageName());
 
@@ -200,31 +275,45 @@ public class CodeGenerator {
     private String generateAbstractDecodeMethod(EncodableClass encodableClass) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(String.format(
-                "    public static %s.%s decode(ByteBuf byteBuf, boolean le) throws DecodingException {\n",
-                encodableClass.getPackageName(),
-                encodableClass.getClassName()
-        ));
+        if (encodableClass.isUseTypeCodeParameter()) {
+            sb.append(String.format(
+                    "    public static %s.%s decode(ByteBuf byteBuf, boolean le, int typeCode) throws DecodingException {\n",
+                    encodableClass.getPackageName(),
+                    encodableClass.getClassName()
+            ));
+        } else {
+            sb.append(String.format(
+                    "    public static %s.%s decode(ByteBuf byteBuf, boolean le) throws DecodingException {\n",
+                    encodableClass.getPackageName(),
+                    encodableClass.getClassName()
+            ));
 
-        switch (encodableClass.getParentType().typeSize()) {
-            case 1 -> sb.append(String.format(
-                    "        int typeCode = byteBuf.getByte(byteBuf.readerIndex() + %d);\n",
-                    encodableClass.getParentType().typeOffset()
-            ));
-            case 2 -> sb.append(String.format(
-                    "        int typeCode = le ? byteBuf.getShortLE(byteBuf.readerIndex() + %d) : byteBuf.getShort(byteBuf.readerIndex() + %d);\n",
-                    encodableClass.getParentType().typeOffset(),
-                    encodableClass.getParentType().typeOffset()
-            ));
-            default -> sb.append(String.format(
-                    "        int typeCode = le ? byteBuf.getIntLE(byteBuf.readerIndex() + %d) : byteBuf.getInt(byteBuf.readerIndex() + %d);\n",
-                    encodableClass.getParentType().typeOffset(),
-                    encodableClass.getParentType().typeOffset()
-            ));
+            switch (encodableClass.getParentType().typeSize()) {
+                case 1 -> sb.append(String.format(
+                        "        int typeCode = byteBuf.getByte(byteBuf.readerIndex() + %d);\n",
+                        encodableClass.getParentType().typeOffset()
+                ));
+                case 2 -> sb.append(String.format(
+                        "        int typeCode = le ? byteBuf.getShortLE(byteBuf.readerIndex() + %d) : byteBuf.getShort(byteBuf.readerIndex() + %d);\n",
+                        encodableClass.getParentType().typeOffset(),
+                        encodableClass.getParentType().typeOffset()
+                ));
+                default -> sb.append(String.format(
+                        "        int typeCode = le ? byteBuf.getIntLE(byteBuf.readerIndex() + %d) : byteBuf.getInt(byteBuf.readerIndex() + %d);\n",
+                        encodableClass.getParentType().typeOffset(),
+                        encodableClass.getParentType().typeOffset()
+                ));
+            }
         }
 
         boolean isFirst = true;
+        ChildTypeSimple defaultChildType = null;
         for (ChildTypeSimple childType : encodableClass.getChildTypes()) {
+            if (childType.isDefault()) {
+                defaultChildType = childType;
+                continue;
+            }
+
             sb.append(String.format(
                     "        %sif (%d == typeCode) {\n",
                     isFirst ? "" : "} else ",
@@ -243,6 +332,16 @@ public class CodeGenerator {
 
         if (isFirst) {
             sb.append("        throw new IllegalArgumentException(\"Unknown type code read\");");
+        } else if (defaultChildType != null) {
+            sb.append("        } else {\n");
+            String packageName = defaultChildType.getClassName().substring(0, defaultChildType.getClassName().lastIndexOf('.'));
+            String className = defaultChildType.getClassName().substring(defaultChildType.getClassName().lastIndexOf('.') + 1);
+            sb.append(String.format(
+                    "            return %s.%sEncodable.decode(byteBuf, le);\n",
+                    getEncodingPackageName(packageName),
+                    className
+            ));
+            sb.append("        }\n");
         } else {
             sb.append("        } else {\n");
             sb.append("            throw new IllegalArgumentException(\"Unknown type code read: \" + typeCode);\n");
@@ -382,13 +481,29 @@ public class CodeGenerator {
                     field.getType()
             );
             if (fieldCodeGenerator != null) {
-                fieldCodeGenerator.generateEncodeJavaCode(
-                        sb,
-                        field,
-                        2,
-                        "toEncode",
-                        field.getType()
-                );
+                if (field.getCondition() == null) {
+                    fieldCodeGenerator.generateEncodeJavaCode(
+                            sb,
+                            field,
+                            2,
+                            "toEncode",
+                            field.getType()
+                    );
+                } else {
+                    sb.append(String.format(
+                            "        if (toEncode.%s == %s) {\n",
+                            field.getCondition().getProperty(),
+                            field.getCondition().getValues()[0]
+                    ));
+                    fieldCodeGenerator.generateEncodeJavaCode(
+                            sb,
+                            field,
+                            3,
+                            "toEncode",
+                            field.getType()
+                    );
+                    sb.append("        }\n");
+                }
             }
         }
 
@@ -398,6 +513,19 @@ public class CodeGenerator {
             sb.append("        } else {\n");
             sb.append("            byteBuf.setInt(sizeIndex, byteBuf.writerIndex() - sizeIndex - 4);\n");
             sb.append("        }\n");
+        }
+
+        if (encodableClass.getPadToSizeOfClass() != null) {
+            Integer currentSize =
+                    getFixedSize(encodableClass.getPackageName() + "." + encodableClass.getClassName());
+            Integer otherSize = getFixedSize(encodableClass.getPadToSizeOfClass());
+
+            if (currentSize != null && otherSize != null && otherSize > currentSize) {
+                sb.append(String.format(
+                        "        byteBuf.writeZero(%d);\n",
+                        otherSize - currentSize
+                ));
+            }
         }
 
         sb.append("    }\n");
@@ -469,13 +597,42 @@ public class CodeGenerator {
             if (fieldCodeGenerator == null) {
                 context.getMessager().printMessage(Diagnostic.Kind.ERROR, "Unable to decode field");
             } else {
-                fieldCodeGenerator.generateDecodeJavaCode(
-                        sb,
-                        field,
-                        2,
-                        "toDecode",
-                        field.getType()
-                );
+                if (field.getCondition() == null) {
+                    fieldCodeGenerator.generateDecodeJavaCode(
+                            sb,
+                            field,
+                            2,
+                            "toDecode",
+                            field.getType()
+                    );
+                } else {
+                    sb.append(String.format(
+                            "        if (toDecode.%s == %s) {\n",
+                            field.getCondition().getProperty(),
+                            field.getCondition().getValues()[0]
+                    ));
+                    fieldCodeGenerator.generateEncodeJavaCode(
+                            sb,
+                            field,
+                            3,
+                            "toDecode",
+                            field.getType()
+                    );
+                    sb.append("        }\n");
+                }
+            }
+        }
+
+        if (encodableClass.getPadToSizeOfClass() != null) {
+            Integer currentSize =
+                    getFixedSize(encodableClass.getPackageName() + "." + encodableClass.getClassName());
+            Integer otherSize = getFixedSize(encodableClass.getPadToSizeOfClass());
+
+            if (currentSize != null && otherSize != null && otherSize > currentSize) {
+                sb.append(String.format(
+                        "        byteBuf.skipBytes(%d);\n",
+                        otherSize - currentSize
+                ));
             }
         }
 

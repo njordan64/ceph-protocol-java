@@ -16,6 +16,7 @@ package ca.venom.ceph.annotation.processor;
 public class ChildTypeSimple {
     private int typeCode;
     private String className;
+    private boolean isDefault;
 
     /**
      * Get the type code
@@ -47,5 +48,13 @@ public class ChildTypeSimple {
      */
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public boolean isDefault() {
+        return isDefault;
+    }
+
+    public void setDefault(boolean isDefault) {
+        isDefault = isDefault;
     }
 }

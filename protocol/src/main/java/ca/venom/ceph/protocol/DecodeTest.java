@@ -9,7 +9,7 @@
  */
 package ca.venom.ceph.protocol;
 
-import ca.venom.ceph.protocol.messages.MonMap;
+import ca.venom.ceph.protocol.messages.MMonMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -22,7 +22,7 @@ public class DecodeTest {
         fis.close();
 
         ByteBuf byteBuf = Unpooled.wrappedBuffer(bytes, 4, bytes.length - 4);
-        MonMap monMap = CephDecoder.decode(byteBuf, true, MonMap.class);
+        MMonMap monMap = CephDecoder.decode(byteBuf, true, MMonMap.class);
         System.out.println(">>> Done");
     }
 }

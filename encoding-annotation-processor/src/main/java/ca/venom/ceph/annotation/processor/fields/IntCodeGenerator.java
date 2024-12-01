@@ -76,7 +76,7 @@ public class IntCodeGenerator extends FieldCodeGenerator {
                     typeName,
                     variableName,
                     field.getName(),
-                    "new Integer(byteBuf.readIntLE())");
+                    "Integer.valueOf(byteBuf.readIntLE())");
             sb.append(getIndentString(indentation));
             sb.append(setter);
             sb.append("\n");
@@ -86,7 +86,7 @@ public class IntCodeGenerator extends FieldCodeGenerator {
                     typeName,
                     variableName,
                     field.getName(),
-                    "new Integer(byteBuf.readInt())");
+                    "Integer.valueOf(byteBuf.readInt())");
             sb.append(getIndentString(indentation));
             sb.append(setter);
             sb.append("\n");
@@ -100,7 +100,7 @@ public class IntCodeGenerator extends FieldCodeGenerator {
                     typeName,
                     variableName,
                     field.getName(),
-                    "new Integer(byteBuf.readIntLE())");
+                    "Integer.valueOf(byteBuf.readIntLE())");
             sb.append(getIndentString(indentation + 1));
             sb.append(setter);
             sb.append("\n");
@@ -114,7 +114,7 @@ public class IntCodeGenerator extends FieldCodeGenerator {
                     typeName,
                     variableName,
                     field.getName(),
-                    "new Integer(byteBuf.readInt())");
+                    "Integer.valueOf(byteBuf.readInt())");
             sb.append(getIndentString(indentation + 1));
             sb.append(setter);
             sb.append("\n");

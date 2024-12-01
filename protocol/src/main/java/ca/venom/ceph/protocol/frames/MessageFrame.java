@@ -16,73 +16,16 @@ import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
+import ca.venom.ceph.protocol.messages.CephMsgHeader2;
+import ca.venom.ceph.protocol.messages.MMonGetMap;
+import ca.venom.ceph.protocol.messages.MMonMap;
 import ca.venom.ceph.protocol.messages.MessagePayload;
-import ca.venom.ceph.protocol.messages.MonGetMap;
-import ca.venom.ceph.protocol.messages.MonMap;
 import ca.venom.ceph.types.MessageType;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
 public class MessageFrame extends ControlFrame {
-    @CephType
-    public static class Header {
-        @Getter
-        @Setter
-        @CephField
-        private long seq;
-
-        @Getter
-        @Setter
-        @CephField(order = 2)
-        private long tid;
-
-        @Getter
-        @Setter
-        @CephField(order = 3)
-        private short type;
-
-        @Getter
-        @Setter
-        @CephField(order = 4)
-        private short priority;
-
-        @Getter
-        @Setter
-        @CephField(order = 5)
-        private short version;
-
-        @Getter
-        @Setter
-        @CephField(order = 6)
-        private int dataPrePaddingLen;
-
-        @Getter
-        @Setter
-        @CephField(order = 7)
-        private short dataOff;
-
-        @Getter
-        @Setter
-        @CephField(order = 8)
-        private long ackSeq;
-
-        @Getter
-        @Setter
-        @CephField(order = 9)
-        private byte flags;
-
-        @Getter
-        @Setter
-        @CephField(order = 10)
-        private short compatVersion;
-
-        @Getter
-        @Setter
-        @CephField(order = 11)
-        private short reserved;
-    }
-
     @CephType
     public static class Segment {
         @Getter
@@ -97,19 +40,11 @@ public class MessageFrame extends ControlFrame {
 
     @Getter
     @Setter
-    private Header head;
+    private CephMsgHeader2 head;
 
     @Getter
     @Setter
-    private MessagePayload front;
-
-    @Getter
-    @Setter
-    private Segment middle;
-
-    @Getter
-    @Setter
-    private Segment data;
+    private MessagePayload payload;
 
     @Override
     public ControlFrameType getTag() {
@@ -118,36 +53,40 @@ public class MessageFrame extends ControlFrame {
 
     @Override
     public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
-        if (front != null) {
+        if (payload != null) {
+            payload.prepareForEncode();
+
             head.setType(getMessageTypeCode());
+            head.setVersion(payload.getHeadVersion());
+            head.setCompatVersion(payload.getHeadCompatVersion());
         }
         CephEncoder.encode(head, byteBuf, le);
     }
 
     @Override
     public void encodeSegment2(ByteBuf byteBuf, boolean le) throws EncodingException {
-        if (front != null) {
-            CephEncoder.encode(front, byteBuf, le);
+        if (payload != null) {
+            CephEncoder.encode(payload, byteBuf, le);
         }
     }
 
     @Override
     public void encodeSegment3(ByteBuf byteBuf, boolean le) throws EncodingException {
-        if (middle != null && middle.encodedBytes.length > 0) {
-            CephEncoder.encode(middle, byteBuf, le);
+        if (payload != null) {
+            payload.encodeMiddle(byteBuf, le);
         }
     }
 
     @Override
     public void encodeSegment4(ByteBuf byteBuf, boolean le) throws EncodingException {
-        if (data != null && data.encodedBytes.length > 0) {
-            CephEncoder.encode(data, byteBuf, le);
+        if (payload != null) {
+            payload.encodeData(byteBuf, le);
         }
     }
 
     @Override
     public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
-        head = CephDecoder.decode(byteBuf, le, Header.class);
+        head = CephDecoder.decode(byteBuf, le, CephMsgHeader2.class);
     }
 
     @Override
@@ -156,38 +95,31 @@ public class MessageFrame extends ControlFrame {
             // Skip over the length
             byteBuf.readerIndex(byteBuf.readerIndex() + 4);
 
-            front = CephDecoder.decode(byteBuf, le, MessagePayload.class, head.getType());
+            payload = CephDecoder.decode(byteBuf, le, MessagePayload.class, head.getType());
             //head.setType(getMessageTypeCode());
         }
     }
 
     @Override
     public void decodeSegment3(ByteBuf byteBuf, boolean le) throws DecodingException {
-        if (byteBuf.readableBytes() > 0) {
-            byte[] bytes = new byte[byteBuf.readableBytes()];
-            byteBuf.getBytes(0, bytes);
-            middle = new Segment();
-            middle.setEncodedBytes(bytes);
-            middle.setLe(le);
+        if (payload != null) {
+            payload.decodeMiddle(byteBuf, le);
         }
     }
 
     @Override
     public void decodeSegment4(ByteBuf byteBuf, boolean le) throws DecodingException {
-        if (byteBuf.readableBytes() > 0) {
-            byte[] bytes = new byte[byteBuf.readableBytes()];
-            byteBuf.getBytes(0, bytes);
-            data = new Segment();
-            data.setEncodedBytes(bytes);
-            data.setLe(le);
+        if (payload != null) {
+            payload.decodeData(byteBuf, le);
+            payload.finishDecode();
         }
     }
 
     private short getMessageTypeCode() {
-        if (front != null) {
-            if (front instanceof MonMap) {
+        if (payload != null) {
+            if (payload instanceof MMonMap) {
                 return (short) MessageType.MSG_MON_MAP.getValueInt();
-            } else if (front instanceof MonGetMap) {
+            } else if (payload instanceof MMonGetMap) {
                 return (short) MessageType.MSG_MON_GET_MAP.getValueInt();
             }
         }

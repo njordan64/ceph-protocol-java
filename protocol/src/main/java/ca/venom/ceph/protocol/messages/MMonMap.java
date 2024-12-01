@@ -35,7 +35,7 @@ import java.util.Set;
 @CephTypeVersion(version = 9, compatVersion = 6)
 @CephTypeSize
 @CephMessagePayload(MessageType.MSG_MON_MAP)
-public class MonMap implements MessagePayload {
+public class MMonMap extends MessagePayload {
     public enum ElectionStrategy implements EnumWithIntValue {
         CLASSIC(1),
         DISALLOW(2),

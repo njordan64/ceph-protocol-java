@@ -11,6 +11,7 @@ package ca.venom.ceph.annotation.processor;
 
 import ca.venom.ceph.encoding.annotations.ByteOrderPreference;
 import ca.venom.ceph.encoding.annotations.CephMarker;
+import ca.venom.ceph.encoding.annotations.ConditonOperator;
 
 import java.util.List;
 
@@ -20,6 +21,42 @@ import java.util.List;
  * to enable generating code for encoding or decoding the field.
  */
 public class EncodableField {
+    public static class Condition {
+        private ConditonOperator operator;
+        private String property;
+        private String[] values;
+
+        public Condition(ConditonOperator operator, String property, String[] values) {
+            this.operator = operator;
+            this.property = property;
+            this.values = values;
+        }
+
+        public ConditonOperator getOperator() {
+            return operator;
+        }
+
+        public void setOperator(ConditonOperator operator) {
+            this.operator = operator;
+        }
+
+        public String getProperty() {
+            return property;
+        }
+
+        public void setProperty(String property) {
+            this.property = property;
+        }
+
+        public String[] getValues() {
+            return values;
+        }
+
+        public void setValues(String[] values) {
+            this.values = values;
+        }
+    }
+
     private String name;
     private String type;
     private List<String> interfaces;
@@ -27,7 +64,10 @@ public class EncodableField {
     private ByteOrderPreference byteOrderPreference;
     private boolean includeSize;
     private int sizeLength;
+    private String sizeProperty;
     private Integer encodingSize;
+    private Condition condition;
+    private String parentTypeValue;
 
     /**
      * Get the name of the field
@@ -141,6 +181,14 @@ public class EncodableField {
         this.sizeLength = sizeLength;
     }
 
+    public String getSizeProperty() {
+        return sizeProperty;
+    }
+
+    public void setSizeProperty(String sizeProperty) {
+        this.sizeProperty = sizeProperty;
+    }
+
     /**
      * Get the encoded size of the field
      * @return encoded size of the field
@@ -155,5 +203,21 @@ public class EncodableField {
      */
     public void setEncodingSize(Integer encodingSize) {
         this.encodingSize = encodingSize;
+    }
+
+    public Condition getCondition() {
+        return condition;
+    }
+
+    public void setCondition(Condition condition) {
+        this.condition = condition;
+    }
+
+    public String getParentTypeValue() {
+        return parentTypeValue;
+    }
+
+    public void setParentTypeValue(String parentTypeValue) {
+        this.parentTypeValue = parentTypeValue;
     }
 }

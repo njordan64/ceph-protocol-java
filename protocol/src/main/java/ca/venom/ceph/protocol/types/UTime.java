@@ -19,10 +19,10 @@ public class UTime {
     @Getter
     @Setter
     @CephField(order = 1)
-    private int high;
+    private int tvSec;
 
     @Getter
     @Setter
     @CephField(order = 2)
-    private int low;
+    private int tvNSec;
 }

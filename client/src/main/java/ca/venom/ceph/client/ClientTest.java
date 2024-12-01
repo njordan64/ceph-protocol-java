@@ -9,7 +9,7 @@
  */
 package ca.venom.ceph.client;
 
-import ca.venom.ceph.protocol.messages.MonMap;
+import ca.venom.ceph.protocol.messages.MMonMap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -22,8 +22,8 @@ public class ClientTest {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             Channel clientChannel = client.start(workerGroup).get();
-            CompletableFuture<MonMap> monMapFuture = client.getMonMap();
-            MonMap monMap = monMapFuture.get();
+            CompletableFuture<MMonMap> monMapFuture = client.getMonMap();
+            MMonMap monMap = monMapFuture.get();
             //client.ping();
         } finally {
             workerGroup.shutdownGracefully();
