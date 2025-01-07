@@ -40,61 +40,61 @@ public class MMonElection extends MessagePayload {
 
     @Getter
     @Setter
-    @CephField(order = 2)
+    @CephField(order = 3)
     private int epoch;
 
     @Getter
     @Setter
-    @CephField(order = 3, includeSize = true)
+    @CephField(order = 4, includeSize = true)
     private byte[] monMap;
 
     @Getter
     @Setter
-    @CephField(order = 4)
+    @CephField(order = 5)
     private List<Integer> quorum;
 
     @Getter
     @Setter
-    @CephField(order = 5)
+    @CephField(order = 6)
     private long quorumFeatures;
 
     @Getter
     @Setter
-    @CephField(order = 6)
+    @CephField(order = 7)
     private long defunctField1;
 
     @Getter
     @Setter
-    @CephField(order = 7)
+    @CephField(order = 8)
     private long defunctField2;
 
     @Getter
     @Setter
-    @CephField(order = 8, includeSize = true)
+    @CephField(order = 9, includeSize = true)
     private byte[] sharing;
 
     @Getter
     @Setter
-    @CephField(order = 9)
+    @CephField(order = 10)
     private MonFeature monFeatures;
 
     @Getter
     @Setter
-    @CephField(order = 10)
+    @CephField(order = 11)
     private Map<String, String> metadata;
 
     @Getter
     @Setter
-    @CephField(order = 11)
+    @CephField(order = 12)
     private CephRelease monRelease = CephRelease.UNKNOWN;
 
     @Getter
     @Setter
-    @CephField(order = 12, includeSize = true)
+    @CephField(order = 13, includeSize = true)
     private byte[] scoring;
 
     @Getter
     @Setter
-    @CephField(order = 13)
+    @CephField(order = 14)
     private byte strategy;
 }

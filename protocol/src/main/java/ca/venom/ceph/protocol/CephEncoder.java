@@ -9,30 +9,19 @@
  */
 package ca.venom.ceph.protocol;
 
+import ca.venom.ceph.annotation.processor.ClassNameSplitter;
 import io.netty.buffer.ByteBuf;
 
 import java.lang.reflect.Method;
 
 public class CephEncoder {
-    private static String getEncodingPackageName(String className) {
-        if (className.contains("$")) {
-            String packageName = className.substring(0, className.lastIndexOf('$'));
-            String base = packageName.substring(0, packageName.lastIndexOf('.'));
-            String outClassName = packageName.substring(packageName.lastIndexOf('.') + 1);
-            return base + "._generated." + outClassName;
-        } else {
-            String packageName = className.substring(0, className.lastIndexOf('.'));
-            return packageName + "._generated";
-        }
-    }
-
     public static void encode(Object toEncode, ByteBuf byteBuf, boolean le) {
         Class<?> toEncodeClass = toEncode.getClass();
-        String packageName = getEncodingPackageName(toEncodeClass.getName());
-        String className = toEncodeClass.getSimpleName() + "Encodable";
+        ClassNameSplitter classNameParser = new ClassNameSplitter(toEncodeClass.getName());
 
         try {
-            Class<?> encodingClass = toEncodeClass.getClassLoader().loadClass(packageName + "." + className);
+            Class<?> encodingClass = toEncodeClass.getClassLoader().loadClass(
+                    classNameParser.getPackageName() + "." + classNameParser.getEncoderClassName());
             Method encodeMethod = encodingClass.getMethod("encode", toEncodeClass, ByteBuf.class, Boolean.TYPE);
             encodeMethod.invoke(null, toEncode, byteBuf, le);
         } catch (Exception e) {

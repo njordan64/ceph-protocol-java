@@ -92,11 +92,7 @@ public class MessageFrame extends ControlFrame {
     @Override
     public void decodeSegment2(ByteBuf byteBuf, boolean le) throws DecodingException {
         if (byteBuf.readableBytes() > 0) {
-            // Skip over the length
-            byteBuf.readerIndex(byteBuf.readerIndex() + 4);
-
             payload = CephDecoder.decode(byteBuf, le, MessagePayload.class, head.getType());
-            //head.setType(getMessageTypeCode());
         }
     }
 

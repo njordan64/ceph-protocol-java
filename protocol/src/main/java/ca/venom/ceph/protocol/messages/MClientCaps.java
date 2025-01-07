@@ -67,7 +67,7 @@ public class MClientCaps extends MessagePayload {
     @Getter
     @Setter
     @CephField(order = 6)
-    private long inline_version = 0;
+    private long inlineVersion = 0;
 
     @Getter
     @Setter

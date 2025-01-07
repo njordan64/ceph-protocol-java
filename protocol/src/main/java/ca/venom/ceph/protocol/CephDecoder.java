@@ -9,26 +9,16 @@
  */
 package ca.venom.ceph.protocol;
 
+import ca.venom.ceph.annotation.processor.ClassNameSplitter;
 import io.netty.buffer.ByteBuf;
 
 import java.lang.reflect.Method;
 
 public class CephDecoder {
-    private static String getEncodingPackageName(String className) {
-        if (className.contains("$")) {
-            String packageName = className.substring(0, className.lastIndexOf('$'));
-            String base = packageName.substring(0, packageName.lastIndexOf('.'));
-            String outClassName = packageName.substring(packageName.lastIndexOf('.') + 1);
-            return base + "._generated." + outClassName;
-        } else {
-            String packageName = className.substring(0, className.lastIndexOf('.'));
-            return packageName + "._generated";
-        }
-    }
-
     public static <T> T decode(ByteBuf byteBuf, boolean le, Class<T> valueClass) throws DecodingException {
-        String packageName = getEncodingPackageName(valueClass.getName());
-        String className = valueClass.getSimpleName() + "Encodable";
+        ClassNameSplitter parsedClassName = new ClassNameSplitter(valueClass.getName());
+        String packageName = parsedClassName.getPackageName();
+        String className = parsedClassName.getEncoderClassName();
 
         try {
             Class<?> decodingClass = valueClass.getClassLoader().loadClass(packageName + "." + className);
@@ -45,8 +35,9 @@ public class CephDecoder {
     }
 
     public static <T> T decode(ByteBuf byteBuf, boolean le, Class<T> valueClass, int typeCode) throws DecodingException {
-        String packageName = getEncodingPackageName(valueClass.getName());
-        String className = valueClass.getSimpleName() + "Encodable";
+        ClassNameSplitter parsedClassName = new ClassNameSplitter(valueClass.getName());
+        String packageName = parsedClassName.getPackageName();
+        String className = parsedClassName.getEncoderClassName();
 
         try {
             Class<?> decodingClass = valueClass.getClassLoader().loadClass(packageName + "." + className);

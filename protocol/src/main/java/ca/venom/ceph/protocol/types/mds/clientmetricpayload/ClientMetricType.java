@@ -9,6 +9,7 @@
  */
 package ca.venom.ceph.protocol.types.mds.clientmetricpayload;
 
+import ca.venom.ceph.protocol.CephRelease;
 import ca.venom.ceph.types.EnumWithIntValue;
 
 public enum ClientMetricType implements EnumWithIntValue {
@@ -25,6 +26,16 @@ public enum ClientMetricType implements EnumWithIntValue {
 
     ClientMetricType(int valueInt) {
         this.valueInt = valueInt;
+    }
+
+    public static ClientMetricType getFromValueInt(int value) {
+        for (ClientMetricType clientMetricType : values()) {
+            if (clientMetricType.valueInt == value) {
+                return clientMetricType;
+            }
+        }
+
+        return null;
     }
 
     @Override

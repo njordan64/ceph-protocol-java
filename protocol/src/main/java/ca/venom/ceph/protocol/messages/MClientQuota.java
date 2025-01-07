@@ -23,7 +23,7 @@ import lombok.Setter;
  * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MClientQuota.h#L6
  */
 @CephType
-@CephMessagePayload(MessageType.MSG_CLIENT_LEASE)
+@CephMessagePayload(MessageType.MSG_CLIENT_QUOTA)
 public class MClientQuota extends MessagePayload {
     @Getter
     @Setter

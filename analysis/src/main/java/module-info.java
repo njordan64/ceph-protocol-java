@@ -10,4 +10,6 @@
 module ca.venom.ceph.protocol.analysis {
     requires ca.venom.ceph.protocol.protocol;
     requires ca.venom.ceph.protocol.utils;
+    requires com.fasterxml.jackson.databind;
+    requires io.netty.buffer;
 }

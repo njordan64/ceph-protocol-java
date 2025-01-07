@@ -13,6 +13,8 @@ import ca.venom.ceph.encoding.annotations.CephChildType;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephParentType;
 import ca.venom.ceph.encoding.annotations.CephType;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/include/cephfs/metrics/Types.h#L95
@@ -27,6 +29,8 @@ import ca.venom.ceph.encoding.annotations.CephType;
 @CephChildType(typeValue = 5, typeClass = PinnedIcapsPayload.class)
 @CephChildType(typeValue = 6, typeClass = OpenedInodesPayload.class)
 public abstract class ClientMetricPayload {
+    @Getter
+    @Setter
     @CephField(order = -1)
     private ClientMetricType type;
 
