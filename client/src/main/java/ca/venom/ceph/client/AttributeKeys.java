@@ -14,4 +14,10 @@ import io.netty.util.AttributeKey;
 public class AttributeKeys {
     public static final AttributeKey<Integer> ADDR_NONCE =
             AttributeKey.newInstance("Addr-Nonce");
+
+    public static final AttributeKey<Long> CLIENT_FEATURES =
+            AttributeKey.newInstance("Client-Features");
+
+    public static final AttributeKey<Long> SERVER_FEATURES =
+            AttributeKey.newInstance("Server-Features");
 }

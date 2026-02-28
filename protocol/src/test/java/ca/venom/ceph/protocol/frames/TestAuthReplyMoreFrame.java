@@ -54,7 +54,7 @@ public class TestAuthReplyMoreFrame {
         AuthReplyMoreFrame parsedMessage = new AuthReplyMoreFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
-        parsedMessage.decodeSegment1(byteBuf, true);
+        parsedMessage.decodeSegment1(byteBuf, true, 0L);
 
         byte[] serverChallenge = new byte[] {
                 (byte) 0x01, (byte) 0x2b, (byte) 0x33, (byte) 0x2f,
@@ -75,7 +75,7 @@ public class TestAuthReplyMoreFrame {
         CephXServerChallenge serverChallenge = new CephXServerChallenge();
         serverChallenge.setServerChallenge(serverChallengeBytes);
         ByteBuf serverChallengeByteBuf = Unpooled.buffer();
-        CephEncoder.encode(serverChallenge, serverChallengeByteBuf, true);
+        CephEncoder.encode(serverChallenge, serverChallengeByteBuf, true, 0L);
         byte[] encodedBytes = new byte[serverChallengeByteBuf.writerIndex()];
         serverChallengeByteBuf.getBytes(0, encodedBytes);
         authReplyMore.getPayload().setPayload(encodedBytes);
@@ -84,7 +84,7 @@ public class TestAuthReplyMoreFrame {
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
 
         ByteBuf byteBuf = Unpooled.buffer();
-        authReplyMore.encodeSegment1(byteBuf, true);
+        authReplyMore.encodeSegment1(byteBuf, true, 0L);
         byte[] actualSegment = new byte[byteBuf.writerIndex()];
         byteBuf.readBytes(actualSegment, 0, byteBuf.writerIndex());
         assertArrayEquals(expectedSegment, actualSegment);

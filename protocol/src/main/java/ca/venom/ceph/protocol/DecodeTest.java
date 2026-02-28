@@ -22,7 +22,7 @@ public class DecodeTest {
         fis.close();
 
         ByteBuf byteBuf = Unpooled.wrappedBuffer(bytes, 4, bytes.length - 4);
-        MMonMap monMap = CephDecoder.decode(byteBuf, true, MMonMap.class);
+        MMonMap monMap = CephDecoder.decode(byteBuf, true, 0L, MMonMap.class);
         System.out.println(">>> Done");
     }
 }

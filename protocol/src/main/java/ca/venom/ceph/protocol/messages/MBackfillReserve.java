@@ -59,12 +59,12 @@ public class MBackfillReserve extends MessagePayload {
     private long shardNumBytes;
 
     @Override
-    public short getHeadVersion() {
+    public short getHeadVersion(long features) {
         return 5;
     }
 
     @Override
-    public short getHeadCompatVersion() {
+    public short getHeadCompatVersion(long features) {
         return 4;
     }
 }

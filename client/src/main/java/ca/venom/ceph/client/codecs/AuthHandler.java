@@ -109,15 +109,15 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         LOG.debug(">>> AuthHandler.channelRead0: " + frame.getClass().getName());
 
         if (frame instanceof AuthReplyMoreFrame replyMoreFrame) {
-            handeAuthReplyMore(ctx, replyMoreFrame);
+            handeAuthReplyMore(ctx, replyMoreFrame, 0L);
         } else if (frame instanceof AuthDoneFrame authDoneFrame) {
-            handleAuthDone(ctx, authDoneFrame);
+            handleAuthDone(ctx, authDoneFrame, 0L);
         } else if (frame instanceof AuthSignatureFrame authSignatureFrame) {
-            handleAuthSignature(ctx, authSignatureFrame);
+            handleAuthSignature(ctx, authSignatureFrame, 0L);
         }
     }
 
-    private void handeAuthReplyMore(ChannelHandlerContext ctx, AuthReplyMoreFrame request) throws Exception {
+    private void handeAuthReplyMore(ChannelHandlerContext ctx, AuthReplyMoreFrame request, long features) throws Exception {
         switch (state) {
             case NONE:
                 LOG.debug("Unexpected auth request more frame");
@@ -135,6 +135,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         CephXServerChallenge serverChallenge = CephDecoder.decode(
                 Unpooled.wrappedBuffer(request.getPayload().getPayload()),
                 true,
+                features,
                 CephXServerChallenge.class
         );
 
@@ -180,10 +181,11 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         ctx.writeAndFlush(requestMore).sync();
     }
 
-    private void handleAuthDone(ChannelHandlerContext ctx, AuthDoneFrame request) throws Exception {
+    private void handleAuthDone(ChannelHandlerContext ctx, AuthDoneFrame request, long features) throws Exception {
         AuthDoneMonPayload payload = CephDecoder.decode(
                 Unpooled.wrappedBuffer(request.getSegment1().getPayload()),
                 true,
+                features,
                 AuthDoneMonPayload.class
         );
         for (CephXTicketInfo ticketInfo : payload.getTicketInfos()) {
@@ -194,13 +196,13 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
 
             ByteBuf decryptedByteBuf = Unpooled.wrappedBuffer(decryptedBytes);
             decryptedByteBuf.skipBytes(9);
-            CephXServiceTicket serviceTicket = CephDecoder.decode(decryptedByteBuf, true, CephXServiceTicket.class);
+            CephXServiceTicket serviceTicket = CephDecoder.decode(decryptedByteBuf, true, features, CephXServiceTicket.class);
 
             sessionKey = new SecretKeySpec(serviceTicket.getSessionKey().getSecret(), "AES");
 
             if (!ticketInfo.isEncrypted()) {
                 decryptedByteBuf = Unpooled.wrappedBuffer(ticketInfo.getTicket());
-                CephXTicketBlob ticketBlob = CephDecoder.decode(decryptedByteBuf, true, CephXTicketBlob.class);
+                CephXTicketBlob ticketBlob = CephDecoder.decode(decryptedByteBuf, true, features, CephXTicketBlob.class);
             }
         }
 
@@ -231,7 +233,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         ctx.channel().config().setAutoRead(true);
     }
 
-    private void handleAuthSignature(ChannelHandlerContext ctx, AuthSignatureFrame request) throws Exception {
+    private void handleAuthSignature(ChannelHandlerContext ctx, AuthSignatureFrame request, long features) throws Exception {
         LOG.debug(">>> AuthHandler.handleAuthSignature");
 
         byte[] x = new byte[sentByteBuf.writerIndex()];

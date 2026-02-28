@@ -52,61 +52,61 @@ public class MessageFrame extends ControlFrame {
     }
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
+    public void encodeSegment1(ByteBuf byteBuf, boolean le, long features) throws EncodingException {
         if (payload != null) {
             payload.prepareForEncode();
 
             head.setType(getMessageTypeCode());
-            head.setVersion(payload.getHeadVersion());
-            head.setCompatVersion(payload.getHeadCompatVersion());
+            head.setVersion(payload.getHeadVersion(features));
+            head.setCompatVersion(payload.getHeadCompatVersion(features));
         }
-        CephEncoder.encode(head, byteBuf, le);
+        CephEncoder.encode(head, byteBuf, le, features);
     }
 
     @Override
-    public void encodeSegment2(ByteBuf byteBuf, boolean le) throws EncodingException {
+    public void encodeSegment2(ByteBuf byteBuf, boolean le, long features) throws EncodingException {
         if (payload != null) {
-            CephEncoder.encode(payload, byteBuf, le);
+            CephEncoder.encode(payload, byteBuf, le, features);
         }
     }
 
     @Override
-    public void encodeSegment3(ByteBuf byteBuf, boolean le) throws EncodingException {
+    public void encodeSegment3(ByteBuf byteBuf, boolean le, long features) throws EncodingException {
         if (payload != null) {
-            payload.encodeMiddle(byteBuf, le);
+            payload.encodeMiddle(byteBuf, le, features);
         }
     }
 
     @Override
-    public void encodeSegment4(ByteBuf byteBuf, boolean le) throws EncodingException {
+    public void encodeSegment4(ByteBuf byteBuf, boolean le, long features) throws EncodingException {
         if (payload != null) {
-            payload.encodeData(byteBuf, le);
+            payload.encodeData(byteBuf, le, features);
         }
     }
 
     @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
-        head = CephDecoder.decode(byteBuf, le, CephMsgHeader2.class);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le, long features) throws DecodingException {
+        head = CephDecoder.decode(byteBuf, le, features, CephMsgHeader2.class);
     }
 
     @Override
-    public void decodeSegment2(ByteBuf byteBuf, boolean le) throws DecodingException {
+    public void decodeSegment2(ByteBuf byteBuf, boolean le, long features) throws DecodingException {
         if (byteBuf.readableBytes() > 0) {
-            payload = CephDecoder.decode(byteBuf, le, MessagePayload.class, head.getType());
+            payload = CephDecoder.decode(byteBuf, le, features, MessagePayload.class, head.getType());
         }
     }
 
     @Override
-    public void decodeSegment3(ByteBuf byteBuf, boolean le) throws DecodingException {
+    public void decodeSegment3(ByteBuf byteBuf, boolean le, long features) throws DecodingException {
         if (payload != null) {
-            payload.decodeMiddle(byteBuf, le);
+            payload.decodeMiddle(byteBuf, le, features);
         }
     }
 
     @Override
-    public void decodeSegment4(ByteBuf byteBuf, boolean le) throws DecodingException {
+    public void decodeSegment4(ByteBuf byteBuf, boolean le, long features) throws DecodingException {
         if (payload != null) {
-            payload.decodeData(byteBuf, le);
+            payload.decodeData(byteBuf, le, features);
             payload.finishDecode();
         }
     }

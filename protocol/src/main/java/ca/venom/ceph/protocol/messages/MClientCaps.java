@@ -122,12 +122,12 @@ public class MClientCaps extends MessagePayload {
     private FileLayout layout = new FileLayout();
 
     @Override
-    public short getHeadVersion() {
+    public short getHeadVersion(long features) {
         return 11;
     }
 
     @Override
-    public short getHeadCompatVersion() {
+    public short getHeadCompatVersion(long features) {
         return 1;
     }
 
@@ -153,12 +153,12 @@ public class MClientCaps extends MessagePayload {
     }
 
     @Override
-    public void encodeMiddle(ByteBuf byteBuf, boolean le) {
+    public void encodeMiddle(ByteBuf byteBuf, boolean le, long features) {
         byteBuf.writeBytes(xattr);
     }
 
     @Override
-    public void decodeMiddle(ByteBuf byteBuf, boolean le) {
+    public void decodeMiddle(ByteBuf byteBuf, boolean le, long features) {
         if (head.getXattrLen() > 0) {
             xattr = new byte[head.getXattrLen()];
             byteBuf.readBytes(xattr);

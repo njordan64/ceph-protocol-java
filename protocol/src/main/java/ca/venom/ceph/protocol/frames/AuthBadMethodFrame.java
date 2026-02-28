@@ -51,13 +51,13 @@ public class AuthBadMethodFrame extends AuthFrameBase {
     private Segment1 segment1;
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
-        CephEncoder.encode(segment1, byteBuf, le);
+    public void encodeSegment1(ByteBuf byteBuf, boolean le, long features) throws EncodingException {
+        CephEncoder.encode(segment1, byteBuf, le, features);
     }
 
     @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
-        segment1 = CephDecoder.decode(byteBuf, le, Segment1.class);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le, long features) throws DecodingException {
+        segment1 = CephDecoder.decode(byteBuf, le, features, Segment1.class);
     }
 
     @Override

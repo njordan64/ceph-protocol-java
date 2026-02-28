@@ -56,6 +56,8 @@ public class CephNettyClient {
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.SO_KEEPALIVE, true)
+                .attr(AttributeKeys.CLIENT_FEATURES, -1L)
+                .attr(AttributeKeys.SERVER_FEATURES, 0L)
                 .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {

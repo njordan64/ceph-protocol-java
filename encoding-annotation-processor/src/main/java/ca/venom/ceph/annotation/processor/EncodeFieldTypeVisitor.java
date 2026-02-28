@@ -24,7 +24,7 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
                                             EncodeCodeGenContext context) {
         ClassNameSplitter fullClassName = new ClassNameSplitter(fieldType.getClassName());
         return List.of(new CodeLine(context.getIndentation(), String.format(
-                "%s.encode(%s, byteBuf, le);",
+                "%s.encode(%s, byteBuf, le, features);",
                 fullClassName.getEncoderClassName(),
                 context.getValueAccessor()
         )));

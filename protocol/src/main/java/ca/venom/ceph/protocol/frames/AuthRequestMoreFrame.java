@@ -25,13 +25,13 @@ public class AuthRequestMoreFrame extends AuthFrameBase {
     private AuthRequestMorePayload payload;
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) throws EncodingException {
-        CephEncoder.encode(payload, byteBuf, le);
+    public void encodeSegment1(ByteBuf byteBuf, boolean le, long features) throws EncodingException {
+        CephEncoder.encode(payload, byteBuf, le, features);
     }
 
     @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) throws DecodingException {
-        payload = CephDecoder.decode(byteBuf, le, AuthRequestMorePayload.class);
+    public void decodeSegment1(ByteBuf byteBuf, boolean le, long features) throws DecodingException {
+        payload = CephDecoder.decode(byteBuf, le, features, AuthRequestMorePayload.class);
     }
 
     @Override

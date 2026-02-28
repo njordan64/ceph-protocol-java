@@ -9,6 +9,7 @@
  */
 package ca.venom.ceph.client.codecs;
 
+import ca.venom.ceph.client.AttributeKeys;
 import ca.venom.ceph.protocol.decode.PreParsedFrame;
 import ca.venom.ceph.protocol.frames.ControlFrame;
 import io.netty.channel.ChannelHandlerContext;
@@ -30,7 +31,7 @@ public class CephFrameCodec extends MessageToMessageCodec<PreParsedFrame, Contro
         frame.setMessageType(controlFrame.getTag());
 
         ByteBuf segmentByteBuf = ctx.alloc().buffer();
-        controlFrame.encodeSegment1(segmentByteBuf, true);
+        controlFrame.encodeSegment1(segmentByteBuf, true, ctx.channel().attr(AttributeKeys.CLIENT_FEATURES).get());
         if (segmentByteBuf.writerIndex() > 0) {
             frame.setSegment1(new PreParsedFrame.Segment(segmentByteBuf, segmentByteBuf.writerIndex(), true));
             segmentByteBuf = null;
@@ -39,7 +40,7 @@ public class CephFrameCodec extends MessageToMessageCodec<PreParsedFrame, Contro
         if (segmentByteBuf == null) {
             segmentByteBuf = ctx.alloc().buffer();
         }
-        controlFrame.encodeSegment2(segmentByteBuf, true);
+        controlFrame.encodeSegment2(segmentByteBuf, true, ctx.channel().attr(AttributeKeys.CLIENT_FEATURES).get());
         if (segmentByteBuf.writerIndex() > 0) {
             frame.setSegment2(new PreParsedFrame.Segment(segmentByteBuf, segmentByteBuf.writerIndex(), true));
             segmentByteBuf = null;
@@ -48,7 +49,7 @@ public class CephFrameCodec extends MessageToMessageCodec<PreParsedFrame, Contro
         if (segmentByteBuf == null) {
             segmentByteBuf = ctx.alloc().buffer();
         }
-        controlFrame.encodeSegment3(segmentByteBuf, true);
+        controlFrame.encodeSegment3(segmentByteBuf, true, ctx.channel().attr(AttributeKeys.CLIENT_FEATURES).get());
         if (segmentByteBuf.writerIndex() > 0) {
             frame.setSegment3(new PreParsedFrame.Segment(segmentByteBuf, segmentByteBuf.writerIndex(), true));
             segmentByteBuf = null;
@@ -57,7 +58,7 @@ public class CephFrameCodec extends MessageToMessageCodec<PreParsedFrame, Contro
         if (segmentByteBuf == null) {
             segmentByteBuf = ctx.alloc().buffer();
         }
-        controlFrame.encodeSegment4(segmentByteBuf, true);
+        controlFrame.encodeSegment4(segmentByteBuf, true, ctx.channel().attr(AttributeKeys.CLIENT_FEATURES).get());
         if (segmentByteBuf.writerIndex() > 0) {
             frame.setSegment4(new PreParsedFrame.Segment(segmentByteBuf, segmentByteBuf.writerIndex(), true));
             segmentByteBuf = null;
@@ -76,19 +77,35 @@ public class CephFrameCodec extends MessageToMessageCodec<PreParsedFrame, Contro
 
         ControlFrame controlFrame = frame.getMessageType().getInstance();
         if (frame.getSegment1() != null) {
-            controlFrame.decodeSegment1(frame.getSegment1().getSegmentByteBuf(), frame.getSegment1().isLe());
+            controlFrame.decodeSegment1(
+                    frame.getSegment1().getSegmentByteBuf(),
+                    frame.getSegment1().isLe(),
+                    ctx.channel().attr(AttributeKeys.SERVER_FEATURES).get()
+            );
             frame.getSegment1().getSegmentByteBuf().release();
         }
         if (frame.getSegment2() != null) {
-            controlFrame.decodeSegment2(frame.getSegment2().getSegmentByteBuf(), frame.getSegment2().isLe());
+            controlFrame.decodeSegment2(
+                    frame.getSegment2().getSegmentByteBuf(),
+                    frame.getSegment2().isLe(),
+                    ctx.channel().attr(AttributeKeys.SERVER_FEATURES).get()
+            );
             frame.getSegment2().getSegmentByteBuf().release();
         }
         if (frame.getSegment3() != null) {
-            controlFrame.decodeSegment3(frame.getSegment3().getSegmentByteBuf(), frame.getSegment3().isLe());
+            controlFrame.decodeSegment3(
+                    frame.getSegment3().getSegmentByteBuf(),
+                    frame.getSegment3().isLe(),
+                    ctx.channel().attr(AttributeKeys.SERVER_FEATURES).get()
+            );
             frame.getSegment3().getSegmentByteBuf().release();
         }
         if (frame.getSegment4() != null) {
-            controlFrame.decodeSegment4(frame.getSegment4().getSegmentByteBuf(), frame.getSegment4().isLe());
+            controlFrame.decodeSegment4(
+                    frame.getSegment4().getSegmentByteBuf(),
+                    frame.getSegment4().isLe(),
+                    ctx.channel().attr(AttributeKeys.SERVER_FEATURES).get()
+            );
             frame.getSegment4().getSegmentByteBuf().release();
         }
 

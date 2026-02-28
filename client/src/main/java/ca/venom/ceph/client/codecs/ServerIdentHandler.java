@@ -89,6 +89,9 @@ public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerIdentFrame serverIdentFrame) {
         LOG.debug(">>> Received ServerIdent");
+        long features = serverIdentFrame.getSegment1().getRequiredFeatures().toLongArray()[0];
+        features |= serverIdentFrame.getSegment1().getSupportedFeatures().toLongArray()[0];
+        ctx.channel().attr(AttributeKeys.SERVER_FEATURES).set(features);
         future.complete(ctx.channel());
     }
 }

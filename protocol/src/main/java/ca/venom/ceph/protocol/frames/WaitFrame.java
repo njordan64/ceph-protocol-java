@@ -14,11 +14,11 @@ import io.netty.buffer.ByteBuf;
 
 public class WaitFrame extends ControlFrame {
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le) {
+    public void encodeSegment1(ByteBuf byteBuf, boolean le, long features) {
     }
 
     @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le) {
+    public void decodeSegment1(ByteBuf byteBuf, boolean le, long features) {
     }
 
     @Override

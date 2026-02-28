@@ -147,7 +147,7 @@ public class EncoderJavaCodeGenerator {
                                    ClassNameSplitter fullClassName,
                                    Collection<ParsedClass> parsedClasses) {
         out.printf(
-                "    public static void encode(%s toEncode, ByteBuf byteBuf, boolean le) {%n",
+                "    public static void encode(%s toEncode, ByteBuf byteBuf, boolean le, long features) {%n",
                 fullClassName.getActualClassName()
         );
 
@@ -174,7 +174,7 @@ public class EncoderJavaCodeGenerator {
                     isFirst ? "" : "} else ",
                     simpleClassName);
             out.printf(
-                    "            %sEncoder.encode(toEncodeImpl, byteBuf, le);%n",
+                    "            %sEncoder.encode(toEncodeImpl, byteBuf, le, features);%n",
                     simpleClassName
             );
 
@@ -200,7 +200,7 @@ public class EncoderJavaCodeGenerator {
                 ClassNameSplitter parsedChildClassName = new ClassNameSplitter(parsedChildClass.getClassName());
                 out.printf("if (toEncode instanceof %s) {%n", parsedChildClassName.getActualClassName());
                 out.printf(
-                        "            %s.encode((%s) toEncode, byteBuf, le);%n",
+                        "            %s.encode((%s) toEncode, byteBuf, le, features);%n",
                         parsedChildClassName.getEncoderClassName(),
                         parsedChildClassName.getActualClassName()
                 );
@@ -306,16 +306,16 @@ public class EncoderJavaCodeGenerator {
                                    Collection<ParsedClass> parsedClasses) {
         if (parsedClass instanceof ParsedAbstractClass parsedAbstractClass) {
             out.printf(
-                    "    public static %s decode(ByteBuf byteBuf, boolean le%s) throws DecodingException {%n",
+                    "    public static %s decode(ByteBuf byteBuf, boolean le, long features%s) throws DecodingException {%n",
                     fullClassName.getActualClassName(),
                     Boolean.TRUE.equals(parsedAbstractClass.getUseParameter()) ? ", int typeCode" : "");
             writeAbstractDecodeMethodBody(out, parsedAbstractClass);
         } else if ("ca.venom.ceph.protocol.messages.MessagePayload".equals(parsedClass.getClassName())) {
-            out.println("    public static MessagePayload decode(ByteBuf byteBuf, boolean le, int typeCode) throws DecodingException {");
+            out.println("    public static MessagePayload decode(ByteBuf byteBuf, boolean le, long features, int typeCode) throws DecodingException {");
             writeMessagePayloadDecodeMethodBody(out, parsedClasses);
         } else {
             out.printf(
-                    "    public static %s decode(ByteBuf byteBuf, boolean le) throws DecodingException {%n",
+                    "    public static %s decode(ByteBuf byteBuf, boolean le, long features) throws DecodingException {%n",
                     fullClassName.getActualClassName());
             out.printf(
                     "        %s decoded = new %s();%n",
@@ -333,16 +333,16 @@ public class EncoderJavaCodeGenerator {
         if (!Boolean.TRUE.equals(parsedAbstractClass.getUseParameter())) {
             switch (parsedAbstractClass.getTypeSize()) {
                 case 1 -> out.printf(
-                        "        int typeCode = byteBuf.getByte(byteBuf.readerIndex() + %d);",
+                        "        int typeCode = byteBuf.getByte(byteBuf.readerIndex() + %d);\n",
                         parsedAbstractClass.getTypeOffset()
                 );
                 case 2 -> out.printf(
-                        "        int typeCode = le ? byteBuf.getShortLE(byteBuf.readerIndex() + %d) : byteBuf.getShort(byteBuf.readerIndex() + %d);",
+                        "        int typeCode = le ? byteBuf.getShortLE(byteBuf.readerIndex() + %d) : byteBuf.getShort(byteBuf.readerIndex() + %d);\n",
                         parsedAbstractClass.getTypeOffset(),
                         parsedAbstractClass.getTypeOffset()
                 );
                 default -> out.printf(
-                        "        int typeCode = le ? byteBuf.getIntLE(byteBuf.readerIndex() + %d) : byteBuf.getInt(byteBuf.readerIndex() + %d);",
+                        "        int typeCode = le ? byteBuf.getIntLE(byteBuf.readerIndex() + %d) : byteBuf.getInt(byteBuf.readerIndex() + %d);\n",
                         parsedAbstractClass.getTypeOffset(),
                         parsedAbstractClass.getTypeOffset()
                 );
@@ -361,14 +361,14 @@ public class EncoderJavaCodeGenerator {
             out.printf("            case %d:%n", implementation.getTypeCode());
             int lastDotIndex = implementation.getClassName().lastIndexOf('.');
             String simpleClassName = implementation.getClassName().substring(lastDotIndex + 1);
-            out.printf("                return %sEncoder.decode(byteBuf, le);%n", simpleClassName);
+            out.printf("                return %sEncoder.decode(byteBuf, le, features);%n", simpleClassName);
         }
 
         if (defaultClassName != null) {
             out.println("            default:");
             int lastDotIndex = defaultClassName.lastIndexOf('.');
             String simpleClassName = defaultClassName.substring(lastDotIndex + 1);
-            out.printf("                return %sEncoder.decode(byteBuf, le);%n", simpleClassName);
+            out.printf("                return %sEncoder.decode(byteBuf, le, features);%n", simpleClassName);
             out.println("        }");
         } else {
             out.println("        }");
@@ -385,7 +385,7 @@ public class EncoderJavaCodeGenerator {
 
                 out.printf("            case %s:%n", parsedChildClass.getMessageType().name());
                 out.printf(
-                        "                return %s.decode(byteBuf, le);%n",
+                        "                return %s.decode(byteBuf, le, features);%n",
                         parsedChildClassName.getEncoderClassName());
             }
         }

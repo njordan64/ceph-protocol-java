@@ -35,7 +35,7 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
                         "%s;",
                         context.getValueSetString(
                                 String.format(
-                                        "%s.decode(byteBuf, le%s)",
+                                        "%s.decode(byteBuf, le, features%s)",
                                         fullClassName.getEncoderClassName(),
                                         typeCodeParam
                                 )

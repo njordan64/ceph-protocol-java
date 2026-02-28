@@ -15,15 +15,15 @@ import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Method;
 
 public class CephEncoder {
-    public static void encode(Object toEncode, ByteBuf byteBuf, boolean le) {
+    public static void encode(Object toEncode, ByteBuf byteBuf, boolean le, long features) {
         Class<?> toEncodeClass = toEncode.getClass();
         ClassNameSplitter classNameParser = new ClassNameSplitter(toEncodeClass.getName());
 
         try {
             Class<?> encodingClass = toEncodeClass.getClassLoader().loadClass(
                     classNameParser.getPackageName() + "." + classNameParser.getEncoderClassName());
-            Method encodeMethod = encodingClass.getMethod("encode", toEncodeClass, ByteBuf.class, Boolean.TYPE);
-            encodeMethod.invoke(null, toEncode, byteBuf, le);
+            Method encodeMethod = encodingClass.getMethod("encode", toEncodeClass, ByteBuf.class, Boolean.TYPE, Long.TYPE);
+            encodeMethod.invoke(null, toEncode, byteBuf, le, features);
         } catch (Exception e) {
             e.printStackTrace();
         }

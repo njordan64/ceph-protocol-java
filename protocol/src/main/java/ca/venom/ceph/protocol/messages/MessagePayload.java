@@ -14,11 +14,11 @@ import io.netty.buffer.ByteBuf;
 
 @CephType
 public abstract class MessagePayload {
-    public short getHeadVersion() {
-        return 0;
+    public short getHeadVersion(long features) {
+        return 1;
     }
 
-    public short getHeadCompatVersion() {
+    public short getHeadCompatVersion(long features) {
         return 0;
     }
 
@@ -28,15 +28,15 @@ public abstract class MessagePayload {
     public void finishDecode() {
     }
 
-    public void encodeMiddle(ByteBuf byteBuf, boolean le) {
+    public void encodeMiddle(ByteBuf byteBuf, boolean le, long features) {
     }
 
-    public void decodeMiddle(ByteBuf byteBuf, boolean le) {
+    public void decodeMiddle(ByteBuf byteBuf, boolean le, long features) {
     }
 
-    public void encodeData(ByteBuf byteBuf, boolean le) {
+    public void encodeData(ByteBuf byteBuf, boolean le, long features) {
     }
 
-    public void decodeData(ByteBuf byteBuf, boolean le) {
+    public void decodeData(ByteBuf byteBuf, boolean le, long features) {
     }
 }

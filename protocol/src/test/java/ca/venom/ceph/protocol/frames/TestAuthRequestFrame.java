@@ -57,7 +57,7 @@ public class TestAuthRequestFrame {
         AuthRequestFrame parsedMessage = new AuthRequestFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
-        parsedMessage.decodeSegment1(byteBuf, true);
+        parsedMessage.decodeSegment1(byteBuf, true, 0L);
 
         assertEquals(2L, parsedMessage.getSegment1().getAuthMethod());
 
@@ -96,7 +96,7 @@ public class TestAuthRequestFrame {
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
         ByteBuf byteBuf = Unpooled.buffer();
-        authRequestFrame.encodeSegment1(byteBuf, true);
+        authRequestFrame.encodeSegment1(byteBuf, true, 0L);
 
         byte[] actualSegment = new byte[byteBuf.writerIndex()];
         byteBuf.readBytes(actualSegment);

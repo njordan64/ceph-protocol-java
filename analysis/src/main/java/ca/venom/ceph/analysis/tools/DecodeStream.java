@@ -62,6 +62,7 @@ public class DecodeStream {
     private final ObjectMapper objectMapper;
     private final FrameDecoder clientDecoder;
     private final FrameDecoder serverDecoder;
+    private long features = -1L;
 
     private DecodeStream(byte[] key, String clientFilename, String serverFilename) throws Exception {
         this.authKey = new SecretKeySpec(key, 12, 16, "AES");
@@ -128,6 +129,7 @@ public class DecodeStream {
             CephXServiceTicketInfo ticketInfo = CephDecoder.decode(
                     Unpooled.wrappedBuffer(unencryptedBytes, 9, unencryptedBytes.length - 9),
                     true,
+                    features,
                     CephXServiceTicketInfo.class);
             System.out.println(objectMapper
                     .writerWithDefaultPrettyPrinter()
@@ -156,7 +158,7 @@ public class DecodeStream {
             System.out.println("****************************************************");
         } else {
             ByteBuf byteBuf = Unpooled.wrappedBuffer(authReplyMoreFrame.getPayload().getPayload());
-            CephXServerChallenge serverChallenge = CephDecoder.decode(byteBuf, true, CephXServerChallenge.class);
+            CephXServerChallenge serverChallenge = CephDecoder.decode(byteBuf, true, features, CephXServerChallenge.class);
             System.out.println("** Server Challenge ********************************");
             System.out.println(objectMapper
                     .writerWithDefaultPrettyPrinter()
@@ -177,7 +179,7 @@ public class DecodeStream {
             cipher.init(Cipher.DECRYPT_MODE, authKey, new IvParameterSpec(PROOF_IV.getBytes()));
             byte[] decryptedBytes = cipher.doFinal(payload.getTicket().getBlob());
             ByteBuf byteBuf = Unpooled.wrappedBuffer(decryptedBytes, 9, decryptedBytes.length - 9);
-            CephXServiceTicketInfo ticketInfo = CephDecoder.decode(byteBuf, true, CephXServiceTicketInfo.class);
+            CephXServiceTicketInfo ticketInfo = CephDecoder.decode(byteBuf, true, features, CephXServiceTicketInfo.class);
 
             System.out.println("** Ticket Info *************************************");
             System.out.println(objectMapper
@@ -187,7 +189,7 @@ public class DecodeStream {
             System.out.println("** Decrypted Authorize *****************************");
             decryptedBytes = cipher.doFinal(payload.getEncryptedAuthMsg());
             byteBuf = Unpooled.wrappedBuffer(decryptedBytes);
-            CephXAuthorize authorize = CephDecoder.decode(byteBuf, true, CephXAuthorize.class);
+            CephXAuthorize authorize = CephDecoder.decode(byteBuf, true, features, CephXAuthorize.class);
             System.out.println(objectMapper
                     .writerWithDefaultPrettyPrinter()
                     .writeValueAsString(authorize));
@@ -208,6 +210,7 @@ public class DecodeStream {
             AuthDoneMonPayload payload = CephDecoder.decode(
                     Unpooled.wrappedBuffer(authDoneFrame.getSegment1().getPayload()),
                     true,
+                    features,
                     AuthDoneMonPayload.class
             );
 
@@ -219,7 +222,7 @@ public class DecodeStream {
 
                 ByteBuf decryptedByteBuf = Unpooled.wrappedBuffer(decryptedBytes);
                 decryptedByteBuf.skipBytes(9);
-                CephXServiceTicket serviceTicket = CephDecoder.decode(decryptedByteBuf, true, CephXServiceTicket.class);
+                CephXServiceTicket serviceTicket = CephDecoder.decode(decryptedByteBuf, true, features, CephXServiceTicket.class);
 
                 sessionKey = new SecretKeySpec(serviceTicket.getSessionKey().getSecret(), "AES");
             }
@@ -241,6 +244,7 @@ public class DecodeStream {
             CephXAuthorizeReplyV2 authorizeReply = CephDecoder.decode(
                     Unpooled.wrappedBuffer(decryptedBytes, 9, decryptedBytes.length - 9),
                     true,
+                    features,
                     CephXAuthorizeReplyV2.class
             );
             decryptedSecret = authorizeReply.getConnectionSecret();
@@ -299,6 +303,8 @@ public class DecodeStream {
         System.out.println(objectMapper
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(clientIdentFrame));
+        features = clientIdentFrame.getSegment1().getRequiredFeatures().toLongArray()[0];
+        features |= clientIdentFrame.getSegment1().getSupportedFeatures().toLongArray()[0];
     }
 
     private void parseServerIdent() throws Exception {
@@ -307,6 +313,10 @@ public class DecodeStream {
         System.out.println(objectMapper
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(serverIdentFrame));
+
+        long serverFeatures = serverIdentFrame.getSegment1().getRequiredFeatures().toLongArray()[0];
+        serverFeatures |= serverIdentFrame.getSegment1().getSupportedFeatures().toLongArray()[0];
+        features &= serverFeatures;
     }
 
     private boolean haveMessages(boolean isClient) {
@@ -329,19 +339,19 @@ public class DecodeStream {
         PreParsedFrame preParsedFrame = isClient ? clientDecoder.decode(clientByteBuf) : serverDecoder.decode(serverByteBuf);
         ControlFrame controlFrame = preParsedFrame.getMessageType().getInstance();
         if (preParsedFrame.getSegment1() != null) {
-            controlFrame.decodeSegment1(preParsedFrame.getSegment1().getSegmentByteBuf(), preParsedFrame.getSegment1().isLe());
+            controlFrame.decodeSegment1(preParsedFrame.getSegment1().getSegmentByteBuf(), preParsedFrame.getSegment1().isLe(), features);
             preParsedFrame.getSegment1().getSegmentByteBuf().release();
         }
         if (preParsedFrame.getSegment2() != null) {
-            controlFrame.decodeSegment2(preParsedFrame.getSegment2().getSegmentByteBuf(), preParsedFrame.getSegment2().isLe());
+            controlFrame.decodeSegment2(preParsedFrame.getSegment2().getSegmentByteBuf(), preParsedFrame.getSegment2().isLe(), features);
             preParsedFrame.getSegment2().getSegmentByteBuf().release();
         }
         if (preParsedFrame.getSegment3() != null) {
-            controlFrame.decodeSegment3(preParsedFrame.getSegment3().getSegmentByteBuf(), preParsedFrame.getSegment3().isLe());
+            controlFrame.decodeSegment3(preParsedFrame.getSegment3().getSegmentByteBuf(), preParsedFrame.getSegment3().isLe(), features);
             preParsedFrame.getSegment3().getSegmentByteBuf().release();
         }
         if (preParsedFrame.getSegment4() != null) {
-            controlFrame.decodeSegment4(preParsedFrame.getSegment4().getSegmentByteBuf(), preParsedFrame.getSegment4().isLe());
+            controlFrame.decodeSegment4(preParsedFrame.getSegment4().getSegmentByteBuf(), preParsedFrame.getSegment4().isLe(), features);
             preParsedFrame.getSegment4().getSegmentByteBuf().release();
         }
 
