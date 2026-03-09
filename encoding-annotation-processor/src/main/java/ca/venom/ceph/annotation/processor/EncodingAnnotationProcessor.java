@@ -14,8 +14,7 @@ import ca.venom.ceph.annotation.processor.parser.CephTypeParser;
 import ca.venom.ceph.annotation.processor.parser.ParsedClass;
 import ca.venom.ceph.annotation.processor.parser.ParsedField;
 import ca.venom.ceph.annotation.processor.parser.ParserContext;
-import ca.venom.ceph.encoding.annotations.CephField;
-import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.*;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -25,20 +24,12 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.*;
+import javax.lang.model.type.*;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Process Ceph annotations. These are used to describe classes that can be encoded and decoded for communicating
@@ -52,6 +43,12 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
     private Types typeUtils;
+
+    private enum TypeVersionReceiverValidity {
+        INVALID,
+        ONLY_VERSION,
+        VERSION_AND_COMPAT
+    }
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -93,6 +90,84 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
 
         addFieldsToClasses(classFields, parsedClasses, classElements);
 
+        Map<String, Map<Integer, String>> encodeMethods = getFieldMethods(
+                roundEnv.getElementsAnnotatedWith(CephFieldEncode.class)
+        );
+        Map<String, Map<Integer, String>> decodeMethods = getFieldMethods(
+                roundEnv.getElementsAnnotatedWith(CephFieldDecode.class)
+        );
+        for (Map.Entry<String, ParsedClass> entry : parsedClasses.entrySet()) {
+            addFieldMethodsToClass(
+                    entry.getValue(),
+                    encodeMethods.get(entry.getKey()),
+                    decodeMethods.get(entry.getKey())
+            );
+        }
+
+        addPreEncodeMethods(parsedClasses, roundEnv.getElementsAnnotatedWith(CephPreEncode.class));
+        addPostDecodeMethods(parsedClasses, roundEnv.getElementsAnnotatedWith(CephPostDecode.class));
+
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephTypeVersionGenerator.class)) {
+            ExecutableElement executableElement = (ExecutableElement) element;
+            String methodName = executableElement.getSimpleName().toString();
+
+            Element classElement = executableElement.getEnclosingElement();
+            String className = "<UNKNOWN>";
+            if (classElement instanceof TypeElement typeElement) {
+                className = typeElement.getQualifiedName().toString();
+            }
+
+            if (className.equals("<UNKNOWN>") || !parsedClasses.containsKey(className)) {
+                continue;
+            }
+
+            if (executableElement.getParameters().size() != 1) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                continue;
+            } else {
+                if (executableElement.getParameters().get(0).asType() instanceof DeclaredType declaredType1) {
+                    if (declaredType1.getKind() == TypeKind.DECLARED) {
+                        TypeElement paramType = (TypeElement) declaredType1.asElement();
+                        if (!paramType.getQualifiedName().toString().equals("java.util.BitSet")) {
+                            messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                            continue;
+                        }
+                    } else {
+                        messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                        continue;
+                    }
+                } else {
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                    continue;
+                }
+            }
+
+            parsedClasses.get(className).setVersionWithCompatGenerator(methodName);
+        }
+
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephTypeVersionReceiver.class)) {
+            ExecutableElement executableElement = (ExecutableElement) element;
+            TypeVersionReceiverValidity validity = validateTypeVersionReceiver(executableElement);
+            String methodName = executableElement.getSimpleName().toString();
+            Element classElement = executableElement.getEnclosingElement();
+            String className = "<UNKNOWN>";
+
+            if (classElement instanceof TypeElement typeElement) {
+                className = typeElement.getQualifiedName().toString();
+            }
+
+            if (validity == TypeVersionReceiverValidity.INVALID) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (byte) or (byte, byte).");
+            }
+
+            if (parsedClasses.containsKey(className)) {
+                parsedClasses.get(className).setVersionWithCompatReceiver(methodName);
+                if (validity == TypeVersionReceiverValidity.VERSION_AND_COMPAT) {
+                    parsedClasses.get(className).setReceiveCompat(true);
+                }
+            }
+        }
+
         try {
             writeJavaCode(parsedClasses);
         } catch (IOException ioe) {
@@ -100,6 +175,166 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
         }
 
         return false;
+    }
+
+    private TypeVersionReceiverValidity validateTypeVersionReceiver(ExecutableElement executableElement) {
+        if (executableElement.isVarArgs()) {
+            return TypeVersionReceiverValidity.INVALID;
+        }
+
+        List<? extends VariableElement> parameters = executableElement.getParameters();
+        if (parameters.isEmpty() || parameters.size() > 2) {
+            return TypeVersionReceiverValidity.INVALID;
+        }
+
+        if (parameters.get(0).asType() instanceof PrimitiveType primitiveType1) {
+            if (primitiveType1.getKind() != TypeKind.BYTE) {
+                return TypeVersionReceiverValidity.INVALID;
+            }
+        } else {
+            return TypeVersionReceiverValidity.INVALID;
+        }
+
+        if (parameters.size() == 2) {
+            if (parameters.get(1).asType() instanceof PrimitiveType primitiveType2) {
+                if (primitiveType2.getKind() != TypeKind.BYTE) {
+                    return TypeVersionReceiverValidity.INVALID;
+                } else {
+                    return TypeVersionReceiverValidity.VERSION_AND_COMPAT;
+                }
+            } else {
+                return TypeVersionReceiverValidity.INVALID;
+            }
+        } else {
+            return TypeVersionReceiverValidity.ONLY_VERSION;
+        }
+    }
+
+    private Map<String, Map<Integer, String>> getFieldMethods(Set<? extends Element> elements) {
+        Map<String, Map<Integer, String>> methods = new HashMap<>();
+        for (Element element : elements) {
+            ExecutableElement executableElement = (ExecutableElement) element;
+            String methodName = executableElement.getSimpleName().toString();
+
+            Element classElement = executableElement.getEnclosingElement();
+            if (classElement instanceof TypeElement typeElement) {
+                String className = typeElement.getQualifiedName().toString();
+                if (!isMethodSignatureValid(executableElement)) {
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (ByteBuf, boolean, BitSet).");
+                }
+
+                CephFieldEncode encodeAnnotation = executableElement.getAnnotation(CephFieldEncode.class);
+                int order = encodeAnnotation.order();
+
+                if (!methods.containsKey(className)) {
+                    methods.put(className, new HashMap<>());
+                }
+                methods.get(className).put(order, methodName);
+            }
+        }
+
+        return methods;
+    }
+
+    private boolean isMethodSignatureValid(ExecutableElement executableElement) {
+        List<? extends VariableElement> parameters = executableElement.getParameters();
+
+        if (executableElement.isVarArgs()) {
+            return false;
+        }
+
+        if (parameters.size() != 3) {
+            return false;
+        }
+
+        if (parameters.get(0).asType() instanceof DeclaredType declaredType1) {
+            if (declaredType1.getKind() == TypeKind.DECLARED) {
+                TypeElement paramType = (TypeElement) declaredType1.asElement();
+                if (!paramType.getQualifiedName().toString().equals("io.netty.buffer.ByteBuf")) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        if (parameters.get(1).asType() instanceof PrimitiveType primitiveType2) {
+            if (primitiveType2.getKind() != TypeKind.BOOLEAN) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        if (parameters.get(2).asType() instanceof DeclaredType declaredType3) {
+            if (declaredType3.getKind() == TypeKind.DECLARED) {
+                TypeElement paramType = (TypeElement) declaredType3.asElement();
+                if (!paramType.getQualifiedName().toString().equals("java.util.BitSet")) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void addFieldMethodsToClass(
+            ParsedClass parsedClass,
+            Map<Integer, String> encodeMethods,
+            Map<Integer, String> decodeMethods) {
+        if (encodeMethods != null) {
+            Optional<Integer> maxOrder = encodeMethods.keySet().stream().max(Comparator.comparingInt(x -> x));
+            if (maxOrder.isPresent()) {
+                for (int i = 0; i < maxOrder.get(); i++) {
+                    parsedClass.getEncodeMethods().add(encodeMethods.get(i + 1));
+                }
+            }
+        }
+
+        if (decodeMethods != null) {
+            Optional<Integer> maxOrder = decodeMethods.keySet().stream().max(Comparator.comparingInt(x -> x));
+            if (maxOrder.isPresent()) {
+                for (int i = 0; i < maxOrder.get(); i++) {
+                    parsedClass.getDecodeMethods().add(decodeMethods.get(i + 1));
+                }
+            }
+        }
+    }
+
+    private void addPreEncodeMethods(Map<String, ParsedClass> parsedClassMap, Set<? extends Element> elements) {
+        for (Element element : elements) {
+            ExecutableElement executableElement = (ExecutableElement) element;
+            String methodName = executableElement.getSimpleName().toString();
+
+            Element classElement = executableElement.getEnclosingElement();
+            if (classElement instanceof TypeElement typeElement) {
+                String className = typeElement.getQualifiedName().toString();
+                if (parsedClassMap.containsKey(className)) {
+                    parsedClassMap.get(className).setPreEncodeMethod(methodName);
+                }
+            }
+        }
+    }
+
+    private void addPostDecodeMethods(Map<String, ParsedClass> parsedClassMap, Set<? extends Element> elements) {
+        for (Element element : elements) {
+            ExecutableElement executableElement = (ExecutableElement) element;
+            String methodName = executableElement.getSimpleName().toString();
+
+            Element classElement = executableElement.getEnclosingElement();
+            if (classElement instanceof TypeElement typeElement) {
+                String className = typeElement.getQualifiedName().toString();
+                if (parsedClassMap.containsKey(className)) {
+                    parsedClassMap.get(className).setPostDecodeMethod(methodName);
+                }
+            }
+        }
     }
 
     private void addFieldsToClasses(Map<String, Map<String, ParsedField>> classFields,
@@ -111,11 +346,11 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
             Map<Integer, ParsedField> fieldsForClass = new HashMap<>();
             addFieldsToClass(classFields, typeElement, fieldsForClass);
 
-            List<Integer> sortedOrders = new ArrayList<>(fieldsForClass.keySet());
-            Collections.sort(sortedOrders);
-
-            for (Integer order : sortedOrders) {
-                entry.getValue().getFields().add(fieldsForClass.get(order));
+            Optional<Integer> lastFieldOrder = fieldsForClass.keySet().stream().max(Comparator.comparingInt(x -> x));
+            if (lastFieldOrder.isPresent()) {
+                for (int i = 0; i < lastFieldOrder.get(); i++) {
+                    entry.getValue().getFields().add(fieldsForClass.get(i + 1));
+                }
             }
         }
     }

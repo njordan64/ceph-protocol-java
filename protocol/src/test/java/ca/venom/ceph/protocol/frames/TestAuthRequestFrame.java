@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -57,7 +58,7 @@ public class TestAuthRequestFrame {
         AuthRequestFrame parsedMessage = new AuthRequestFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
-        parsedMessage.decodeSegment1(byteBuf, true, 0L);
+        parsedMessage.decodeSegment1(byteBuf, true, new BitSet(64));
 
         assertEquals(2L, parsedMessage.getSegment1().getAuthMethod());
 
@@ -96,7 +97,7 @@ public class TestAuthRequestFrame {
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
         ByteBuf byteBuf = Unpooled.buffer();
-        authRequestFrame.encodeSegment1(byteBuf, true, 0L);
+        authRequestFrame.encodeSegment1(byteBuf, true, new BitSet(64));
 
         byte[] actualSegment = new byte[byteBuf.writerIndex()];
         byteBuf.readBytes(actualSegment);

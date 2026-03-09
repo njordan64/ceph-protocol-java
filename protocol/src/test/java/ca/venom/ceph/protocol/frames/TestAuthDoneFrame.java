@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.BitSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -66,7 +67,7 @@ public class TestAuthDoneFrame {
         AuthDoneFrame parsedMessage = new AuthDoneFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
-        parsedMessage.decodeSegment1(byteBuf, true, 0L);
+        parsedMessage.decodeSegment1(byteBuf, true, new BitSet(64));
 
         assertEquals(ControlFrameType.AUTH_DONE, parsedMessage.getTag());
         assertEquals(154220L, parsedMessage.getSegment1().getGlobalId());
@@ -75,7 +76,7 @@ public class TestAuthDoneFrame {
         AuthDoneMonPayload payload = CephDecoder.decode(
                 Unpooled.wrappedBuffer(parsedMessage.getSegment1().getPayload()),
                 true,
-                0L,
+                new BitSet(64),
                 AuthDoneMonPayload.class
         );
 
@@ -115,7 +116,7 @@ public class TestAuthDoneFrame {
         payload.setEncryptedSecret(ENCRYPTED_SECRET);
         payload.setExtra(new byte[0]);
         ByteBuf payloadByteBuf = Unpooled.buffer();
-        CephEncoder.encode(payload, payloadByteBuf, true, 0L);
+        CephEncoder.encode(payload, payloadByteBuf, true, new BitSet(64));
 
         byte[] payloadBytes = new byte[payloadByteBuf.writerIndex()];
         payloadByteBuf.readBytes(payloadBytes);
@@ -125,7 +126,7 @@ public class TestAuthDoneFrame {
         System.arraycopy(message1Bytes, 32, expectedPayload, 0, message1Bytes.length - 36);
 
         ByteBuf byteBuf = Unpooled.buffer();
-        authDoneFrame.encodeSegment1(byteBuf, true, 0L);
+        authDoneFrame.encodeSegment1(byteBuf, true, new BitSet(64));
         byte[] actualPayload = new byte[byteBuf.writerIndex()];
         byteBuf.readBytes(actualPayload);
         assertArrayEquals(expectedPayload, actualPayload);

@@ -27,6 +27,8 @@ import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.BitSet;
+
 /**
  * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MClientCaps.h#L22
  */
@@ -122,12 +124,12 @@ public class MClientCaps extends MessagePayload {
     private FileLayout layout = new FileLayout();
 
     @Override
-    public short getHeadVersion(long features) {
+    public short getHeadVersion(BitSet features) {
         return 11;
     }
 
     @Override
-    public short getHeadCompatVersion(long features) {
+    public short getHeadCompatVersion(BitSet features) {
         return 1;
     }
 
@@ -153,12 +155,12 @@ public class MClientCaps extends MessagePayload {
     }
 
     @Override
-    public void encodeMiddle(ByteBuf byteBuf, boolean le, long features) {
+    public void encodeMiddle(ByteBuf byteBuf, boolean le, BitSet features) {
         byteBuf.writeBytes(xattr);
     }
 
     @Override
-    public void decodeMiddle(ByteBuf byteBuf, boolean le, long features) {
+    public void decodeMiddle(ByteBuf byteBuf, boolean le, BitSet features) {
         if (head.getXattrLen() > 0) {
             xattr = new byte[head.getXattrLen()];
             byteBuf.readBytes(xattr);

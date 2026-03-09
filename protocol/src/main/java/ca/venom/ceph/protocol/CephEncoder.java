@@ -13,16 +13,17 @@ import ca.venom.ceph.annotation.processor.ClassNameSplitter;
 import io.netty.buffer.ByteBuf;
 
 import java.lang.reflect.Method;
+import java.util.BitSet;
 
 public class CephEncoder {
-    public static void encode(Object toEncode, ByteBuf byteBuf, boolean le, long features) {
+    public static void encode(Object toEncode, ByteBuf byteBuf, boolean le, BitSet features) {
         Class<?> toEncodeClass = toEncode.getClass();
         ClassNameSplitter classNameParser = new ClassNameSplitter(toEncodeClass.getName());
 
         try {
             Class<?> encodingClass = toEncodeClass.getClassLoader().loadClass(
                     classNameParser.getPackageName() + "." + classNameParser.getEncoderClassName());
-            Method encodeMethod = encodingClass.getMethod("encode", toEncodeClass, ByteBuf.class, Boolean.TYPE, Long.TYPE);
+            Method encodeMethod = encodingClass.getMethod("encode", toEncodeClass, ByteBuf.class, Boolean.TYPE, BitSet.class);
             encodeMethod.invoke(null, toEncode, byteBuf, le, features);
         } catch (Exception e) {
             e.printStackTrace();

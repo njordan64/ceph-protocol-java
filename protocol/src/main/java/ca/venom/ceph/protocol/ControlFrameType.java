@@ -11,6 +11,9 @@ package ca.venom.ceph.protocol;
 
 import ca.venom.ceph.protocol.frames.*;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L671
+ */
 public enum ControlFrameType {
     HELLO(1, HelloFrame.class),
     AUTH_REQUEST(2, AuthRequestFrame.class),
@@ -30,7 +33,7 @@ public enum ControlFrameType {
     WAIT(16, WaitFrame.class),
     MESSAGE(17, MessageFrame.class),
     KEEPALIVE2(18, KeepAliveFrame.class),
-    KEEPALIVE2_ACK(19, KeepAliveAck.class),
+    KEEPALIVE2_ACK(19, KeepAliveAckFrame.class),
     ACK(20, AckFrame.class),
     COMPRESSION_REQUEST(21, CompressionRequestFrame.class),
     COMPRESSION_DONE(22, CompressionDoneFrame.class);

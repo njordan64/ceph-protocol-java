@@ -11,13 +11,15 @@ package ca.venom.ceph.client;
 
 import io.netty.util.AttributeKey;
 
+import java.util.BitSet;
+
 public class AttributeKeys {
     public static final AttributeKey<Integer> ADDR_NONCE =
             AttributeKey.newInstance("Addr-Nonce");
 
-    public static final AttributeKey<Long> CLIENT_FEATURES =
+    public static final AttributeKey<BitSet> CLIENT_FEATURES =
             AttributeKey.newInstance("Client-Features");
 
-    public static final AttributeKey<Long> SERVER_FEATURES =
+    public static final AttributeKey<BitSet> SERVER_FEATURES =
             AttributeKey.newInstance("Server-Features");
 }

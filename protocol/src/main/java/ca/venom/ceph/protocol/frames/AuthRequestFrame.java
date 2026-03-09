@@ -22,8 +22,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L532
+ */
 public class AuthRequestFrame extends AuthFrameBase {
     @CephType
     public static class Segment1 {
@@ -48,12 +52,12 @@ public class AuthRequestFrame extends AuthFrameBase {
     private Segment1 segment1;
 
     @Override
-    public void encodeSegment1(ByteBuf byteBuf, boolean le, long features) throws EncodingException {
+    public void encodeSegment1(ByteBuf byteBuf, boolean le, BitSet features) throws EncodingException {
         CephEncoder.encode(segment1, byteBuf, le, features);
     }
 
     @Override
-    public void decodeSegment1(ByteBuf byteBuf, boolean le, long features) throws DecodingException {
+    public void decodeSegment1(ByteBuf byteBuf, boolean le, BitSet features) throws DecodingException {
         segment1 = CephDecoder.decode(byteBuf, le, features, Segment1.class);
     }
 

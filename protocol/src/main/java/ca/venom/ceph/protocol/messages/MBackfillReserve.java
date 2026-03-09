@@ -9,13 +9,15 @@
  */
 package ca.venom.ceph.protocol.messages;
 
-import ca.venom.ceph.encoding.annotations.CephField;
-import ca.venom.ceph.encoding.annotations.CephMessagePayload;
-import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.*;
+import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.types.PlacementGroupId;
 import ca.venom.ceph.types.MessageType;
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.BitSet;
 
 /**
  * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MBackfillReserve.h#L22
@@ -50,21 +52,67 @@ public class MBackfillReserve extends MessagePayload {
 
     @Getter
     @Setter
-    @CephField(order = 6)
+    @CephField(order = 6, optional = true)
     private long primaryNumBytes;
 
     @Getter
     @Setter
-    @CephField(order = 7)
+    @CephField(order = 7, optional = true)
     private long shardNumBytes;
 
     @Override
-    public short getHeadVersion(long features) {
+    public short getHeadVersion(BitSet features) {
+        if (!CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
+            return 3;
+        }
+
         return 5;
     }
 
     @Override
-    public short getHeadCompatVersion(long features) {
+    public short getHeadCompatVersion(BitSet features) {
+        if (!CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
+            return 3;
+        }
+
         return 4;
+    }
+
+    @CephFieldEncode(order = 3)
+    public void encodeType(ByteBuf byteBuf, boolean le, BitSet features) {
+        int valueToWrite = type;
+        if (!CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
+            if (type == 3 || type == 4 || type == 5) {
+                valueToWrite = 2;
+            }
+        }
+
+        if (le) {
+            byteBuf.writeIntLE(valueToWrite);
+        } else {
+            byteBuf.writeInt(valueToWrite);
+        }
+    }
+
+    @CephFieldEncode(order = 6)
+    public void encodePrimaryNumBytes(ByteBuf byteBuf, boolean le, BitSet features) {
+        if (CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
+            if (le) {
+                byteBuf.writeLongLE(primaryNumBytes);
+            } else {
+                byteBuf.writeLong(primaryNumBytes);
+            }
+        }
+    }
+
+    @CephFieldEncode(order = 7)
+    public void encodeShardNumBytes(ByteBuf byteBuf, boolean le, BitSet features) {
+        if (CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
+            if (le) {
+                byteBuf.writeLongLE(shardNumBytes);
+            } else {
+                byteBuf.writeLong(shardNumBytes);
+            }
+        }
     }
 }

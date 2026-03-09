@@ -23,6 +23,14 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     public List<CodeLine> visitDeclaredType(ParsedField.DeclaredFieldType fieldType,
                                             ParsedField field,
                                             DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
         ClassNameSplitter fullClassName = new ClassNameSplitter(fieldType.getClassName());
 
         String typeCodeParam = "";
@@ -30,8 +38,8 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
             typeCodeParam = String.format(", decoded.%s", field.getParameterTypeValue());
         }
 
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString(
                                 String.format(
@@ -42,36 +50,85 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
                         )
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitBooleanType(ParsedField.PrimitiveFieldType fieldType,
                                            ParsedField field,
                                            DecodeCodeGenContext context) {
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString("byteBuf.readByte() > 0")
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitByteType(ParsedField.PrimitiveFieldType fieldType,
                                         ParsedField field,
                                         DecodeCodeGenContext context) {
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString("byteBuf.readByte()")
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(context.getIndentation(), "}"));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitIntType(ParsedField.PrimitiveFieldType fieldType,
                                        ParsedField field,
                                        DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
         String newValue;
         if (field.getByteOrderPreference() == ByteOrderPreference.BE) {
             newValue = "byteBuf.readInt()";
@@ -81,18 +138,33 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
             newValue = "le ? byteBuf.readIntLE() : byteBuf.readInt()";
         }
 
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString(newValue)
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(context.getIndentation(), "}"));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitLongType(ParsedField.PrimitiveFieldType fieldType,
                                         ParsedField field,
                                         DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
         String newValue;
         if (field.getByteOrderPreference() == ByteOrderPreference.BE) {
             newValue = "byteBuf.readLong()";
@@ -102,18 +174,35 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
             newValue = "le ? byteBuf.readLongLE() : byteBuf.readLong()";
         }
 
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString(newValue)
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitShortType(ParsedField.PrimitiveFieldType fieldType,
                                          ParsedField field,
                                          DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
         String newValue;
         if (field.getByteOrderPreference() == ByteOrderPreference.BE) {
             newValue = "byteBuf.readShort()";
@@ -123,42 +212,111 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
             newValue = "le ? byteBuf.readShortLE() : byteBuf.readShort()";
         }
 
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString(newValue)
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitWrappedBooleanType(ParsedField.WrappedPrimitiveFieldType fieldType,
                                                   ParsedField field,
                                                   DecodeCodeGenContext context) {
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString("Boolean.valueOf(byteBuf.readByte() > 0)")
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            lines.add(new CodeLine(
+                    context.getIndentation() + 1, String.format(
+                            "%s;",
+                            context.getValueSetString("Boolean.FALSE")
+                    ))
+            );
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitWrappedByteType(ParsedField.WrappedPrimitiveFieldType fieldType,
                                                ParsedField field,
                                                DecodeCodeGenContext context) {
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "%s;",
                         context.getValueSetString("Byte.valueOf(byteBuf.readByte())")
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            lines.add(new CodeLine(
+                            context.getIndentation() + 1, String.format(
+                            "%s;",
+                            context.getValueSetString("new Byte(0)")
+                    ))
+            );
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitWrappedIntType(ParsedField.WrappedPrimitiveFieldType fieldType,
                                               ParsedField field,
                                               DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
         String newValue;
         if (field.getByteOrderPreference() == ByteOrderPreference.BE) {
             newValue = "byteBuf.readInt()";
@@ -168,18 +326,44 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
             newValue = "le ? byteBuf.readIntLE() : byteBuf.readInt()";
         }
 
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "Integer.valueOf(%s);",
                         context.getValueSetString(newValue)
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            lines.add(new CodeLine(
+                            context.getIndentation() + 1, String.format(
+                            "%s;",
+                            context.getValueSetString("new Integer(0)")
+                    ))
+            );
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitWrappedLongType(ParsedField.WrappedPrimitiveFieldType fieldType,
                                                ParsedField field,
                                                DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
         String newValue;
         if (field.getByteOrderPreference() == ByteOrderPreference.BE) {
             newValue = "byteBuf.readLong()";
@@ -189,18 +373,44 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
             newValue = "le ? byteBuf.readLongLE() : byteBuf.readLong()";
         }
 
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "Long.valueOf(%s);",
                         context.getValueSetString(newValue)
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            lines.add(new CodeLine(
+                            context.getIndentation() + 1, String.format(
+                            "%s;",
+                            context.getValueSetString("new Long(0)")
+                    ))
+            );
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitWrappedShortType(ParsedField.WrappedPrimitiveFieldType fieldType,
                                                 ParsedField field,
                                                 DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
         String newValue;
         if (field.getByteOrderPreference() == ByteOrderPreference.BE) {
             newValue = "byteBuf.readShort()";
@@ -210,96 +420,154 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
             newValue = "le ? byteBuf.readShortLE() : byteBuf.readShort()";
         }
 
-        return List.of(
-                new CodeLine(context.getIndentation(), String.format(
+        lines.add(
+                new CodeLine(indentation, String.format(
                         "Short.valueOf(%s);",
                         context.getValueSetString(newValue)
                 ))
         );
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            lines.add(new CodeLine(
+                            context.getIndentation() + 1, String.format(
+                            "%s;",
+                            context.getValueSetString("new Short(0)")
+                    ))
+            );
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitStringType(ParsedField.StringFieldType fieldType,
                                           ParsedField field,
                                           DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
         int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
 
         String sizeVariable = String.format("size%d", (indentation + 1));
         String bytesVariable = String.format("bytes%d", (indentation + 2));
-        return List.of(
-                new CodeLine(indentation, "{"),
+        lines.add(new CodeLine(indentation, "{"));
+        lines.add(
                 new CodeLine(indentation + 1, String.format(
                         "int %s = le ? byteBuf.readIntLE() : byteBuf.readInt();",
                         sizeVariable
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 1, String.format(
                         "if (%s == 0) {",
                         sizeVariable
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 2, String.format(
                         "%s;",
                         context.getValueSetString("null")
-                )),
-                new CodeLine(indentation + 1, "} else {"),
+                ))
+        );
+        lines.add(new CodeLine(indentation + 1, "} else {"));
+        lines.add(
                 new CodeLine(indentation + 2, String.format(
                         "byte[] %s = new byte[%s];",
                         bytesVariable,
                         sizeVariable
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 2, String.format(
                         "byteBuf.readBytes(%s);",
                         bytesVariable
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 2, String.format(
                         "%s;",
                         context.getValueSetString(String.format(
                                 "new String(%s, StandardCharsets.UTF_8)",
                                 bytesVariable
                         ))
-                )),
-                new CodeLine(indentation + 1, "}"),
-                new CodeLine(indentation, "}")
+                ))
         );
+        lines.add(new CodeLine(indentation + 1, "}"));
+        lines.add(new CodeLine(indentation, "}"));
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitBitSetType(ParsedField.BitSetFieldType fieldType,
                                           ParsedField field,
                                           DecodeCodeGenContext context) {
+        List<CodeLine> lines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
+
         if (field.getEncodingSize() == null) {
             context.getMessager().printMessage(Diagnostic.Kind.ERROR, "BitSet missing encoding size");
         }
 
-        int indentation = context.getIndentation();
         String bytesVariableName = "bytes" + (indentation + 1);
         String bVariableName = "b" + (indentation + 3);
         String iVariableName = "i" + (indentation + 2);
-        return List.of(
-                new CodeLine(indentation, "{"),
+        lines.add(new CodeLine(indentation, "{"));
+        lines.add(
                 new CodeLine(indentation + 1, String.format(
                         "byte[] %s = new byte[%d];",
                         bytesVariableName,
                         field.getEncodingSize()
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 1, String.format(
                         "byteBuf.readBytes(%s);",
                         bytesVariableName
-                )),
-                new CodeLine(indentation + 1, "if (!le) {"),
+                ))
+        );
+        lines.add(new CodeLine(indentation + 1, "if (!le) {"));
+        lines.add(
                 new CodeLine(indentation + 2, String.format(
                         "for (int %s = 0; %s < %d / 2; %s++) {",
                         iVariableName,
                         iVariableName,
                         field.getEncodingSize(),
                         iVariableName
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 3, String.format(
                         "byte %s = %s[%d - %s - 1];",
                         bVariableName,
                         bytesVariableName,
                         field.getEncodingSize(),
                         iVariableName
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 3, String.format(
                         "%s[%d - %s - 1] = %s[%s];",
                         bytesVariableName,
@@ -307,29 +575,56 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
                         iVariableName,
                         bytesVariableName,
                         iVariableName
-                )),
+                ))
+        );
+        lines.add(
                 new CodeLine(indentation + 3, String.format(
                         "%s[%s] = %s;",
                         bytesVariableName,
                         iVariableName,
                         bVariableName
-                )),
-                new CodeLine(indentation + 2, "}"),
-                new CodeLine(indentation + 1, "}"),
+                ))
+        );
+        lines.add(new CodeLine(indentation + 2, "}"));
+        lines.add(new CodeLine(indentation + 1, "}"));
+        lines.add(
                 new CodeLine(indentation + 1, String.format(
                         "%s;",
                         context.getValueSetString(String.format("BitSet.valueOf(%s)", bytesVariableName))
-                )),
-                new CodeLine(indentation, "}")
+                ))
         );
+        lines.add(new CodeLine(indentation, "}"));
+
+        if (field.isOptional()) {
+            lines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            lines.add(new CodeLine(
+                            context.getIndentation() + 1, String.format(
+                            "%s;",
+                            context.getValueSetString(String.format("new BitSet(%d)", field.getEncodingSize() * 8))
+                    )
+            ));
+            lines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
+        return lines;
     }
 
     @Override
     public List<CodeLine> visitByteArrayType(ParsedField.ByteArrayFieldType fieldType,
                                              ParsedField field,
                                              DecodeCodeGenContext context) {
-        int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
 
         codeLines.add(new CodeLine(indentation, "{"));
         String sizeVariableName = "size" + (indentation + 1);
@@ -452,13 +747,32 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
         )));
         codeLines.add(new CodeLine(indentation, "}"));
 
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            codeLines.add(new CodeLine(
+                    context.getIndentation() + 1, String.format(
+                            "%s;",
+                            context.getValueSetString("new byte[0]")
+                    )
+            ));
+            codeLines.add(new CodeLine(context.getIndentation(), "}"));
+        }
+
         return codeLines;
     }
 
     @Override
     public List<CodeLine> visitEnumType(ParsedField.EnumFieldType fieldType, ParsedField field, DecodeCodeGenContext context) {
-        int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
 
         int encodingSize = 1;
         if (field.getEncodingSize() != null) {
@@ -481,13 +795,25 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
                 ))
         )));
 
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "}"
+            ));
+        }
+
         return codeLines;
     }
 
     @Override
     public List<CodeLine> visitListType(ParsedField.ListFieldType fieldType, ParsedField field, DecodeCodeGenContext context) {
-        int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
 
         codeLines.add(new CodeLine(indentation, "{"));
         String listSizeVariable = "listSize" + (indentation + 1);
@@ -539,13 +865,32 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
         )));
         codeLines.add(new CodeLine(indentation, "}"));
 
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            codeLines.add(new CodeLine(
+                    context.getIndentation() + 1, String.format(
+                    "%s;",
+                    context.getValueSetString("java.util.Collections.emptyList()")
+            )
+            ));
+            codeLines.add(new CodeLine(context.getIndentation(), "}"));
+        }
+
         return codeLines;
     }
 
     @Override
     public List<CodeLine> visitSetType(ParsedField.SetFieldType fieldType, ParsedField field, DecodeCodeGenContext context) {
-        int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
 
         codeLines.add(new CodeLine(indentation, "{"));
         String setSizeVariable = "setSize" + (indentation + 1);
@@ -597,13 +942,32 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
         )));
         codeLines.add(new CodeLine(indentation, "}"));
 
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            codeLines.add(new CodeLine(
+                    context.getIndentation() + 1, String.format(
+                    "%s;",
+                    context.getValueSetString("java.util.Collections.emptySet()")
+            )
+            ));
+            codeLines.add(new CodeLine(context.getIndentation(), "}"));
+        }
+
         return codeLines;
     }
 
     @Override
     public List<CodeLine> visitMapType(ParsedField.MapFieldType fieldType, ParsedField field, DecodeCodeGenContext context) {
-        int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
+        int indentation = context.getIndentation();
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "if (byteBuf.readableBytes() > 0) {"
+            ));
+            indentation++;
+        }
 
         codeLines.add(new CodeLine(indentation, "{"));
         String mapSizeVariable = "mapSize" + (indentation + 1);
@@ -672,6 +1036,19 @@ public class DecodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
                 context.getValueSetString(decodedListVariableName)
         )));
         codeLines.add(new CodeLine(indentation, "}"));
+
+        if (field.isOptional()) {
+            codeLines.add(new CodeLine(
+                    context.getIndentation(), "} else {"
+            ));
+            codeLines.add(new CodeLine(
+                    context.getIndentation() + 1, String.format(
+                    "%s;",
+                    context.getValueSetString("java.util.Collections.emptyMap()")
+            )
+            ));
+            codeLines.add(new CodeLine(context.getIndentation(), "}"));
+        }
 
         return codeLines;
     }

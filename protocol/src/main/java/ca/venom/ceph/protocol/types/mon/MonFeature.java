@@ -13,14 +13,14 @@ import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.BitSet;
 
 @CephType
-@CephTypeVersion(version = 1, compatVersion = 1)
+@CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize
 public class MonFeature {
     @Getter

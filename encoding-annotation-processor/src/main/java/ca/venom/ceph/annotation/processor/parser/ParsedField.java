@@ -255,6 +255,7 @@ public class ParsedField {
     private final boolean includeTypeSize;
     private final int sizeLength;
     private final String sizeProperty;
+    private final boolean optional;
     private final String parameterTypeValue;
 
     public ParsedField(VariableElement element, Set<String> parsedClassNames) {
@@ -267,6 +268,7 @@ public class ParsedField {
         this.includeTypeSize = cephField.includeSize();
         this.sizeLength = cephField.sizeLength();
         this.sizeProperty = cephField.sizeProperty();
+        this.optional = cephField.optional();
 
         CephCondition condition = element.getAnnotation(CephCondition.class);
         if (condition != null) {
@@ -324,6 +326,10 @@ public class ParsedField {
 
     public String getSizeProperty() {
         return sizeProperty;
+    }
+
+    public boolean isOptional() {
+        return optional;
     }
 
     public String getParameterTypeValue() {

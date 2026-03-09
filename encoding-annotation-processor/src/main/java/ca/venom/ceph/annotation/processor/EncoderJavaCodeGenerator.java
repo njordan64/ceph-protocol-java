@@ -17,6 +17,7 @@ import ca.venom.ceph.encoding.annotations.ConditonOperator;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.type.TypeKind;
+import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -71,6 +72,7 @@ public class EncoderJavaCodeGenerator {
         Set<String> imports = new HashSet<>();
         imports.add("ca.venom.ceph.protocol.DecodingException");
         imports.add("io.netty.buffer.ByteBuf");
+        imports.add("java.util.BitSet");
 
         ClassNameSplitter fullClassName = new ClassNameSplitter(parsedClass.getClassName());
 
@@ -102,8 +104,14 @@ public class EncoderJavaCodeGenerator {
             }
         }
 
+        if (parsedClass.getVersionWithCompatGenerator() != null) {
+            imports.add("ca.venom.ceph.types.VersionWithCompat");
+        }
+
         for (ParsedField parsedField : parsedClass.getFields()) {
-            addImportsForFieldType(parsedField.getFieldType(), imports, fullClassName);
+            if (parsedField != null) {
+                addImportsForFieldType(parsedField.getFieldType(), imports, fullClassName);
+            }
         }
 
         return imports;
@@ -118,8 +126,6 @@ public class EncoderJavaCodeGenerator {
                 imports.add(fieldClassName.getPackageName() + "." + fieldClassName.getActualClassName());
                 imports.add(fieldClassName.getPackageName() + "." + fieldClassName.getEncoderClassName());
             }
-        } else if (fieldType instanceof ParsedField.BitSetFieldType) {
-            imports.add("java.util.BitSet");
         } else if (fieldType instanceof ParsedField.EnumFieldType enumFieldType) {
             ClassNameSplitter fieldClassName = new ClassNameSplitter(enumFieldType.getClassName());
             if (!fullClassName.getPackageName().equals(fieldClassName.getPackageName())) {
@@ -147,7 +153,7 @@ public class EncoderJavaCodeGenerator {
                                    ClassNameSplitter fullClassName,
                                    Collection<ParsedClass> parsedClasses) {
         out.printf(
-                "    public static void encode(%s toEncode, ByteBuf byteBuf, boolean le, long features) {%n",
+                "    public static void encode(%s toEncode, ByteBuf byteBuf, boolean le, BitSet features) {%n",
                 fullClassName.getActualClassName()
         );
 
@@ -217,7 +223,13 @@ public class EncoderJavaCodeGenerator {
             out.printf("        byteBuf.writeByte((byte) %d);%n", parsedClass.getMarker());
         }
 
-        if (parsedClass.getVersion() != null) {
+        if (parsedClass.getVersionWithCompatGenerator() != null) {
+            out.printf("        VersionWithCompat versionWithCompat = toEncode.%s();%n", parsedClass.getVersionWithCompatGenerator());
+            out.println("        byteBuf.writeByte(versionWithCompat.getVersion());");
+            out.println("        if (versionWithCompat.getCompat() != null) {");
+            out.printf("            byteBuf.writeByte(versionWithComapt.getCompat());");
+            out.println("        }");
+        } else if (parsedClass.getVersion() != null) {
             out.printf("        byteBuf.writeByte((byte) %d);%n", parsedClass.getVersion());
             if (parsedClass.getCompatVersion() != null) {
                 out.printf("        byteBuf.writeByte((byte) %d);%n", parsedClass.getCompatVersion());
@@ -229,9 +241,28 @@ public class EncoderJavaCodeGenerator {
             out.println("        byteBuf.writeZero(4);");
         }
 
+        if (parsedClass.getPreEncodeMethod() != null) {
+            out.printf("        toEncode.%s();%n", parsedClass.getPreEncodeMethod());
+        }
+
         EncodeFieldTypeVisitor fieldTypeVisitor = new EncodeFieldTypeVisitor();
-        for (ParsedField field : parsedClass.getFields()) {
+        int fieldsCount = Math.max(parsedClass.getFields().size(), parsedClass.getEncodeMethods().size());
+        for (int i = 0; i < fieldsCount; i++) {
             int indentation = 2;
+
+            if (i < parsedClass.getEncodeMethods().size() && parsedClass.getEncodeMethods().get(i) != null) {
+                out.printf("        toEncode.%s(byteBuf, le, features);%n", parsedClass.getEncodeMethods().get(i));
+                continue;
+            }
+
+            if (i >= parsedClass.getFields().size()) {
+                continue;
+            }
+
+            ParsedField field = parsedClass.getFields().get(i);
+            if (field == null) {
+                continue;
+            }
 
             if (field.getCondition() != null) {
                 indentation++;
@@ -306,16 +337,16 @@ public class EncoderJavaCodeGenerator {
                                    Collection<ParsedClass> parsedClasses) {
         if (parsedClass instanceof ParsedAbstractClass parsedAbstractClass) {
             out.printf(
-                    "    public static %s decode(ByteBuf byteBuf, boolean le, long features%s) throws DecodingException {%n",
+                    "    public static %s decode(ByteBuf byteBuf, boolean le, BitSet features%s) throws DecodingException {%n",
                     fullClassName.getActualClassName(),
                     Boolean.TRUE.equals(parsedAbstractClass.getUseParameter()) ? ", int typeCode" : "");
             writeAbstractDecodeMethodBody(out, parsedAbstractClass);
         } else if ("ca.venom.ceph.protocol.messages.MessagePayload".equals(parsedClass.getClassName())) {
-            out.println("    public static MessagePayload decode(ByteBuf byteBuf, boolean le, long features, int typeCode) throws DecodingException {");
+            out.println("    public static MessagePayload decode(ByteBuf byteBuf, boolean le, BitSet features, int typeCode) throws DecodingException {");
             writeMessagePayloadDecodeMethodBody(out, parsedClasses);
         } else {
             out.printf(
-                    "    public static %s decode(ByteBuf byteBuf, boolean le, long features) throws DecodingException {%n",
+                    "    public static %s decode(ByteBuf byteBuf, boolean le, BitSet features) throws DecodingException {%n",
                     fullClassName.getActualClassName());
             out.printf(
                     "        %s decoded = new %s();%n",
@@ -403,18 +434,27 @@ public class EncoderJavaCodeGenerator {
             out.println("        }");
         }
 
-        if (parsedClass.getVersion() != null) {
-            out.printf("        if ((byte) %d != byteBuf.readByte()) {", parsedClass.getVersion());
+        if (parsedClass.getVersionWithCompatReceiver() != null) {
+            if (parsedClass.isReceiveCompat()) {
+                out.printf("        decoded.%s(byteBuf.readByte(), byteBuf.readByte());%n", parsedClass.getVersionWithCompatReceiver());
+            } else {
+                out.printf("        decoded.%s(byteBuf.readByte());%n", parsedClass.getVersionWithCompatReceiver());
+            }
+        } else if (parsedClass.getVersion() != null) {
+            out.printf("        if ((byte) %d != byteBuf.readByte()) {%n", parsedClass.getVersion());
             out.println("            throw new DecodingException(\"Unsupported version\");");
             out.println("        }");
 
             if (parsedClass.getCompatVersion() != null) {
-                out.printf("        if ((byte) %d != byteBuf.readByte()) {", parsedClass.getCompatVersion());
+                out.printf("        if ((byte) %d != byteBuf.readByte()) {%n", parsedClass.getCompatVersion());
                 out.println("            throw new DecodingException(\"Unsupported compat version\");");
                 out.println("        }");
             }
         }
 
+        if (parsedClass.getClassName().equals("ca.venom.ceph.protocol.messages.MMonMap")) {
+            messager.printMessage(Diagnostic.Kind.WARNING, ">>> Test 1: " + parsedClass.isIncludeSize());
+        }
         if (parsedClass.isIncludeSize()) {
             out.println("        if (le) {");
             out.println("            if (byteBuf.readIntLE() > byteBuf.readableBytes()) {");
@@ -427,8 +467,22 @@ public class EncoderJavaCodeGenerator {
             out.println("        }");
         }
 
-        for (ParsedField field : parsedClass.getFields()) {
+        int fieldsCount = Math.max(parsedClass.getFields().size(), parsedClass.getEncodeMethods().size());
+        for (int i = 0; i < fieldsCount; i++) {
             int indentation = 2;
+
+            if (i < parsedClass.getDecodeMethods().size() && parsedClass.getDecodeMethods().get(i ) != null) {
+                out.printf("        decoded.%s(byteBuf, le, features);%n", parsedClass.getDecodeMethods().get(i));
+            }
+
+            if (i >= parsedClass.getFields().size()) {
+                continue;
+            }
+
+            ParsedField field = parsedClass.getFields().get(i);
+            if (field == null) {
+                continue;
+            }
 
             if (field.getCondition() != null) {
                 indentation++;
@@ -478,6 +532,10 @@ public class EncoderJavaCodeGenerator {
             if (field.getCondition() != null) {
                 out.println("        }");
             }
+        }
+
+        if (parsedClass.getPostDecodeMethod() != null) {
+            out.printf("        decoded.%s();%n", parsedClass.getPostDecodeMethod());
         }
     }
 }

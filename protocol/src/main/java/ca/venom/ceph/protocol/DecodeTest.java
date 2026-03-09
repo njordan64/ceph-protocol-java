@@ -14,6 +14,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 import java.io.FileInputStream;
+import java.util.BitSet;
 
 public class DecodeTest {
     public static void main(String[] args) throws Exception {
@@ -22,7 +23,7 @@ public class DecodeTest {
         fis.close();
 
         ByteBuf byteBuf = Unpooled.wrappedBuffer(bytes, 4, bytes.length - 4);
-        MMonMap monMap = CephDecoder.decode(byteBuf, true, 0L, MMonMap.class);
+        MMonMap monMap = CephDecoder.decode(byteBuf, true, new BitSet(64), MMonMap.class);
         System.out.println(">>> Done");
     }
 }

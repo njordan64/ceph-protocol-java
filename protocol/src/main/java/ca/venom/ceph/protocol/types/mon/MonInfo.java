@@ -12,7 +12,7 @@ package ca.venom.ceph.protocol.types.mon;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import ca.venom.ceph.protocol.types.AddrVec;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +20,7 @@ import lombok.Setter;
 import java.util.Map;
 
 @CephType
-@CephTypeVersion(version = 5, compatVersion = 1)
+@CephTypeVersionConstant(version = 5, compatVersion = 1)
 @CephTypeSize
 public class MonInfo {
     @Getter

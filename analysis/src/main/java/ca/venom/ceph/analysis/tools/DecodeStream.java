@@ -10,6 +10,7 @@
 package ca.venom.ceph.analysis.tools;
 
 import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.decode.FrameDecoder;
 import ca.venom.ceph.protocol.decode.PreParsedFrame;
 import ca.venom.ceph.protocol.frames.AuthDoneFrame;
@@ -44,6 +45,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.util.Base64;
+import java.util.BitSet;
 
 /**
  * Decodes client and server streams to enable analysis of the traffic.
@@ -62,7 +64,7 @@ public class DecodeStream {
     private final ObjectMapper objectMapper;
     private final FrameDecoder clientDecoder;
     private final FrameDecoder serverDecoder;
-    private long features = -1L;
+    private BitSet features = (BitSet) CephFeatures.ALL.clone();
 
     private DecodeStream(byte[] key, String clientFilename, String serverFilename) throws Exception {
         this.authKey = new SecretKeySpec(key, 12, 16, "AES");
@@ -303,8 +305,8 @@ public class DecodeStream {
         System.out.println(objectMapper
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(clientIdentFrame));
-        features = clientIdentFrame.getSegment1().getRequiredFeatures().toLongArray()[0];
-        features |= clientIdentFrame.getSegment1().getSupportedFeatures().toLongArray()[0];
+        features = (BitSet) clientIdentFrame.getSegment1().getRequiredFeatures().clone();
+        features.or(clientIdentFrame.getSegment1().getSupportedFeatures());
     }
 
     private void parseServerIdent() throws Exception {
@@ -314,9 +316,9 @@ public class DecodeStream {
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(serverIdentFrame));
 
-        long serverFeatures = serverIdentFrame.getSegment1().getRequiredFeatures().toLongArray()[0];
-        serverFeatures |= serverIdentFrame.getSegment1().getSupportedFeatures().toLongArray()[0];
-        features &= serverFeatures;
+        BitSet serverFeatures = (BitSet) serverIdentFrame.getSegment1().getRequiredFeatures().clone();
+        serverFeatures.or(serverIdentFrame.getSegment1().getSupportedFeatures());
+        features.and(serverFeatures);
     }
 
     private boolean haveMessages(boolean isClient) {

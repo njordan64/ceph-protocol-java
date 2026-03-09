@@ -12,13 +12,15 @@ package ca.venom.ceph.protocol.messages;
 import ca.venom.ceph.encoding.annotations.CephType;
 import io.netty.buffer.ByteBuf;
 
+import java.util.BitSet;
+
 @CephType
 public abstract class MessagePayload {
-    public short getHeadVersion(long features) {
+    public short getHeadVersion(BitSet features) {
         return 1;
     }
 
-    public short getHeadCompatVersion(long features) {
+    public short getHeadCompatVersion(BitSet features) {
         return 0;
     }
 
@@ -28,15 +30,15 @@ public abstract class MessagePayload {
     public void finishDecode() {
     }
 
-    public void encodeMiddle(ByteBuf byteBuf, boolean le, long features) {
+    public void encodeMiddle(ByteBuf byteBuf, boolean le, BitSet features) {
     }
 
-    public void decodeMiddle(ByteBuf byteBuf, boolean le, long features) {
+    public void decodeMiddle(ByteBuf byteBuf, boolean le, BitSet features) {
     }
 
-    public void encodeData(ByteBuf byteBuf, boolean le, long features) {
+    public void encodeData(ByteBuf byteBuf, boolean le, BitSet features) {
     }
 
-    public void decodeData(ByteBuf byteBuf, boolean le, long features) {
+    public void decodeData(ByteBuf byteBuf, boolean le, BitSet features) {
     }
 }

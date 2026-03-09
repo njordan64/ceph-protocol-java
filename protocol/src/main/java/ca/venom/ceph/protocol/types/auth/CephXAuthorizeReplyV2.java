@@ -11,12 +11,12 @@ package ca.venom.ceph.protocol.types.auth;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
 @CephType
-@CephTypeVersion(version = 2)
+@CephTypeVersionConstant(version = 2)
 public class CephXAuthorizeReplyV2 extends CephXAuthorizeReply {
     @Getter
     @Setter

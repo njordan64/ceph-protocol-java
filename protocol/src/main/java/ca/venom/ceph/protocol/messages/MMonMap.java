@@ -13,7 +13,7 @@ import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import ca.venom.ceph.protocol.CephRelease;
 import ca.venom.ceph.protocol.types.mon.MonFeature;
 import ca.venom.ceph.protocol.types.mon.MonInfo;
@@ -32,7 +32,7 @@ import java.util.Set;
  * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/mon/MonMap.h#L96
  */
 @CephType
-@CephTypeVersion(version = 9, compatVersion = 6)
+@CephTypeVersionConstant(version = 9, compatVersion = 6)
 @CephTypeSize
 @CephMessagePayload(MessageType.MSG_MON_MAP)
 public class MMonMap extends MessagePayload {

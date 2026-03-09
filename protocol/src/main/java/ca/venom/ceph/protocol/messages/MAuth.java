@@ -34,6 +34,6 @@ public class MAuth extends PaxosMessage {
 
     @Getter
     @Setter
-    @CephField(order = 6)
+    @CephField(order = 6, optional = true)
     private int monMapEpoch;
 }

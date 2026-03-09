@@ -316,7 +316,7 @@ public class TestCephEncoder {
 
     private void validateEncoding2(Object toEncode, byte[] expectedBytes, boolean le) {
         ByteBuf byteBuf = Unpooled.buffer();
-        CephEncoder.encode(toEncode, byteBuf, le, 0L);
+        CephEncoder.encode(toEncode, byteBuf, le, new BitSet(64));
 
         byte[] actualBytes = new byte[byteBuf.writerIndex() - byteBuf.readerIndex()];
         byteBuf.readBytes(actualBytes);

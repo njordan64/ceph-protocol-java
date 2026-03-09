@@ -165,21 +165,21 @@ public class TestCephDecoder {
     @Test
     public void testDecodeByte() throws Exception {
         byte[] bytes = new byte[] {(byte) 3};
-        DecodeByteTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeByteTest.class);
+        DecodeByteTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeByteTest.class);
         assertEquals((byte) 3, value.getValue());
     }
 
     @Test
     public void testDecodeShort() throws Exception {
         byte[] bytes = new byte[] {(byte) 3, (byte) 0};
-        DecodeShortTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeShortTest.class);
+        DecodeShortTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeShortTest.class);
         assertEquals((short) 3, value.getValue());
     }
 
     @Test
     public void testDecodeInt() throws Exception {
         byte[] bytes = new byte[] {(byte) 3, (byte) 0, (byte) 0, (byte) 0};
-        DecodeIntTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeIntTest.class);
+        DecodeIntTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeIntTest.class);
         assertEquals(3, value.getValue());
     }
 
@@ -189,7 +189,7 @@ public class TestCephDecoder {
                 (byte) 3, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 0, (byte) 0, (byte) 0, (byte) 0
         };
-        DecodeLongTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeLongTest.class);
+        DecodeLongTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeLongTest.class);
         assertEquals(3, value.getValue());
     }
 
@@ -199,14 +199,14 @@ public class TestCephDecoder {
                 (byte) 1, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 97
         };
-        DecodeStringTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeStringTest.class);
+        DecodeStringTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeStringTest.class);
         assertEquals("a", value.getValue());
     }
 
     @Test
     public void testDecodeRawBytes() throws Exception {
         byte[] bytes = new byte[] {(byte) 3, (byte) 2, (byte) 1};
-        DecodeRawBytesTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeRawBytesTest.class);
+        DecodeRawBytesTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeRawBytesTest.class);
         assertArrayEquals(bytes, value.getValue());
     }
 
@@ -216,35 +216,35 @@ public class TestCephDecoder {
                 (byte) 3, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 3, (byte) 2, (byte) 1
         };
-        DecodeBytesTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeBytesTest.class);
+        DecodeBytesTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeBytesTest.class);
         assertArrayEquals(new byte[] {(byte) 3, (byte) 2, (byte) 1}, value.getValue());
     }
 
     @Test
     public void testDecodeEnum1Byte() throws Exception {
         byte[] bytes = new byte[] {(byte) NodeType.MDS.getValueInt()};
-        DecodeEnum1Byte value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeEnum1Byte.class);
+        DecodeEnum1Byte value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeEnum1Byte.class);
         assertEquals(NodeType.MDS, value.getValue());
     }
 
     @Test
     public void testDecodeEnum2Byte() throws Exception {
         byte[] bytes = new byte[] {(byte) NodeType.MDS.getValueInt(), (byte) 0};
-        DecodeEnum2Byte value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeEnum2Byte.class);
+        DecodeEnum2Byte value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeEnum2Byte.class);
         assertEquals(NodeType.MDS, value.getValue());
     }
 
     @Test
     public void testDecodeEnum4Byte() throws Exception {
         byte[] bytes = new byte[] {(byte) NodeType.MDS.getValueInt(), (byte) 0, (byte) 0, (byte) 0};
-        DecodeEnum4Byte value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeEnum4Byte.class);
+        DecodeEnum4Byte value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeEnum4Byte.class);
         assertEquals(NodeType.MDS, value.getValue());
     }
 
     @Test
     public void testDecodeBitSet() throws Exception {
         byte[] bytes = new byte[] {(byte) 5, (byte) 0, (byte) 0, (byte) 0};
-        DecodeBitSetTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeBitSetTest.class);
+        DecodeBitSetTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeBitSetTest.class);
         assertEquals(2, value.value.cardinality());
         assertTrue(value.value.get(0));
         assertTrue(value.value.get(2));
@@ -258,7 +258,7 @@ public class TestCephDecoder {
                 (byte) 2, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 1, (byte) 0, (byte) 0, (byte) 0
         };
-        DecodeSetTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeSetTest.class);
+        DecodeSetTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeSetTest.class);
         assertEquals(3, value.value.size());
         assertTrue(value.value.contains(3));
         assertTrue(value.value.contains(2));
@@ -273,7 +273,7 @@ public class TestCephDecoder {
                 (byte) 2, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 1, (byte) 0, (byte) 0, (byte) 0
         };
-        DecodeListTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeListTest.class);
+        DecodeListTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeListTest.class);
         assertEquals(3, value.value.size());
         assertEquals(3, value.value.get(0));
         assertEquals(2, value.value.get(1));
@@ -294,7 +294,7 @@ public class TestCephDecoder {
                 (byte) 99,
                 (byte) 1, (byte) 0, (byte) 0, (byte) 0
         };
-        DecodeMapTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeMapTest.class);
+        DecodeMapTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeMapTest.class);
         assertEquals(3, value.value.size());
         assertEquals(3, value.value.get("a"));
         assertEquals(2, value.value.get("b"));
@@ -311,7 +311,7 @@ public class TestCephDecoder {
                 (byte) 5, (byte) 0, (byte) 0, (byte) 0,
                 (byte) 4, (byte) 0, (byte) 0, (byte) 0
         };
-        DecodeNestedTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, 0L, DecodeNestedTest.class);
+        DecodeNestedTest value = CephDecoder.decode(Unpooled.wrappedBuffer(bytes), true, new BitSet(64), DecodeNestedTest.class);
         assertEquals("a", value.getStrValue());
         assertEquals(7, value.getIntValue().getValue());
         assertEquals(2, value.getListValue().size());

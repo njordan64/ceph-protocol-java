@@ -14,8 +14,7 @@ import ca.venom.ceph.types.MessageType;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +24,9 @@ public class ParsedClass {
     private final Byte marker;
     private final Byte version;
     private final Byte compatVersion;
+    private String versionWithCompatGenerator;
+    private String versionWithCompatReceiver;
+    private boolean receiveCompat;
     private final boolean includeSize;
     private final Integer typeOffset;
     private final Integer typeSize;
@@ -32,6 +34,10 @@ public class ParsedClass {
     private final String zeroPadToSizeOfClass;
     private final MessageType messageType;
     private final List<ParsedField> fields = new ArrayList<>();
+    private final List<String> encodeMethods = new ArrayList<>();
+    private final List<String> decodeMethods = new ArrayList<>();
+    private String preEncodeMethod;
+    private String postDecodeMethod;
 
     public ParsedClass(TypeElement classElement) {
         this.className = classElement.getQualifiedName().toString();
@@ -145,7 +151,7 @@ public class ParsedClass {
             marker.set(markerAnnotation.value());
         }
 
-        CephTypeVersion typeVersionAnnotation = classElement.getAnnotation(CephTypeVersion.class);
+        CephTypeVersionConstant typeVersionAnnotation = classElement.getAnnotation(CephTypeVersionConstant.class);
         if (typeVersionAnnotation != null) {
             version.set(typeVersionAnnotation.version());
             if (typeVersionAnnotation.compatVersion() != 0) {
@@ -186,6 +192,30 @@ public class ParsedClass {
         return compatVersion;
     }
 
+    public String getVersionWithCompatGenerator() {
+        return versionWithCompatGenerator;
+    }
+
+    public void setVersionWithCompatGenerator(String versionWithCompatGenerator) {
+        this.versionWithCompatGenerator = versionWithCompatGenerator;
+    }
+
+    public String getVersionWithCompatReceiver() {
+        return versionWithCompatReceiver;
+    }
+
+    public void setVersionWithCompatReceiver(String versionWithCompatReceiver) {
+        this.versionWithCompatReceiver = versionWithCompatReceiver;
+    }
+
+    public boolean isReceiveCompat() {
+        return receiveCompat;
+    }
+
+    public void setReceiveCompat(boolean receiveCompat) {
+        this.receiveCompat = receiveCompat;
+    }
+
     public boolean isIncludeSize() {
         return includeSize;
     }
@@ -212,5 +242,29 @@ public class ParsedClass {
 
     public List<ParsedField> getFields() {
         return fields;
+    }
+
+    public List<String> getEncodeMethods() {
+        return encodeMethods;
+    }
+
+    public List<String> getDecodeMethods() {
+        return decodeMethods;
+    }
+
+    public String getPreEncodeMethod() {
+        return preEncodeMethod;
+    }
+
+    public void setPreEncodeMethod(String preEncodeMethod) {
+        this.preEncodeMethod = preEncodeMethod;
+    }
+
+    public String getPostDecodeMethod() {
+        return postDecodeMethod;
+    }
+
+    public void setPostDecodeMethod(String postDecodeMethod) {
+        this.postDecodeMethod = postDecodeMethod;
     }
 }

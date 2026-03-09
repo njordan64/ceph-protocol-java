@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-public @interface CephTypeVersion {
+public @interface CephTypeVersionConstant {
     byte version();
     byte compatVersion() default 0;
 }

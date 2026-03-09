@@ -11,7 +11,7 @@ package ca.venom.ceph.protocol.types.mds;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,7 +21,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @CephType
-@CephTypeVersion(version = 1, compatVersion = 1)
+@CephTypeVersionConstant(version = 1, compatVersion = 1)
 public class QuotaInfo {
     @CephField
     private long maxBytes = 0;

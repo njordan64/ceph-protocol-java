@@ -12,7 +12,7 @@ package ca.venom.ceph.protocol.types.mds.clientmetricpayload;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.encoding.annotations.CephTypeSize;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +22,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @CephType
-@CephTypeVersion(version = 1, compatVersion = 1)
+@CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize
 public class OpenedFilesPayload extends ClientMetricPayload {
     @CephField(order = 2)

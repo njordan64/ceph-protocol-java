@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
+import java.util.BitSet;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +44,7 @@ public class TestHelloFrame {
         HelloFrame parsedMessage = new HelloFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(message1Bytes);
         byteBuf.skipBytes(32);
-        parsedMessage.decodeSegment1(byteBuf, true, 0L);
+        parsedMessage.decodeSegment1(byteBuf, true, new BitSet(64));
 
         assertEquals(NodeType.MON, parsedMessage.getSegment1().getNodeType());
 
@@ -76,7 +77,7 @@ public class TestHelloFrame {
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
         ByteBuf byteBuf = Unpooled.buffer();
-        helloFrame.encodeSegment1(byteBuf, true, 0L);
+        helloFrame.encodeSegment1(byteBuf, true, new BitSet(64));
 
         byte[] actualSegment = new byte[byteBuf.writerIndex()];
         System.arraycopy(byteBuf.array(), 0, actualSegment, 0, byteBuf.writerIndex());

@@ -18,6 +18,7 @@ import ca.venom.ceph.client.codecs.GeneralMessageHandler;
 import ca.venom.ceph.client.codecs.HelloFrameHandler;
 import ca.venom.ceph.client.codecs.RequestWithFuture;
 import ca.venom.ceph.client.codecs.ServerIdentHandler;
+import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.frames.ControlFrame;
 import ca.venom.ceph.protocol.frames.MessageFrame;
 import ca.venom.ceph.protocol.messages.CephMsgHeader2;
@@ -33,6 +34,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
+import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
 
 public class CephNettyClient {
@@ -56,8 +58,8 @@ public class CephNettyClient {
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.SO_KEEPALIVE, true)
-                .attr(AttributeKeys.CLIENT_FEATURES, -1L)
-                .attr(AttributeKeys.SERVER_FEATURES, 0L)
+                .attr(AttributeKeys.CLIENT_FEATURES, (BitSet) CephFeatures.ALL.clone())
+                .attr(AttributeKeys.SERVER_FEATURES, new BitSet(64))
                 .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {

@@ -11,14 +11,14 @@ package ca.venom.ceph.protocol.types;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 
 @CephType
-@CephTypeVersion(version = 2)
+@CephTypeVersionConstant(version = 2)
 public class AddrVec {
     @Getter
     @Setter

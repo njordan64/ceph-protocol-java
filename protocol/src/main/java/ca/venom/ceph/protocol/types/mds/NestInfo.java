@@ -11,7 +11,7 @@ package ca.venom.ceph.protocol.types.mds;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import ca.venom.ceph.protocol.types.UTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +20,7 @@ import lombok.Setter;
  * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/mds/mdstypes.h#L214
  */
 @CephType
-@CephTypeVersion(version = 3, compatVersion = 2)
+@CephTypeVersionConstant(version = 3, compatVersion = 2)
 public class NestInfo {
     @Getter
     @Setter

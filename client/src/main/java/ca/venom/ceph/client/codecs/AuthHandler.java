@@ -41,10 +41,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 public class AuthHandler extends InitializationHandler<AuthFrameBase> {
     private static final Logger LOG = LoggerFactory.getLogger(AuthHandler.class);
@@ -109,15 +106,15 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         LOG.debug(">>> AuthHandler.channelRead0: " + frame.getClass().getName());
 
         if (frame instanceof AuthReplyMoreFrame replyMoreFrame) {
-            handeAuthReplyMore(ctx, replyMoreFrame, 0L);
+            handeAuthReplyMore(ctx, replyMoreFrame, new BitSet(64));
         } else if (frame instanceof AuthDoneFrame authDoneFrame) {
-            handleAuthDone(ctx, authDoneFrame, 0L);
+            handleAuthDone(ctx, authDoneFrame, new BitSet(64));
         } else if (frame instanceof AuthSignatureFrame authSignatureFrame) {
-            handleAuthSignature(ctx, authSignatureFrame, 0L);
+            handleAuthSignature(ctx, authSignatureFrame, new BitSet(64));
         }
     }
 
-    private void handeAuthReplyMore(ChannelHandlerContext ctx, AuthReplyMoreFrame request, long features) throws Exception {
+    private void handeAuthReplyMore(ChannelHandlerContext ctx, AuthReplyMoreFrame request, BitSet features) throws Exception {
         switch (state) {
             case NONE:
                 LOG.debug("Unexpected auth request more frame");
@@ -181,7 +178,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         ctx.writeAndFlush(requestMore).sync();
     }
 
-    private void handleAuthDone(ChannelHandlerContext ctx, AuthDoneFrame request, long features) throws Exception {
+    private void handleAuthDone(ChannelHandlerContext ctx, AuthDoneFrame request, BitSet features) throws Exception {
         AuthDoneMonPayload payload = CephDecoder.decode(
                 Unpooled.wrappedBuffer(request.getSegment1().getPayload()),
                 true,
@@ -233,7 +230,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         ctx.channel().config().setAutoRead(true);
     }
 
-    private void handleAuthSignature(ChannelHandlerContext ctx, AuthSignatureFrame request, long features) throws Exception {
+    private void handleAuthSignature(ChannelHandlerContext ctx, AuthSignatureFrame request, BitSet features) throws Exception {
         LOG.debug(">>> AuthHandler.handleAuthSignature");
 
         byte[] x = new byte[sentByteBuf.writerIndex()];

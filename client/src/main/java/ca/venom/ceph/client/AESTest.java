@@ -29,6 +29,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.BitSet;
 
 public class AESTest {
     private static final byte[] MAGIC_VALUE = new byte[] {
@@ -912,11 +913,11 @@ public class AESTest {
         HexFunctions.printHexString(decryptedBytes);
         ByteBuf byteBuf = Unpooled.wrappedBuffer(decryptedBytes);
         byteBuf.skipBytes(9);
-        CephXServiceTicket serviceTicket = CephDecoder.decode(byteBuf, true, 0L, CephXServiceTicket.class);
+        CephXServiceTicket serviceTicket = CephDecoder.decode(byteBuf, true, new BitSet(64), CephXServiceTicket.class);
 
         System.out.println("---------------------------------------- ");
         byteBuf = Unpooled.wrappedBuffer(TICKET_BYTES);
-        CephXTicketBlob blob = CephDecoder.decode(byteBuf, true, 0L, CephXTicketBlob.class);
+        CephXTicketBlob blob = CephDecoder.decode(byteBuf, true, new BitSet(64), CephXTicketBlob.class);
         HexFunctions.printHexString(blob.getBlob());
 
         System.out.println("---------------------------------------- ");
@@ -991,7 +992,7 @@ public class AESTest {
         cipher.init(Cipher.DECRYPT_MODE, txKey, gcmParameterSpec);
         sentBytes = cipher.doFinal(ENCRYPTED_MESSAGE2, 0, 96);
         AuthSignatureFrame signatureFrame = new AuthSignatureFrame();
-        signatureFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, 32), true, 0L);
+        signatureFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, 32), true, new BitSet(64));
         HexFunctions.printHexString(sentBytes);
         System.out.println("--------------------------------------------------------");
         nonceBytes2[4] = (byte) 0x11;
@@ -1000,7 +1001,7 @@ public class AESTest {
         cipher.init(Cipher.DECRYPT_MODE, txKey, gcmParameterSpec);
         sentBytes = cipher.doFinal(ENCRYPTED_MESSAGE2, 96, 96);
         CompressionRequestFrame compressionRequestFrame = new CompressionRequestFrame();
-        compressionRequestFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, 5), true, 0L);
+        compressionRequestFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, 5), true, new BitSet(64));
         HexFunctions.printHexString(sentBytes);
 
         System.out.println("--------------------------------------------------------");
@@ -1010,7 +1011,7 @@ public class AESTest {
         cipher.init(Cipher.DECRYPT_MODE, txKey, gcmParameterSpec);
         sentBytes = cipher.doFinal(ENCRYPTED_MESSAGE3, 0, 96);
         CompressionDoneFrame compressionDoneFrame = new CompressionDoneFrame();
-        compressionDoneFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, 5), true, 0L);
+        compressionDoneFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, 5), true, new BitSet(64));
         HexFunctions.printHexString(sentBytes);
 
         System.out.println("--------------------------------------------------------");
@@ -1032,7 +1033,7 @@ public class AESTest {
         HexFunctions.printHexString(sentBytes);
         System.arraycopy(sentBytes, 0, fullSegment, 48, 123 - 48);
         ClientIdentFrame clientIdentFrame = new ClientIdentFrame();
-        clientIdentFrame.decodeSegment1(Unpooled.wrappedBuffer(fullSegment), true, 0L);
+        clientIdentFrame.decodeSegment1(Unpooled.wrappedBuffer(fullSegment), true, new BitSet(64));
 
         byte[] bar = new byte[8];
         ByteBuf foo = Unpooled.wrappedBuffer(bar);
@@ -1060,7 +1061,7 @@ public class AESTest {
         System.arraycopy(sentBytes, 0, x, 0, sentBytes.length);
         System.arraycopy(sentBytes2, 0, x, sentBytes.length, sentBytes2.length);
         ServerIdentFrame serverIdentFrame = new ServerIdentFrame();
-        serverIdentFrame.decodeSegment1(Unpooled.wrappedBuffer(x, 32, x.length - 32), true, 0L);
+        serverIdentFrame.decodeSegment1(Unpooled.wrappedBuffer(x, 32, x.length - 32), true, new BitSet(64));
 
         System.out.println("MSG 6a -------------------------------------------------");
         nonceBytes2[4] = (byte) 0x14;
@@ -1070,7 +1071,7 @@ public class AESTest {
         sentBytes = cipher.doFinal(ENCRYPTED_MESSAGE6, 0, 96);
         HexFunctions.printHexString(sentBytes);
         MessageFrame messageFrame = new MessageFrame();
-        messageFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, sentBytes.length - 32), true, 0L);
+        messageFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes, 32, sentBytes.length - 32), true, new BitSet(64));
 
         System.out.println("MSG 6b -------------------------------------------------");
         nonceBytes2[4] = (byte) 0x15;
@@ -1090,8 +1091,8 @@ public class AESTest {
         HexFunctions.printHexString(sentBytes);
         System.arraycopy(sentBytes, 0, sentBytes2, 80, sentBytes.length);
         messageFrame = new MessageFrame();
-        messageFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes2, 32, 41), true, 0L);
-        messageFrame.decodeSegment2(Unpooled.wrappedBuffer(sentBytes2, 80, 57), true, 0L);
+        messageFrame.decodeSegment1(Unpooled.wrappedBuffer(sentBytes2, 32, 41), true, new BitSet(64));
+        messageFrame.decodeSegment2(Unpooled.wrappedBuffer(sentBytes2, 80, 57), true, new BitSet(64));
 
         System.out.println("MSG 7 --------------------------------------------------");
         nonceBytes[4] = (byte) 0xbc;

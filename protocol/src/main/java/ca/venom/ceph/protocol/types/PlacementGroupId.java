@@ -11,7 +11,7 @@ package ca.venom.ceph.protocol.types;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeVersion;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,7 +19,7 @@ import lombok.Setter;
  * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/osd/osd_types.h#L395
  */
 @CephType
-@CephTypeVersion(version = 1)
+@CephTypeVersionConstant(version = 1)
 public class PlacementGroupId {
     @Getter
     @Setter

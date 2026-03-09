@@ -28,6 +28,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.InputStream;
+import java.util.BitSet;
 
 /*
 actual_tx_sig=cd7d5cfaa7e989a02e6ba58e7ab1b4265fabef0509b3011aa18abd06a4fa2d79
@@ -339,24 +340,24 @@ public class AESTest2 {
 
         AuthRequestFrame authRequestFrame = new AuthRequestFrame();
         ByteBuf byteBuf = Unpooled.wrappedBuffer(AUTH_REQUEST_BYTES, 32, AUTH_REQUEST_BYTES.length - 32);
-        authRequestFrame.decodeSegment1(byteBuf, true, 0L);
+        authRequestFrame.decodeSegment1(byteBuf, true, new BitSet(64));
 
         AuthReplyMoreFrame authReplyMoreFrame = new AuthReplyMoreFrame();
         byteBuf = Unpooled.wrappedBuffer(AUTH_REPLY_MORE_BYTES, 32, AUTH_REPLY_MORE_BYTES.length - 32);
-        authReplyMoreFrame.decodeSegment1(byteBuf, true, 0L);
+        authReplyMoreFrame.decodeSegment1(byteBuf, true, new BitSet(64));
 
         AuthRequestMoreFrame authRequestMoreFrame = new AuthRequestMoreFrame();
         byteBuf = Unpooled.wrappedBuffer(AUTH_REQUEST_MORE_BYTES, 32, AUTH_REQUEST_MORE_BYTES.length - 32);
-        authRequestMoreFrame.decodeSegment1(byteBuf, true, 0L);
+        authRequestMoreFrame.decodeSegment1(byteBuf, true, new BitSet(64));
 
         AuthDoneFrame authDoneFrame = new AuthDoneFrame();
         byteBuf = Unpooled.wrappedBuffer(AUTH_DONE_1_BYTES, 32, AUTH_DONE_1_BYTES.length - 32);
-        authDoneFrame.decodeSegment1(byteBuf, true, 0L);
+        authDoneFrame.decodeSegment1(byteBuf, true, new BitSet(64));
 
         AuthDoneMonPayload payload = CephDecoder.decode(
                 Unpooled.wrappedBuffer(authDoneFrame.getSegment1().getPayload()),
                 true,
-                0L,
+                new BitSet(64),
                 AuthDoneMonPayload.class
         );
 
@@ -368,7 +369,7 @@ public class AESTest2 {
 
         ByteBuf decryptedByteBuf = Unpooled.wrappedBuffer(decryptedBytes);
         decryptedByteBuf.skipBytes(9);
-        CephXServiceTicket serviceTicket = CephDecoder.decode(decryptedByteBuf, true, 0L, CephXServiceTicket.class);
+        CephXServiceTicket serviceTicket = CephDecoder.decode(decryptedByteBuf, true, new BitSet(64), CephXServiceTicket.class);
 
         SecretKey sessionKey = new SecretKeySpec(serviceTicket.getSessionKey().getSecret(), "AES");
 
@@ -389,7 +390,7 @@ public class AESTest2 {
         byte[] sigMsgBytes = cipher.doFinal(AUTH_SIG_SERVER_ENC_BYTES);
         AuthSignatureFrame authSignatureFrame = new AuthSignatureFrame();
         byteBuf = Unpooled.wrappedBuffer(sigMsgBytes, 32, sigMsgBytes.length - 32);
-        authSignatureFrame.decodeSegment1(byteBuf, true, 0L);
+        authSignatureFrame.decodeSegment1(byteBuf, true, new BitSet(64));
         HexFunctions.printHexString(authSignatureFrame.getSegment1().getSha256Digest());
         System.out.println("--------------------------------------------");
 
@@ -399,7 +400,7 @@ public class AESTest2 {
         sigMsgBytes = cipher.doFinal(AUTH_SIG_CLIENT_ENC_BYTES);
         AuthSignatureFrame clientAuthSignatureFrame = new AuthSignatureFrame();
         byteBuf = Unpooled.wrappedBuffer(sigMsgBytes, 32, sigMsgBytes.length - 32);
-        clientAuthSignatureFrame.decodeSegment1(byteBuf, true, 0L);
+        clientAuthSignatureFrame.decodeSegment1(byteBuf, true, new BitSet(64));
 
         byte[] allBytes;
         try (InputStream is = AESTest.class.getClassLoader().getResourceAsStream("all_messages_client.bin")) {
