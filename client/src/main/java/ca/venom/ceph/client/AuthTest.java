@@ -20,7 +20,7 @@ import ca.venom.ceph.protocol.frames.AuthRequestMoreFrame;
 import ca.venom.ceph.protocol.frames.AuthSignatureFrame;
 import ca.venom.ceph.protocol.frames.BannerFrame;
 import ca.venom.ceph.protocol.frames.HelloFrame;
-import ca.venom.ceph.protocol.types.AddrIPv4;
+import ca.venom.ceph.protocol.types.Addr;
 import ca.venom.ceph.protocol.types.auth.AuthDoneMonPayload;
 import ca.venom.ceph.protocol.types.auth.AuthRequestMoreMonPayload;
 import ca.venom.ceph.protocol.types.auth.AuthRequestMonPayload;
@@ -38,6 +38,9 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -116,11 +119,15 @@ public class AuthTest {
         HelloFrame helloFrame = new HelloFrame();
         helloFrame.setSegment1(new HelloFrame.Segment1());
         helloFrame.getSegment1().setNodeType(NodeType.CLIENT);
-        AddrIPv4 addr = new AddrIPv4();
-        helloFrame.getSegment1().setAddr(addr);
+        Addr addr = new Addr();
         addr.setNonce(0);
-        addr.setPort((short) socket.getLocalPort());
-        addr.setAddrBytes(socket.getLocalAddress().getAddress());
+        InetAddress inetAddress = socket.getLocalAddress();
+        if (inetAddress instanceof Inet4Address inet4Address) {
+            addr.setIPv4AddrWithPort(inet4Address, (short) socket.getLocalPort());
+        } else if (inetAddress instanceof Inet6Address inet6Address) {
+            addr.setIPv6AddrWithPort(inet6Address, (short) socket.getLocalPort(), 0);
+        }
+        helloFrame.getSegment1().setAddr(addr);
 
         //socket.getOutputStream().write(helloFrame.encode(ctx));
     }

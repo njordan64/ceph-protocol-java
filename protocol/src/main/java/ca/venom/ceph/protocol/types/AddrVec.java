@@ -23,5 +23,5 @@ public class AddrVec {
     @Getter
     @Setter
     @CephField
-    private List<Addr> addrList;
+    private List<AddrBase> addrList;
 }

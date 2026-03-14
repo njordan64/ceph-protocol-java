@@ -18,6 +18,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CephParentType {
     int typeOffset() default 0;
+
     int typeSize() default 4;
+
     boolean useParameter() default false;
 }

@@ -13,14 +13,16 @@ import ca.venom.ceph.client.AttributeKeys;
 import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.frames.ClientIdentFrame;
 import ca.venom.ceph.protocol.frames.ServerIdentFrame;
-import ca.venom.ceph.protocol.types.AddrIPv4;
+import ca.venom.ceph.protocol.types.Addr;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.BitSet;
 import java.util.Collections;
@@ -53,35 +55,46 @@ public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> 
         int addrNonce = random.nextInt();
         channel.attr(AttributeKeys.ADDR_NONCE).set(addrNonce);
 
-        AddrIPv4 myAddr = new AddrIPv4();
+        Addr myAddr = new Addr();
         myAddr.setNonce(addrNonce);
         InetSocketAddress inetSocketAddress = (InetSocketAddress) channel.localAddress();
-        myAddr.setPort((short) inetSocketAddress.getPort());
-        myAddr.setAddrBytes(inetSocketAddress.getAddress().getAddress());
+        if (inetSocketAddress.getAddress() instanceof Inet4Address inet4Address) {
+            myAddr.setIPv4AddrWithPort(inet4Address, (short) inetSocketAddress.getPort());
+        } else if (inetSocketAddress.getAddress() instanceof Inet6Address inet6Address) {
+            myAddr.setIPv6AddrWithPort(inet6Address, (short) inetSocketAddress.getPort(), 0);
+        }
         clientIdentFrame.getSegment1().setMyAddresses(Collections.singletonList(myAddr));
 
-        AddrIPv4 targetAddr = new AddrIPv4();
-        clientIdentFrame.getSegment1().setTargetAddress(targetAddr);
+        Addr targetAddr = new Addr();
         targetAddr.setNonce(0);
-
         inetSocketAddress = (InetSocketAddress) channel.remoteAddress();
         String overrideServerPort = System.getenv("OVERRIDE_SERVER_PORT");
-        if (overrideServerPort != null) {
-            targetAddr.setPort((short) Integer.parseInt(overrideServerPort));
-        } else {
-            targetAddr.setPort((short) inetSocketAddress.getPort());
-        }
         String overrideServerHost = System.getenv("OVERRIDE_SERVER_HOST");
+        short targetPort = (short) inetSocketAddress.getPort();
+        if (overrideServerPort != null) {
+            targetPort = (short) Integer.parseInt(overrideServerPort);
+        } else {
+            targetPort = (short) inetSocketAddress.getPort();
+        }
         if (overrideServerHost != null) {
             String[] ipParts = overrideServerHost.split("\\.");
             byte[] ip = new byte[4];
             for (int i = 0; i < 4; i++) {
                 ip[i] = (byte) Integer.parseInt(ipParts[i]);
             }
-            targetAddr.setAddrBytes(ip);
-        } else {
-            targetAddr.setAddrBytes(inetSocketAddress.getAddress().getAddress());
+            Inet4Address inet4Address;
+            try {
+                inet4Address = (Inet4Address) Inet4Address.getByAddress(ip);
+            } catch (UnknownHostException uhe) {
+                inet4Address = (Inet4Address) Inet4Address.getLoopbackAddress();
+            }
+            targetAddr.setIPv4AddrWithPort(inet4Address, targetPort);
+        } else if (inetSocketAddress.getAddress() instanceof Inet4Address inet4Address) {
+            targetAddr.setIPv4AddrWithPort(inet4Address, targetPort);
+        } else if (inetSocketAddress.getAddress() instanceof Inet6Address inet6Address) {
+            targetAddr.setIPv6AddrWithPort(inet6Address, targetPort, 0);
         }
+        clientIdentFrame.getSegment1().setTargetAddress(targetAddr);
 
         channel.writeAndFlush(clientIdentFrame);
     }

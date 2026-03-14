@@ -9,16 +9,13 @@
  */
 package ca.venom.ceph.protocol.frames;
 
-import ca.venom.ceph.encoding.annotations.CephEncodingSize;
-import ca.venom.ceph.encoding.annotations.CephField;
-import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
+import ca.venom.ceph.encoding.annotations.*;
 import ca.venom.ceph.protocol.CephDecoder;
 import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.AddrBase;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,12 +33,12 @@ public class ClientIdentFrame extends ControlFrame {
         @Getter
         @Setter
         @CephField
-        private List<Addr> myAddresses;
+        private List<AddrBase> myAddresses;
 
         @Getter
         @Setter
         @CephField(order = 2)
-        private Addr targetAddress;
+        private AddrBase targetAddress;
 
         @Getter
         @Setter

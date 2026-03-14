@@ -17,7 +17,6 @@ import ca.venom.ceph.encoding.annotations.ConditonOperator;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.type.TypeKind;
-import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -452,9 +451,6 @@ public class EncoderJavaCodeGenerator {
             }
         }
 
-        if (parsedClass.getClassName().equals("ca.venom.ceph.protocol.messages.MMonMap")) {
-            messager.printMessage(Diagnostic.Kind.WARNING, ">>> Test 1: " + parsedClass.isIncludeSize());
-        }
         if (parsedClass.isIncludeSize()) {
             out.println("        if (le) {");
             out.println("            if (byteBuf.readIntLE() > byteBuf.readableBytes()) {");

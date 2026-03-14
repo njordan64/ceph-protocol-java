@@ -16,7 +16,7 @@ import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.AddrBase;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +33,7 @@ public class ReconnectFrame extends ControlFrame {
         @Getter
         @Setter
         @CephField
-        private List<Addr> myAddresses;
+        private List<AddrBase> myAddresses;
 
         @Getter
         @Setter

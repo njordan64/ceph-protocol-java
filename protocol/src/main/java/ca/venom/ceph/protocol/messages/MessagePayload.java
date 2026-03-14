@@ -27,6 +27,9 @@ public abstract class MessagePayload {
     public void prepareForEncode() {
     }
 
+    public void prepareForDecode(CephMsgHeader2 header) {
+    }
+
     public void finishDecode() {
     }
 

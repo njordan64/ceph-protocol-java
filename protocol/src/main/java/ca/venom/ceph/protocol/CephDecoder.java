@@ -13,9 +13,68 @@ import ca.venom.ceph.annotation.processor.ClassNameSplitter;
 import io.netty.buffer.ByteBuf;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 
 public class CephDecoder {
+    public static short decodeShort(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            return byteBuf.readShortLE();
+        } else {
+            return byteBuf.readShort();
+        }
+    }
+
+    public static int decodeInt(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            return byteBuf.readIntLE();
+        } else {
+            return byteBuf.readInt();
+        }
+    }
+
+    public static long decodeLong(ByteBuf byteBuf, boolean le) {
+        if (le) {
+            return byteBuf.readLongLE();
+        } else {
+            return byteBuf.readLong();
+        }
+    }
+
+    public static String decodeString(ByteBuf byteBuf, boolean le) {
+        int length;
+        if (le) {
+            length = byteBuf.readIntLE();
+        } else {
+            length = byteBuf.readInt();
+        }
+
+        if (length == 0) {
+            return "";
+        }
+
+        byte[] bytes = new byte[length];
+        byteBuf.readBytes(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    public static byte[] decodeBytes(ByteBuf byteBuf, boolean le) {
+        int length;
+        if (le) {
+            length = byteBuf.readIntLE();
+        } else {
+            length = byteBuf.readInt();
+        }
+
+        if (length == 0) {
+            return new byte[0];
+        }
+
+        byte[] bytes = new byte[length];
+        byteBuf.readBytes(bytes);
+        return bytes;
+    }
+
     public static <T> T decode(ByteBuf byteBuf, boolean le, BitSet features, Class<T> valueClass) throws DecodingException {
         ClassNameSplitter parsedClassName = new ClassNameSplitter(valueClass.getName());
         String packageName = parsedClassName.getPackageName();

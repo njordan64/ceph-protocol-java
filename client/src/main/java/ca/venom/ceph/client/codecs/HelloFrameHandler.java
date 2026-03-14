@@ -11,15 +11,15 @@ package ca.venom.ceph.client.codecs;
 
 import ca.venom.ceph.protocol.NodeType;
 import ca.venom.ceph.protocol.frames.HelloFrame;
-import ca.venom.ceph.protocol.types.AddrIPv4;
+import ca.venom.ceph.protocol.types.Addr;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetSocketAddress;
-import java.util.concurrent.CompletableFuture;
 
 public class HelloFrameHandler extends InitializationHandler<HelloFrame> {
     private static final Logger LOG = LoggerFactory.getLogger(HelloFrameHandler.class);
@@ -36,12 +36,15 @@ public class HelloFrameHandler extends InitializationHandler<HelloFrame> {
         reply.setSegment1(new HelloFrame.Segment1());
         reply.getSegment1().setNodeType(NodeType.CLIENT);
 
-        AddrIPv4 addr = new AddrIPv4();
-        reply.getSegment1().setAddr(addr);
+        Addr addr = new Addr();
         addr.setNonce(0);
         InetSocketAddress inetAddress = (InetSocketAddress) ctx.channel().localAddress();
-        addr.setPort((short) inetAddress.getPort());
-        addr.setAddrBytes(inetAddress.getAddress().getAddress());
+        if (inetAddress.getAddress() instanceof Inet4Address inet4Address) {
+            addr.setIPv4AddrWithPort(inet4Address, (short) inetAddress.getPort());
+        } else if (inetAddress.getAddress() instanceof Inet6Address inet6Address) {
+            addr.setIPv6AddrWithPort(inet6Address, (short) inetAddress.getPort(), 0);
+        }
+        reply.getSegment1().setAddr(addr);
 
         ctx.writeAndFlush(reply).sync();
 

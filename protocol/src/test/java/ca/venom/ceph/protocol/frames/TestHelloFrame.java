@@ -11,13 +11,14 @@ package ca.venom.ceph.protocol.frames;
 
 import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.NodeType;
-import ca.venom.ceph.protocol.types.AddrIPv4;
+import ca.venom.ceph.protocol.types.Addr;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
+import java.net.Inet4Address;
 import java.util.BitSet;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -48,15 +49,14 @@ public class TestHelloFrame {
 
         assertEquals(NodeType.MON, parsedMessage.getSegment1().getNodeType());
 
-        AddrIPv4 addr = (AddrIPv4) parsedMessage.getSegment1().getAddr();
+        Addr addr = (Addr) parsedMessage.getSegment1().getAddr();
         assertEquals(0, addr.getNonce());
 
         assertEquals(60832, addr.getPort() & 0xffff);
         assertArrayEquals(
                 new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227},
-                addr.getAddrBytes()
+                addr.getAddress().getAddress()
         );
-        assertEquals((byte) 192, addr.getAddrBytes()[0]);
     }
 
     @Test
@@ -66,11 +66,17 @@ public class TestHelloFrame {
 
         helloFrame.getSegment1().setNodeType(NodeType.MON);
 
-        AddrIPv4 addr = new AddrIPv4();
+        Addr addr = new Addr();
         addr.setNonce(0);
-
-        addr.setPort((short) 60832);
-        addr.setAddrBytes(new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227});
+        Inet4Address inet4Address = (Inet4Address) Inet4Address.getByAddress(
+                new byte[] {
+                        (byte) 192,
+                        (byte) 168,
+                        (byte) 122,
+                        (byte) 227
+                }
+        );
+        addr.setIPv4AddrWithPort(inet4Address, (short) 60832);
 
         helloFrame.getSegment1().setAddr(addr);
 

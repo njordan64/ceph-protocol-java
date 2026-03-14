@@ -20,5 +20,6 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface CephTypeVersionConstant {
     byte version();
+
     byte compatVersion() default 0;
 }

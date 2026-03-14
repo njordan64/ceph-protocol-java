@@ -14,7 +14,14 @@ import ca.venom.ceph.annotation.processor.parser.CephTypeParser;
 import ca.venom.ceph.annotation.processor.parser.ParsedClass;
 import ca.venom.ceph.annotation.processor.parser.ParsedField;
 import ca.venom.ceph.annotation.processor.parser.ParserContext;
-import ca.venom.ceph.encoding.annotations.*;
+import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephFieldDecode;
+import ca.venom.ceph.encoding.annotations.CephFieldEncode;
+import ca.venom.ceph.encoding.annotations.CephPostDecode;
+import ca.venom.ceph.encoding.annotations.CephPreEncode;
+import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionGenerator;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionReceiver;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -24,12 +31,23 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
-import javax.lang.model.type.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.io.IOException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Process Ceph annotations. These are used to describe classes that can be encoded and decoded for communicating
@@ -91,10 +109,12 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
         addFieldsToClasses(classFields, parsedClasses, classElements);
 
         Map<String, Map<Integer, String>> encodeMethods = getFieldMethods(
-                roundEnv.getElementsAnnotatedWith(CephFieldEncode.class)
+                roundEnv.getElementsAnnotatedWith(CephFieldEncode.class),
+                true
         );
         Map<String, Map<Integer, String>> decodeMethods = getFieldMethods(
-                roundEnv.getElementsAnnotatedWith(CephFieldDecode.class)
+                roundEnv.getElementsAnnotatedWith(CephFieldDecode.class),
+                false
         );
         for (Map.Entry<String, ParsedClass> entry : parsedClasses.entrySet()) {
             addFieldMethodsToClass(
@@ -210,7 +230,7 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private Map<String, Map<Integer, String>> getFieldMethods(Set<? extends Element> elements) {
+    private Map<String, Map<Integer, String>> getFieldMethods(Set<? extends Element> elements, boolean encode) {
         Map<String, Map<Integer, String>> methods = new HashMap<>();
         for (Element element : elements) {
             ExecutableElement executableElement = (ExecutableElement) element;
@@ -223,8 +243,14 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
                     messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (ByteBuf, boolean, BitSet).");
                 }
 
-                CephFieldEncode encodeAnnotation = executableElement.getAnnotation(CephFieldEncode.class);
-                int order = encodeAnnotation.order();
+                int order;
+                if (encode) {
+                    CephFieldEncode encodeAnnotation = executableElement.getAnnotation(CephFieldEncode.class);
+                    order = encodeAnnotation.order();
+                } else {
+                    CephFieldDecode decodeAnnotation = executableElement.getAnnotation(CephFieldDecode.class);
+                    order = decodeAnnotation.order();
+                }
 
                 if (!methods.containsKey(className)) {
                     methods.put(className, new HashMap<>());
