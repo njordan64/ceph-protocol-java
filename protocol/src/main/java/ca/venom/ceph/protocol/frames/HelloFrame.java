@@ -18,7 +18,7 @@ import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
 import ca.venom.ceph.protocol.NodeType;
-import ca.venom.ceph.protocol.types.AddrBase;
+import ca.venom.ceph.protocol.types.CephAddr;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,7 +41,7 @@ public class HelloFrame extends ControlFrame {
         @Setter
         @CephField(order = 2)
         @CephEncodingSize
-        private AddrBase addr;
+        private CephAddr addr;
     }
 
     @Getter

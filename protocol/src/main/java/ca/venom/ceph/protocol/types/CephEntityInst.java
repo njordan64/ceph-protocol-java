@@ -15,14 +15,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 @CephType
-public class CephEntityName {
+public class CephEntityInst {
     @Getter
     @Setter
     @CephField
-    private byte type;
+    private EntityName name;
 
     @Getter
     @Setter
     @CephField(order = 2)
-    private long num;
+    private CephAddr addr;
 }

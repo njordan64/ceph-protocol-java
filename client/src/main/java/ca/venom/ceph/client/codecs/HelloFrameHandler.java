@@ -11,14 +11,12 @@ package ca.venom.ceph.client.codecs;
 
 import ca.venom.ceph.protocol.NodeType;
 import ca.venom.ceph.protocol.frames.HelloFrame;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.CephAddr;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Inet4Address;
-import java.net.Inet6Address;
 import java.net.InetSocketAddress;
 
 public class HelloFrameHandler extends InitializationHandler<HelloFrame> {
@@ -36,14 +34,8 @@ public class HelloFrameHandler extends InitializationHandler<HelloFrame> {
         reply.setSegment1(new HelloFrame.Segment1());
         reply.getSegment1().setNodeType(NodeType.CLIENT);
 
-        Addr addr = new Addr();
-        addr.setNonce(0);
-        InetSocketAddress inetAddress = (InetSocketAddress) ctx.channel().localAddress();
-        if (inetAddress.getAddress() instanceof Inet4Address inet4Address) {
-            addr.setIPv4AddrWithPort(inet4Address, (short) inetAddress.getPort());
-        } else if (inetAddress.getAddress() instanceof Inet6Address inet6Address) {
-            addr.setIPv6AddrWithPort(inet6Address, (short) inetAddress.getPort(), 0);
-        }
+        CephAddr addr = new CephAddr();
+        addr.setSocketAddress((InetSocketAddress) ctx.channel().localAddress());
         reply.getSegment1().setAddr(addr);
 
         ctx.writeAndFlush(reply).sync();

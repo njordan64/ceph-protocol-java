@@ -16,9 +16,11 @@ import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.types.CephFileLayout;
 import ca.venom.ceph.protocol.types.FileLayout;
+import ca.venom.ceph.protocol.types.TimeSpec;
 import ca.venom.ceph.protocol.types.UTime;
 import ca.venom.ceph.protocol.types.mds.CapPeer;
 import ca.venom.ceph.protocol.types.mds.CapsBody;
+import ca.venom.ceph.protocol.types.mds.CapsExportBody;
 import ca.venom.ceph.protocol.types.mds.CapsHead;
 import ca.venom.ceph.protocol.types.mds.CapsNonExportBody;
 import ca.venom.ceph.types.MessageType;
@@ -36,7 +38,19 @@ import java.util.BitSet;
 public class MClientCaps extends MessagePayload {
     @Getter
     @Setter
-    @CephField
+    @CephField(minVersion = (byte) 1, maxVersion = (byte) 1)
+    @CephField(minVersion = (byte) 2, maxVersion = (byte) 2)
+    @CephField(minVersion = (byte) 3, maxVersion = (byte) 3)
+    @CephField(minVersion = (byte) 4, maxVersion = (byte) 4)
+    @CephField(minVersion = (byte) 5, maxVersion = (byte) 5)
+    @CephField(minVersion = (byte) 6, maxVersion = (byte) 6)
+    @CephField(minVersion = (byte) 7, maxVersion = (byte) 7)
+    @CephField(minVersion = (byte) 8, maxVersion = (byte) 8)
+    @CephField(minVersion = (byte) 9, maxVersion = (byte) 9)
+    @CephField(minVersion = (byte) 10, maxVersion = (byte) 10)
+    @CephField(minVersion = (byte) 11, maxVersion = (byte) 11)
+    @CephField(minVersion = (byte) 12, maxVersion = (byte) 12)
+    @CephField(minVersion = (byte) 13, maxVersion = (byte) 13)
     private CapsHead head;
 
     @Getter
@@ -77,7 +91,19 @@ public class MClientCaps extends MessagePayload {
 
     @Getter
     @Setter
-    @CephField(order = 3, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 1, maxVersion = 1, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 2, maxVersion = 2, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 3, maxVersion = 3, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 4, maxVersion = 4, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 5, maxVersion = 5, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 6, maxVersion = 6, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 7, maxVersion = 7, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 8, maxVersion = 8, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 9, maxVersion = 9, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 10, maxVersion = 10, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 11, maxVersion = 11, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 12, maxVersion = 12, sizeProperty = "getHead().getSnapTraceLen()")
+    @CephField(order = 3, minVersion = 13, maxVersion = 13, sizeProperty = "getHead().getSnapTraceLen()")
     private byte[] snap;
 
     @Getter
@@ -86,70 +112,166 @@ public class MClientCaps extends MessagePayload {
 
     @Getter
     @Setter
+    @CephField(order = 4, includeSize = true, minVersion = 2, maxVersion = 2)
+    @CephField(order = 4, includeSize = true, minVersion = 3, maxVersion = 3)
+    @CephField(order = 4, includeSize = true, minVersion = 4, maxVersion = 4)
+    @CephField(order = 4, includeSize = true, minVersion = 5, maxVersion = 5)
+    @CephField(order = 4, includeSize = true, minVersion = 6, maxVersion = 6)
+    @CephField(order = 4, includeSize = true, minVersion = 7, maxVersion = 7)
+    @CephField(order = 4, includeSize = true, minVersion = 8, maxVersion = 8)
+    @CephField(order = 4, includeSize = true, minVersion = 9, maxVersion = 9)
+    @CephField(order = 4, includeSize = true, minVersion = 10, maxVersion = 10)
+    @CephField(order = 4, includeSize = true, minVersion = 11, maxVersion = 11)
+    @CephField(order = 4, includeSize = true, minVersion = 12, maxVersion = 12)
+    @CephField(order = 4, includeSize = true, minVersion = 13, maxVersion = 13)
     private byte[] flock;
 
     @Getter
     @Setter
+    @CephField(order = 5, minVersion = 3, maxVersion = 3)
+    @CephField(order = 5, minVersion = 4, maxVersion = 4)
+    @CephField(order = 5, minVersion = 5, maxVersion = 5)
+    @CephField(order = 5, minVersion = 6, maxVersion = 6)
+    @CephField(order = 5, minVersion = 7, maxVersion = 7)
+    @CephField(order = 5, minVersion = 8, maxVersion = 8)
+    @CephField(order = 5, minVersion = 9, maxVersion = 9)
+    @CephField(order = 5, minVersion = 10, maxVersion = 10)
+    @CephField(order = 5, minVersion = 11, maxVersion = 11)
+    @CephField(order = 5, minVersion = 12, maxVersion = 12)
+    @CephField(order = 5, minVersion = 13, maxVersion = 13)
     private CapPeer peer;
 
     @Getter
     @Setter
-    private long inlineVersion = 0;
+    @CephField(order = 6, minVersion = 4, maxVersion = 4)
+    @CephField(order = 6, minVersion = 5, maxVersion = 5)
+    @CephField(order = 6, minVersion = 6, maxVersion = 6)
+    @CephField(order = 6, minVersion = 7, maxVersion = 7)
+    @CephField(order = 6, minVersion = 8, maxVersion = 8)
+    @CephField(order = 6, minVersion = 9, maxVersion = 9)
+    @CephField(order = 6, minVersion = 10, maxVersion = 10)
+    @CephField(order = 6, minVersion = 11, maxVersion = 11)
+    @CephField(order = 6, minVersion = 12, maxVersion = 12)
+    @CephField(order = 6, minVersion = 13, maxVersion = 13)
+    private long inlineVersion = -1L;
 
     @Getter
     @Setter
+    @CephField(order = 7, includeSize = true, minVersion = 4, maxVersion = 4)
+    @CephField(order = 7, includeSize = true, minVersion = 5, maxVersion = 5)
+    @CephField(order = 7, includeSize = true, minVersion = 6, maxVersion = 6)
+    @CephField(order = 7, includeSize = true, minVersion = 7, maxVersion = 7)
+    @CephField(order = 7, includeSize = true, minVersion = 8, maxVersion = 8)
+    @CephField(order = 7, includeSize = true, minVersion = 9, maxVersion = 9)
+    @CephField(order = 7, includeSize = true, minVersion = 10, maxVersion = 10)
+    @CephField(order = 7, includeSize = true, minVersion = 11, maxVersion = 11)
+    @CephField(order = 7, includeSize = true, minVersion = 12, maxVersion = 12)
+    @CephField(order = 7, includeSize = true, minVersion = 13, maxVersion = 13)
     private byte[] inlineData;
 
     @Getter
     @Setter
+    @CephField(order = 8, minVersion = 5, maxVersion = 5)
+    @CephField(order = 8, minVersion = 6, maxVersion = 6)
+    @CephField(order = 8, minVersion = 7, maxVersion = 7)
+    @CephField(order = 8, minVersion = 8, maxVersion = 8)
+    @CephField(order = 8, minVersion = 9, maxVersion = 9)
+    @CephField(order = 8, minVersion = 10, maxVersion = 10)
+    @CephField(order = 8, minVersion = 11, maxVersion = 11)
+    @CephField(order = 8, minVersion = 12, maxVersion = 12)
+    @CephField(order = 8, minVersion = 13, maxVersion = 13)
     private int osdEpochBarrier;
 
     @Getter
     @Setter
+    @CephField(order = 9, minVersion = 6, maxVersion = 6)
+    @CephField(order = 9, minVersion = 7, maxVersion = 7)
+    @CephField(order = 9, minVersion = 8, maxVersion = 8)
+    @CephField(order = 9, minVersion = 9, maxVersion = 9)
+    @CephField(order = 9, minVersion = 10, maxVersion = 10)
+    @CephField(order = 9, minVersion = 11, maxVersion = 11)
+    @CephField(order = 9, minVersion = 12, maxVersion = 12)
+    @CephField(order = 9, minVersion = 13, maxVersion = 13)
     private long oldestFlushTid;
 
     @Getter
     @Setter
+    @CephField(order = 10, minVersion = 7, maxVersion = 7)
+    @CephField(order = 10, minVersion = 8, maxVersion = 8)
+    @CephField(order = 10, minVersion = 9, maxVersion = 9)
+    @CephField(order = 10, minVersion = 10, maxVersion = 10)
+    @CephField(order = 10, minVersion = 11, maxVersion = 11)
+    @CephField(order = 10, minVersion = 12, maxVersion = 12)
+    @CephField(order = 10, minVersion = 13, maxVersion = 13)
     private int callerUid;
 
     @Getter
     @Setter
+    @CephField(order = 11, minVersion = 7, maxVersion = 7)
+    @CephField(order = 11, minVersion = 8, maxVersion = 8)
+    @CephField(order = 11, minVersion = 9, maxVersion = 9)
+    @CephField(order = 11, minVersion = 10, maxVersion = 10)
+    @CephField(order = 11, minVersion = 11, maxVersion = 11)
+    @CephField(order = 11, minVersion = 12, maxVersion = 12)
+    @CephField(order = 11, minVersion = 13, maxVersion = 13)
     private int callerGid;
 
     @Getter
     @Setter
+    @CephField(order = 13, minVersion = 9, maxVersion = 9)
+    @CephField(order = 13, minVersion = 10, maxVersion = 10)
+    @CephField(order = 13, minVersion = 11, maxVersion = 11)
+    @CephField(order = 13, minVersion = 12, maxVersion = 12)
+    @CephField(order = 13, minVersion = 13, maxVersion = 13)
     private UTime bTime;
 
     @Getter
     @Setter
+    @CephField(order = 14, minVersion = 9, maxVersion = 9)
+    @CephField(order = 14, minVersion = 10, maxVersion = 10)
+    @CephField(order = 14, minVersion = 11, maxVersion = 11)
+    @CephField(order = 14, minVersion = 12, maxVersion = 12)
+    @CephField(order = 14, minVersion = 13, maxVersion = 13)
     private long changeAttr = 0;
 
     @Getter
     @Setter
+    @CephField(order = 15, minVersion = 10, maxVersion = 10)
+    @CephField(order = 15, minVersion = 11, maxVersion = 11)
+    @CephField(order = 15, minVersion = 12, maxVersion = 12)
+    @CephField(order = 15, minVersion = 13, maxVersion = 13)
     private int flags = 0;
 
     @Getter
     @Setter
-    @CephField(order = 14)
+    @CephField(order = 16, minVersion = 11, maxVersion = 11)
+    @CephField(order = 16, minVersion = 12, maxVersion = 12)
+    @CephField(order = 16, minVersion = 13, maxVersion = 13)
     private long nFiles = -1;
 
     @Getter
     @Setter
+    @CephField(order = 17, minVersion = 11, maxVersion = 11)
+    @CephField(order = 17, minVersion = 12, maxVersion = 12)
+    @CephField(order = 17, minVersion = 13, maxVersion = 13)
     private long nSubDirs = -1;
 
     @Getter
     @Setter
+    @CephField(order = 18, includeSize = true, minVersion = 12, maxVersion = 12)
+    @CephField(order = 18, includeSize = true, minVersion = 13, maxVersion = 13)
     private byte[] fscryptAuth;
 
     @Getter
     @Setter
+    @CephField(order = 19, includeSize = true, minVersion = 12, maxVersion = 12)
+    @CephField(order = 19, includeSize = true, minVersion = 13, maxVersion = 13)
     private byte[] fscryptFile;
 
     @Getter
     @Setter
+    @CephField(order = 20, minVersion = 13, maxVersion = 13)
     private long subVolumeId;
-
-    private short headerVersion;
 
     @Override
     public short getHeadVersion(BitSet features) {
@@ -174,11 +296,6 @@ public class MClientCaps extends MessagePayload {
     }
 
     @Override
-    public void prepareForDecode(CephMsgHeader2 header) {
-        headerVersion = header.getVersion();
-    }
-
-    @Override
     public void encodeMiddle(ByteBuf byteBuf, boolean le, BitSet features) {
         byteBuf.writeBytes(xattr);
     }
@@ -191,32 +308,74 @@ public class MClientCaps extends MessagePayload {
         }
     }
 
-    @CephFieldEncode(order = 2)
+    @CephFieldEncode(order = 2, minVersion = (byte) 1, maxVersion = (byte) 1)
+    @CephFieldEncode(order = 2, minVersion = (byte) 2, maxVersion = (byte) 2)
+    @CephFieldEncode(order = 2, minVersion = (byte) 3, maxVersion = (byte) 3)
+    @CephFieldEncode(order = 2, minVersion = (byte) 4, maxVersion = (byte) 4)
+    @CephFieldEncode(order = 2, minVersion = (byte) 5, maxVersion = (byte) 5)
+    @CephFieldEncode(order = 2, minVersion = (byte) 6, maxVersion = (byte) 6)
+    @CephFieldEncode(order = 2, minVersion = (byte) 7, maxVersion = (byte) 7)
+    @CephFieldEncode(order = 2, minVersion = (byte) 8, maxVersion = (byte) 8)
+    @CephFieldEncode(order = 2, minVersion = (byte) 9, maxVersion = (byte) 9)
+    @CephFieldEncode(order = 2, minVersion = (byte) 10, maxVersion = (byte) 10)
+    @CephFieldEncode(order = 2, minVersion = (byte) 11, maxVersion = (byte) 11)
+    @CephFieldEncode(order = 2, minVersion = (byte) 12, maxVersion = (byte) 12)
+    @CephFieldEncode(order = 2, minVersion = (byte) 13, maxVersion = (byte) 13)
     public void encodeBody(ByteBuf byteBuf, boolean le, BitSet features) {
         if (head.getOp() == CapsHead.OpValue.EXPORT) {
-            CephEncoder.encode(peer, byteBuf, le, features);
+            final CapsExportBody exportBody = new CapsExportBody();
+            exportBody.setPeer(peer);
+            CephEncoder.encode(exportBody, byteBuf, le, features);
             byteBuf.writeZero(63);
             return;
         }
 
-        CephEncoder.encode(size, byteBuf, le);
-        CephEncoder.encode(maxSize, byteBuf, le);
-        CephEncoder.encode(truncateSize, byteBuf, le);
-        CephEncoder.encode(truncateSeq, byteBuf, le);
-        CephEncoder.encode(mtime, byteBuf, le, features);
-        CephEncoder.encode(atime, byteBuf, le, features);
-        CephEncoder.encode(ctime, byteBuf, le, features);
-        CephFileLayout cephFileLayout = new CephFileLayout();
+        final CapsNonExportBody nonExportBody = new CapsNonExportBody();
+        nonExportBody.setSize(size);
+        nonExportBody.setMaxSize(maxSize);
+        nonExportBody.setTruncateSize(truncateSize);
+        nonExportBody.setTruncateSeq(truncateSeq);
+
+        TimeSpec timeSpec = new TimeSpec();
+        timeSpec.setTvSec(mtime.getTvSec());
+        timeSpec.setTvNSec(mtime.getTvNSec());
+        nonExportBody.setMTime(timeSpec);
+
+        timeSpec = new TimeSpec();
+        timeSpec.setTvSec(atime.getTvSec());
+        timeSpec.setTvNSec(atime.getTvNSec());
+        nonExportBody.setATime(timeSpec);
+
+        timeSpec = new TimeSpec();
+        timeSpec.setTvSec(ctime.getTvSec());
+        timeSpec.setTvNSec(ctime.getTvNSec());
+        nonExportBody.setCTime(timeSpec);
+
+        final CephFileLayout cephFileLayout = new CephFileLayout();
         layout.toLegacy(cephFileLayout);
-        CephEncoder.encode(cephFileLayout, byteBuf, le, features);
-        CephEncoder.encode(timeWarpSeq, byteBuf, le);
+        nonExportBody.setLayout(cephFileLayout);
+        nonExportBody.setTimeWarpSeq(timeWarpSeq);
+        CephEncoder.encode(nonExportBody, byteBuf, le, features);
     }
 
-    @CephFieldDecode(order = 2)
+    @CephFieldDecode(order = 2, minVersion = 1, maxVersion = 1)
+    @CephFieldDecode(order = 2, minVersion = 2, maxVersion = 2)
+    @CephFieldDecode(order = 2, minVersion = 3, maxVersion = 3)
+    @CephFieldDecode(order = 2, minVersion = 4, maxVersion = 4)
+    @CephFieldDecode(order = 2, minVersion = 5, maxVersion = 5)
+    @CephFieldDecode(order = 2, minVersion = 6, maxVersion = 6)
+    @CephFieldDecode(order = 2, minVersion = 7, maxVersion = 7)
+    @CephFieldDecode(order = 2, minVersion = 8, maxVersion = 8)
+    @CephFieldDecode(order = 2, minVersion = 9, maxVersion = 9)
+    @CephFieldDecode(order = 2, minVersion = 10, maxVersion = 10)
+    @CephFieldDecode(order = 2, minVersion = 11, maxVersion = 11)
+    @CephFieldDecode(order = 2, minVersion = 12, maxVersion = 12)
+    @CephFieldDecode(order = 2, minVersion = 13, maxVersion = 13)
     public void decodeBody(ByteBuf byteBuf, boolean le, BitSet features) {
         if (head.getOp() == CapsHead.OpValue.EXPORT) {
             try {
-                peer = CephDecoder.decode(byteBuf, le, features, CapPeer.class);
+                final CapsExportBody exportBody = CephDecoder.decode(byteBuf, le, features, CapsExportBody.class);
+                peer = exportBody.getPeer();
                 byteBuf.readerIndex(byteBuf.readerIndex() + 63);
             } catch (DecodingException de) {
                 throw new RuntimeException(de);
@@ -225,286 +384,75 @@ public class MClientCaps extends MessagePayload {
         }
 
         try {
-            size = CephDecoder.decodeLong(byteBuf, le);
-            maxSize = CephDecoder.decodeLong(byteBuf, le);
-            truncateSize = CephDecoder.decodeLong(byteBuf, le);
-            truncateSeq = CephDecoder.decodeInt(byteBuf, le);
-            mtime = CephDecoder.decode(byteBuf, le, features, UTime.class);
-            atime = CephDecoder.decode(byteBuf, le, features, UTime.class);
-            ctime = CephDecoder.decode(byteBuf, le, features, UTime.class);
-            CephFileLayout cephFileLayout = CephDecoder.decode(byteBuf, le, features, CephFileLayout.class);
+            final CapsNonExportBody nonExportBody = CephDecoder.decode(byteBuf, le, features, CapsNonExportBody.class);
+            size = nonExportBody.getSize();
+            maxSize = nonExportBody.getMaxSize();
+            truncateSize = nonExportBody.getTruncateSize();
+            truncateSeq = nonExportBody.getTruncateSeq();
+
+            mtime = new UTime();
+            mtime.setTvSec(nonExportBody.getMTime().getTvSec());
+            mtime.setTvNSec(nonExportBody.getMTime().getTvNSec());
+
+            atime = new UTime();
+            atime.setTvSec(nonExportBody.getATime().getTvSec());
+            atime.setTvNSec(nonExportBody.getATime().getTvNSec());
+
+            ctime = new UTime();
+            ctime.setTvSec(nonExportBody.getCTime().getTvSec());
+            ctime.setTvNSec(nonExportBody.getCTime().getTvNSec());
+
             layout = new FileLayout();
-            layout.fromLegacy(cephFileLayout);
-            timeWarpSeq = CephDecoder.decodeInt(byteBuf, le);
+            layout.fromLegacy(nonExportBody.getLayout());
+
+            timeWarpSeq = nonExportBody.getTimeWarpSeq();
         } catch (DecodingException de) {
             throw new RuntimeException(de);
         }
     }
 
-    @CephFieldEncode(order = 3)
-    public void encodeFlock(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features)) {
-            CephEncoder.encode(flock.length, byteBuf, le);
-            byteBuf.writeBytes(flock);
-        }
-    }
-
-    @CephFieldDecode(order = 3)
-    public void decodeFlock(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 2) {
-            int length = CephDecoder.decodeInt(byteBuf, le);
-            flock = new byte[length];
-            byteBuf.readBytes(flock);
-        }
-    }
-
-    @CephFieldEncode(order = 4)
-    public void encodePeer(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.EXPORT_PEER.isEnabled(features) &&
-                CephFeatures.FLOCK.isEnabled(features) &&
-                head.getOp() == CapsHead.OpValue.IMPORT) {
-            CephEncoder.encode(peer, byteBuf, le, features);
-        }
-    }
-
-    @CephFieldDecode(order = 4)
-    public void decodePeer(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 3 && head.getOp() == CapsHead.OpValue.IMPORT) {
-            try {
-                peer = CephDecoder.decode(byteBuf, le, features, CapPeer.class);
-            } catch (DecodingException de) {
-                throw new RuntimeException(de);
-            }
-        }
-    }
-
-    @CephFieldDecode(order = 5)
-    public void decodeInlineVersion(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 4) {
-            inlineVersion = CephDecoder.decodeLong(byteBuf, le);
-        } else {
-            inlineVersion = -1;
-        }
-    }
-
-    @CephFieldEncode(order = 6)
+    @CephFieldEncode(order = 7, minVersion = 4, maxVersion = 4)
+    @CephFieldEncode(order = 7, minVersion = 5, maxVersion = 5)
+    @CephFieldEncode(order = 7, minVersion = 6, maxVersion = 6)
+    @CephFieldEncode(order = 7, minVersion = 7, maxVersion = 7)
+    @CephFieldEncode(order = 7, minVersion = 8, maxVersion = 8)
+    @CephFieldEncode(order = 7, minVersion = 9, maxVersion = 9)
+    @CephFieldEncode(order = 7, minVersion = 10, maxVersion = 10)
+    @CephFieldEncode(order = 7, minVersion = 11, maxVersion = 11)
+    @CephFieldEncode(order = 7, minVersion = 12, maxVersion = 12)
+    @CephFieldEncode(order = 7, minVersion = 13, maxVersion = 13)
     public void encodeInlineData(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.MDS_INLINE_DATA.isEnabled(features) &&
-                CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features) &&
-                inlineData != null) {
-            CephEncoder.encode(inlineData.length, byteBuf, le);
-            byteBuf.writeBytes(inlineData);
+        if (CephFeatures.MDS_INLINE_DATA.isEnabled(features)) {
+            CephEncoder.encode(inlineData, byteBuf, le, features);
         } else {
             byteBuf.writeZero(4);
         }
     }
 
-    @CephFieldDecode(order = 6)
-    public void decodeInlineData(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 4) {
-            int length = CephDecoder.decodeInt(byteBuf, le);
-            inlineData = new byte[length];
-            byteBuf.readBytes(inlineData);
-        }
-    }
-
-    @CephFieldEncode(order = 7)
-    public void encodeOsdEpochBarrier(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(osdEpochBarrier, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 7)
-    public void decodeOsdEpochBarrier(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 5) {
-            osdEpochBarrier = CephDecoder.decodeInt(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 8)
-    public void encodeOldestFlushTid(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(oldestFlushTid, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 8)
-    public void decodeOldestFlushTid(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 6) {
-            oldestFlushTid = CephDecoder.decodeInt(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 9)
-    public void encodeCallerUid(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(callerUid, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 9)
-    public void decodeCallerUid(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 7) {
-            callerUid = CephDecoder.decodeInt(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 10)
-    public void encodeCallerGid(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(callerGid, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 10)
-    public void decodeCallerGid(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 7) {
-            callerGid = CephDecoder.decodeInt(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 11)
+    @CephFieldEncode(order = 12, minVersion = 8, maxVersion = 8)
+    @CephFieldEncode(order = 12, minVersion = 9, maxVersion = 9)
+    @CephFieldEncode(order = 12, minVersion = 10, maxVersion = 10)
+    @CephFieldEncode(order = 12, minVersion = 11, maxVersion = 11)
+    @CephFieldEncode(order = 12, minVersion = 12, maxVersion = 12)
+    @CephFieldEncode(order = 12, minVersion = 13, maxVersion = 13)
     public void encodePoolNs(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (layout != null && CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(layout.getPoolNs(), byteBuf, le);
-        }
+        CephEncoder.encodeString(layout.getPoolNs(), byteBuf, le);
     }
 
-    @CephFieldDecode(order = 11)
+    @CephFieldDecode(order = 12, minVersion = 8, maxVersion = 8)
+    @CephFieldDecode(order = 12, minVersion = 9, maxVersion = 9)
+    @CephFieldDecode(order = 12, minVersion = 10, maxVersion = 10)
+    @CephFieldDecode(order = 12, minVersion = 11, maxVersion = 11)
+    @CephFieldDecode(order = 12, minVersion = 12, maxVersion = 12)
+    @CephFieldDecode(order = 12, minVersion = 13, maxVersion = 13)
     public void decodePoolNs(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 8) {
-            layout.setPoolNs(CephDecoder.decodeString(byteBuf, le));
-        }
+        layout.setPoolNs(CephDecoder.decodeString(byteBuf, le));
     }
 
-    @CephFieldEncode(order = 12)
-    public void encodeBTime(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(bTime, byteBuf, le, features);
-        }
-    }
-
-    @CephFieldDecode(order = 12)
-    public void decodeBTime(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 9) {
-            try {
-                bTime = CephDecoder.decode(byteBuf, le, features, UTime.class);
-            } catch (DecodingException de) {
-                throw new RuntimeException(de);
-            }
-        }
-    }
-
-    @CephFieldEncode(order = 13)
-    public void encodeChangeAttr(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(changeAttr, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 13)
-    public void decodeChangeAttr(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 9) {
-            changeAttr = CephDecoder.decodeLong(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 14)
-    public void encodeFlags(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(flags, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 14)
-    public void decodeFlags(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 10) {
-            flags = CephDecoder.decodeInt(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 15)
-    public void encodeNFiles(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(nFiles, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 15)
-    public void decodeNFiles(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 11) {
-            nFiles = CephDecoder.decodeLong(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 16)
-    public void encodeNSubDirs(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(nSubDirs, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 16)
-    public void decodeNSubDirs(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 11) {
-            nSubDirs = CephDecoder.decodeLong(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 17)
-    public void encodeFscryptAuth(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(fscryptAuth, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 17)
-    public void decodeFscryptAuth(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 12) {
-            fscryptAuth = CephDecoder.decodeBytes(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 18)
-    public void encodeFscryptFile(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(fscryptFile, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 18)
-    public void decodeFscryptFile(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 12) {
-            fscryptFile = CephDecoder.decodeBytes(byteBuf, le);
-        }
-    }
-
-    @CephFieldEncode(order = 19)
-    public void encodeSubVolumeId(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.FLOCK.isEnabled(features) &&
-                CephFeatures.EXPORT_PEER.isEnabled(features)) {
-            CephEncoder.encode(subVolumeId, byteBuf, le);
-        }
-    }
-
-    @CephFieldDecode(order = 19)
-    public void decodeSubVolumeId(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (headerVersion >= 13) {
-            subVolumeId = CephDecoder.decodeLong(byteBuf, le);
+    @CephPostDecode
+    public void postDecode(short version) {
+        if (version < 4) {
+            inlineVersion = -1L;
         }
     }
 }

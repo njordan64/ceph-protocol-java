@@ -10,12 +10,15 @@
 package ca.venom.ceph.annotation.processor;
 
 import ca.venom.ceph.annotation.processor.parser.ParsedClass;
-import ca.venom.ceph.annotation.processor.parser.ParsedField;
+import ca.venom.ceph.annotation.processor.parser.VersionField;
+import ca.venom.ceph.annotation.processor.parser.VersionGroup;
+
+import java.util.List;
 
 public class FixedSizeTypeVisitor implements FieldTypeVisitor<Integer, CodeGenContext> {
     @Override
-    public Integer visitDeclaredType(ParsedField.DeclaredFieldType fieldType,
-                                     ParsedField field,
+    public Integer visitDeclaredType(VersionField.DeclaredFieldType fieldType,
+                                     VersionField field,
                                      CodeGenContext context) {
         if (context.getParsedClasses().containsKey(fieldType.getClassName())) {
             ParsedClass fieldParsedClass = context.getParsedClasses().get(fieldType.getClassName());
@@ -36,7 +39,8 @@ public class FixedSizeTypeVisitor implements FieldTypeVisitor<Integer, CodeGenCo
                 size += 4;
             }
 
-            for (ParsedField subField : fieldParsedClass.getFields()) {
+            final VersionGroup versionGroup = new VersionGroup(field.getMinVersion(), field.getMaxVersion());
+            for (VersionField subField : fieldParsedClass.getFields().get(versionGroup)) {
                 size += subField.getFieldType().accept(this, subField, context);
             }
 
@@ -47,85 +51,85 @@ public class FixedSizeTypeVisitor implements FieldTypeVisitor<Integer, CodeGenCo
     }
 
     @Override
-    public Integer visitBooleanType(ParsedField.PrimitiveFieldType fieldType,
-                                    ParsedField field,
+    public Integer visitBooleanType(VersionField.PrimitiveFieldType fieldType,
+                                    VersionField field,
                                     CodeGenContext context) {
         return 1;
     }
 
     @Override
-    public Integer visitByteType(ParsedField.PrimitiveFieldType fieldType,
-                                 ParsedField field,
+    public Integer visitByteType(VersionField.PrimitiveFieldType fieldType,
+                                 VersionField field,
                                  CodeGenContext context) {
         return 1;
     }
 
     @Override
-    public Integer visitIntType(ParsedField.PrimitiveFieldType fieldType,
-                                ParsedField field,
+    public Integer visitIntType(VersionField.PrimitiveFieldType fieldType,
+                                VersionField field,
                                 CodeGenContext context) {
         return 4;
     }
 
     @Override
-    public Integer visitLongType(ParsedField.PrimitiveFieldType fieldType,
-                                 ParsedField field,
+    public Integer visitLongType(VersionField.PrimitiveFieldType fieldType,
+                                 VersionField field,
                                  CodeGenContext context) {
         return 8;
     }
 
     @Override
-    public Integer visitShortType(ParsedField.PrimitiveFieldType fieldType,
-                                  ParsedField field,
+    public Integer visitShortType(VersionField.PrimitiveFieldType fieldType,
+                                  VersionField field,
                                   CodeGenContext context) {
         return 2;
     }
 
     @Override
-    public Integer visitWrappedBooleanType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                           ParsedField field,
+    public Integer visitWrappedBooleanType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                           VersionField field,
                                            CodeGenContext context) {
         return 1;
     }
 
     @Override
-    public Integer visitWrappedByteType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                        ParsedField field,
+    public Integer visitWrappedByteType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                        VersionField field,
                                         CodeGenContext context) {
         return 1;
     }
 
     @Override
-    public Integer visitWrappedIntType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                       ParsedField field,
+    public Integer visitWrappedIntType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                       VersionField field,
                                        CodeGenContext context) {
         return 4;
     }
 
     @Override
-    public Integer visitWrappedLongType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                        ParsedField field,
+    public Integer visitWrappedLongType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                        VersionField field,
                                         CodeGenContext context) {
         return 8;
     }
 
     @Override
-    public Integer visitWrappedShortType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                         ParsedField field,
+    public Integer visitWrappedShortType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                         VersionField field,
                                          CodeGenContext context) {
         return 2;
     }
 
     @Override
-    public Integer visitStringType(ParsedField.StringFieldType fieldType,
-                                   ParsedField field,
+    public Integer visitStringType(VersionField.StringFieldType fieldType,
+                                   VersionField field,
                                    CodeGenContext context) {
         throw new RuntimeException("String is not of fixed size");
     }
 
     @Override
-    public Integer visitBitSetType(ParsedField.BitSetFieldType fieldType,
-                                   ParsedField field,
+    public Integer visitBitSetType(VersionField.BitSetFieldType fieldType,
+                                   VersionField field,
                                    CodeGenContext context) {
         if (field.getEncodingSize() != null) {
             return field.getEncodingSize();
@@ -135,8 +139,8 @@ public class FixedSizeTypeVisitor implements FieldTypeVisitor<Integer, CodeGenCo
     }
 
     @Override
-    public Integer visitByteArrayType(ParsedField.ByteArrayFieldType fieldType,
-                                      ParsedField field,
+    public Integer visitByteArrayType(VersionField.ByteArrayFieldType fieldType,
+                                      VersionField field,
                                       CodeGenContext context) {
         if (field.getEncodingSize() != null) {
             return field.getEncodingSize();
@@ -146,8 +150,8 @@ public class FixedSizeTypeVisitor implements FieldTypeVisitor<Integer, CodeGenCo
     }
 
     @Override
-    public Integer visitEnumType(ParsedField.EnumFieldType fieldType,
-                                 ParsedField field,
+    public Integer visitEnumType(VersionField.EnumFieldType fieldType,
+                                 VersionField field,
                                  CodeGenContext context) {
         if (field.getEncodingSize() != null) {
             return field.getEncodingSize();
@@ -157,22 +161,22 @@ public class FixedSizeTypeVisitor implements FieldTypeVisitor<Integer, CodeGenCo
     }
 
     @Override
-    public Integer visitListType(ParsedField.ListFieldType fieldType,
-                                 ParsedField field,
+    public Integer visitListType(VersionField.ListFieldType fieldType,
+                                 VersionField field,
                                  CodeGenContext context) {
         throw new RuntimeException("List does not have a fixed length");
     }
 
     @Override
-    public Integer visitSetType(ParsedField.SetFieldType fieldType,
-                                ParsedField field,
+    public Integer visitSetType(VersionField.SetFieldType fieldType,
+                                VersionField field,
                                 CodeGenContext context) {
         throw new RuntimeException("Set does not have a fixed length");
     }
 
     @Override
-    public Integer visitMapType(ParsedField.MapFieldType fieldType,
-                                ParsedField field,
+    public Integer visitMapType(VersionField.MapFieldType fieldType,
+                                VersionField field,
                                 CodeGenContext context) {
         throw new RuntimeException("Map does not have a fixed length");
     }

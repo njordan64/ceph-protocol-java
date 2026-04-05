@@ -9,44 +9,42 @@
  */
 package ca.venom.ceph.annotation.processor;
 
-import ca.venom.ceph.annotation.processor.parser.ParsedField;
-
-import java.util.List;
+import ca.venom.ceph.annotation.processor.parser.VersionField;
 
 public interface FieldTypeVisitor<R, P extends CodeGenContext> {
-    R visitDeclaredType(ParsedField.DeclaredFieldType fieldType, ParsedField field, P context);
+    R visitDeclaredType(VersionField.DeclaredFieldType fieldType, VersionField field, P context);
 
-    R visitBooleanType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitBooleanType(VersionField.PrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitByteType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitByteType(VersionField.PrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitIntType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitIntType(VersionField.PrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitLongType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitLongType(VersionField.PrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitShortType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitShortType(VersionField.PrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitWrappedBooleanType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitWrappedBooleanType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitWrappedByteType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitWrappedByteType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitWrappedIntType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitWrappedIntType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitWrappedLongType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitWrappedLongType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitWrappedShortType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, P context);
+    R visitWrappedShortType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, P context);
 
-    R visitStringType(ParsedField.StringFieldType fieldType, ParsedField field, P context);
+    R visitStringType(VersionField.StringFieldType fieldType, VersionField field, P context);
 
-    R visitBitSetType(ParsedField.BitSetFieldType fieldType, ParsedField field, P context);
+    R visitBitSetType(VersionField.BitSetFieldType fieldType, VersionField field, P context);
 
-    R visitByteArrayType(ParsedField.ByteArrayFieldType fieldType, ParsedField field, P context);
+    R visitByteArrayType(VersionField.ByteArrayFieldType fieldType, VersionField field, P context);
 
-    R visitEnumType(ParsedField.EnumFieldType fieldType, ParsedField field, P context);
+    R visitEnumType(VersionField.EnumFieldType fieldType, VersionField field, P context);
 
-    R visitListType(ParsedField.ListFieldType fieldType, ParsedField field, P context);
+    R visitListType(VersionField.ListFieldType fieldType, VersionField field, P context);
 
-    R visitSetType(ParsedField.SetFieldType fieldType, ParsedField field, P context);
+    R visitSetType(VersionField.SetFieldType fieldType, VersionField field, P context);
 
-    R visitMapType(ParsedField.MapFieldType fieldType, ParsedField field, P context);
+    R visitMapType(VersionField.MapFieldType fieldType, VersionField field, P context);
 }

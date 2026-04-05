@@ -9,6 +9,7 @@
  */
 package ca.venom.ceph.protocol.messages;
 
+import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephType;
@@ -86,6 +87,7 @@ public class MMonElection extends MessagePayload {
     @Getter
     @Setter
     @CephField(order = 12)
+    @CephEncodingSize
     private CephRelease monRelease = CephRelease.UNKNOWN;
 
     @Getter

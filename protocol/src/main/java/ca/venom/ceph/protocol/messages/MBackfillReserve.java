@@ -10,6 +10,7 @@
 package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.encoding.annotations.*;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.types.PlacementGroupId;
 import ca.venom.ceph.types.MessageType;
@@ -27,37 +28,42 @@ import java.util.BitSet;
 public class MBackfillReserve extends MessagePayload {
     @Getter
     @Setter
-    @CephField
+    @CephField(minVersion = 3, maxVersion = 3)
+    @CephField(minVersion = 4, maxVersion = 5)
     private PlacementGroupId pgId;
 
     @Getter
     @Setter
-    @CephField(order = 2)
+    @CephField(order = 2, minVersion = 3, maxVersion = 3)
+    @CephField(order = 2, minVersion = 4, maxVersion = 5)
     private int queryEpoch;
 
     @Getter
     @Setter
-    @CephField(order = 3)
+    @CephField(order = 3, minVersion = 3, maxVersion = 3)
+    @CephField(order = 3, minVersion = 4, maxVersion = 5)
     private int type;
 
     @Getter
     @Setter
-    @CephField(order = 4)
+    @CephField(order = 4, minVersion = 3, maxVersion = 3)
+    @CephField(order = 4, minVersion = 4, maxVersion = 5)
     private int priority;
 
     @Getter
     @Setter
-    @CephField(order = 5)
+    @CephField(order = 5, minVersion = 3, maxVersion = 3)
+    @CephField(order = 5, minVersion = 4, maxVersion = 5)
     private byte shardId;
 
     @Getter
     @Setter
-    @CephField(order = 6, optional = true)
+    @CephField(order = 6, minVersion = 4, maxVersion = 5)
     private long primaryNumBytes;
 
     @Getter
     @Setter
-    @CephField(order = 7, optional = true)
+    @CephField(order = 7, minVersion = 4, maxVersion = 5)
     private long shardNumBytes;
 
     @Override
@@ -78,41 +84,10 @@ public class MBackfillReserve extends MessagePayload {
         return 4;
     }
 
-    @CephFieldEncode(order = 3)
+    @CephFieldEncode(order = 3, minVersion = 3, maxVersion = 3)
     public void encodeType(ByteBuf byteBuf, boolean le, BitSet features) {
-        int valueToWrite = type;
-        if (!CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
-            if (type == 3 || type == 4 || type == 5) {
-                valueToWrite = 2;
-            }
-        }
-
-        if (le) {
-            byteBuf.writeIntLE(valueToWrite);
-        } else {
-            byteBuf.writeInt(valueToWrite);
-        }
-    }
-
-    @CephFieldEncode(order = 6)
-    public void encodePrimaryNumBytes(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
-            if (le) {
-                byteBuf.writeLongLE(primaryNumBytes);
-            } else {
-                byteBuf.writeLong(primaryNumBytes);
-            }
-        }
-    }
-
-    @CephFieldEncode(order = 7)
-    public void encodeShardNumBytes(ByteBuf byteBuf, boolean le, BitSet features) {
-        if (CephFeatures.RECOVERY_RESERVATION_2.isEnabled(features)) {
-            if (le) {
-                byteBuf.writeLongLE(shardNumBytes);
-            } else {
-                byteBuf.writeLong(shardNumBytes);
-            }
+        if (type == 3 || type == 4 || type == 5) {
+            CephEncoder.encode(2, byteBuf, le);
         }
     }
 }

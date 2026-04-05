@@ -15,30 +15,29 @@ import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.AddrBase;
+import ca.venom.ceph.protocol.types.AddrVec;
+import ca.venom.ceph.protocol.types.CephAddr;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.BitSet;
-import java.util.List;
 
 /**
  * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L619
  */
 public class ClientIdentFrame extends ControlFrame {
     @CephType
-    @CephTypeVersionConstant(version = 2)
     public static class Segment1 {
         @Getter
         @Setter
         @CephField
-        private List<AddrBase> myAddresses;
+        private AddrVec myAddresses;
 
         @Getter
         @Setter
         @CephField(order = 2)
-        private AddrBase targetAddress;
+        private CephAddr targetAddress;
 
         @Getter
         @Setter

@@ -12,16 +12,20 @@ package ca.venom.ceph.annotation.processor;
 import ca.venom.ceph.annotation.processor.parser.CephFieldParser;
 import ca.venom.ceph.annotation.processor.parser.CephTypeParser;
 import ca.venom.ceph.annotation.processor.parser.ParsedClass;
-import ca.venom.ceph.annotation.processor.parser.ParsedField;
+import ca.venom.ceph.annotation.processor.parser.ParsedFieldMethod;
 import ca.venom.ceph.annotation.processor.parser.ParserContext;
+import ca.venom.ceph.annotation.processor.parser.VersionField;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephFieldDecode;
+import ca.venom.ceph.encoding.annotations.CephFieldDecodes;
 import ca.venom.ceph.encoding.annotations.CephFieldEncode;
+import ca.venom.ceph.encoding.annotations.CephFieldEncodes;
+import ca.venom.ceph.encoding.annotations.CephFields;
 import ca.venom.ceph.encoding.annotations.CephPostDecode;
 import ca.venom.ceph.encoding.annotations.CephPreEncode;
 import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeCompatVersionDecider;
 import ca.venom.ceph.encoding.annotations.CephTypeVersionGenerator;
-import ca.venom.ceph.encoding.annotations.CephTypeVersionReceiver;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -38,15 +42,14 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -77,52 +80,22 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        ParserContext context = new ParserContext(messager);
-        CephTypeParser typeParser = new CephTypeParser();
-        Map<String, ParsedClass> parsedClasses = new HashMap<>();
-        Map<String, TypeElement> classElements = new HashMap<>();
+        final ParserContext context = new ParserContext(messager);
+        final CephTypeParser typeParser = new CephTypeParser();
+        final Map<String, ParsedClass> parsedClasses = new HashMap<>();
         for (Element classElement : roundEnv.getElementsAnnotatedWith(CephType.class)) {
             ParsedClass parsedClass = classElement.accept(typeParser, context);
             if (parsedClass != null && classElement instanceof TypeElement typeElement) {
                 parsedClasses.put(typeElement.getQualifiedName().toString(), parsedClass);
-                classElements.put(typeElement.getQualifiedName().toString(), typeElement);
             }
         }
 
-        CephFieldParser fieldParser = new CephFieldParser(parsedClasses.keySet());
-        Map<String, Map<String, ParsedField>> classFields = new HashMap<>();
-        for (Element fieldElement : roundEnv.getElementsAnnotatedWith(CephField.class)) {
-            ParsedField field = fieldElement.accept(fieldParser, context);
-            if (field != null && fieldElement instanceof VariableElement variableElement) {
-                Element classElement = fieldElement.getEnclosingElement();
-                if (classElement instanceof TypeElement typeElement) {
-                    String className = typeElement.getQualifiedName().toString();
-                    if (!classFields.containsKey(className)) {
-                        classFields.put(className, new HashMap<>());
-                    }
-
-                    classFields.get(className).put(variableElement.getSimpleName().toString(), field);
-                }
-            }
+        for (ParsedClass parsedClass : parsedClasses.values()) {
+            parsedClass.processFields(parsedClasses);
         }
 
-        addFieldsToClasses(classFields, parsedClasses, classElements);
-
-        Map<String, Map<Integer, String>> encodeMethods = getFieldMethods(
-                roundEnv.getElementsAnnotatedWith(CephFieldEncode.class),
-                true
-        );
-        Map<String, Map<Integer, String>> decodeMethods = getFieldMethods(
-                roundEnv.getElementsAnnotatedWith(CephFieldDecode.class),
-                false
-        );
-        for (Map.Entry<String, ParsedClass> entry : parsedClasses.entrySet()) {
-            addFieldMethodsToClass(
-                    entry.getValue(),
-                    encodeMethods.get(entry.getKey()),
-                    decodeMethods.get(entry.getKey())
-            );
-        }
+        addEncodeMethods(parsedClasses, roundEnv);
+        addDecodeMethods(parsedClasses, roundEnv);
 
         addPreEncodeMethods(parsedClasses, roundEnv.getElementsAnnotatedWith(CephPreEncode.class));
         addPostDecodeMethods(parsedClasses, roundEnv.getElementsAnnotatedWith(CephPostDecode.class));
@@ -142,50 +115,85 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
             }
 
             if (executableElement.getParameters().size() != 1) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet) -> ca.venom.ceph.types.VersionWithCompat.");
                 continue;
             } else {
                 if (executableElement.getParameters().get(0).asType() instanceof DeclaredType declaredType1) {
                     if (declaredType1.getKind() == TypeKind.DECLARED) {
                         TypeElement paramType = (TypeElement) declaredType1.asElement();
                         if (!paramType.getQualifiedName().toString().equals("java.util.BitSet")) {
-                            messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                            messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet) -> ca.venom.ceph.types.VersionWithCompat.");
                             continue;
                         }
                     } else {
-                        messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                        messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet) -> ca.venom.ceph.types.VersionWithCompat.");
                         continue;
                     }
                 } else {
-                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet).");
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet) -> ca.venom.ceph.types.VersionWithCompat.");
                     continue;
                 }
+            }
+
+            if (executableElement.getReturnType() instanceof DeclaredType returnType) {
+                if (returnType.getKind() == TypeKind.DECLARED) {
+                    TypeElement paramType = (TypeElement) returnType.asElement();
+                    if (!paramType.getQualifiedName().toString().equals("ca.venom.ceph.types.VersionWithCompat")) {
+                        messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet) -> ca.venom.ceph.types.VersionWithCompat.");
+                        continue;
+                    }
+                } else {
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet) -> ca.venom.ceph.types.VersionWithCompat.");
+                    continue;
+                }
+            } else {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (java.util.BitSet) -> ca.venom.ceph.types.VersionWithCompat.");
+                continue;
             }
 
             parsedClasses.get(className).setVersionWithCompatGenerator(methodName);
         }
 
-        for (Element element : roundEnv.getElementsAnnotatedWith(CephTypeVersionReceiver.class)) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephTypeCompatVersionDecider.class)) {
             ExecutableElement executableElement = (ExecutableElement) element;
-            TypeVersionReceiverValidity validity = validateTypeVersionReceiver(executableElement);
             String methodName = executableElement.getSimpleName().toString();
+
             Element classElement = executableElement.getEnclosingElement();
             String className = "<UNKNOWN>";
-
             if (classElement instanceof TypeElement typeElement) {
                 className = typeElement.getQualifiedName().toString();
             }
 
-            if (validity == TypeVersionReceiverValidity.INVALID) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (byte) or (byte, byte).");
+            if (className.equals("<UNKNOWN>") || !parsedClasses.containsKey(className)) {
+                continue;
             }
 
-            if (parsedClasses.containsKey(className)) {
-                parsedClasses.get(className).setVersionWithCompatReceiver(methodName);
-                if (validity == TypeVersionReceiverValidity.VERSION_AND_COMPAT) {
-                    parsedClasses.get(className).setReceiveCompat(true);
+            if (executableElement.getParameters().size() != 1) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (byte) -> boolean.");
+                continue;
+            } else {
+                if (executableElement.getParameters().get(0).asType() instanceof PrimitiveType primitiveType) {
+                    if (primitiveType.getKind() != TypeKind.BYTE) {
+                        messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (byte) - boolean.");
+                        continue;
+                    }
+                } else {
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (byte) -> boolean.");
+                    continue;
                 }
             }
+
+            if (executableElement.getReturnType() instanceof PrimitiveType primitiveType) {
+                if (primitiveType.getKind() != TypeKind.BOOLEAN) {
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (byte) -> boolean.");
+                    continue;
+                }
+            } else {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (byte) -> boolean.");
+                continue;
+            }
+
+            parsedClasses.get(className).setCompatVersionDecider(methodName);
         }
 
         try {
@@ -197,138 +205,240 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
         return false;
     }
 
-    private TypeVersionReceiverValidity validateTypeVersionReceiver(ExecutableElement executableElement) {
-        if (executableElement.isVarArgs()) {
-            return TypeVersionReceiverValidity.INVALID;
-        }
-
-        List<? extends VariableElement> parameters = executableElement.getParameters();
-        if (parameters.isEmpty() || parameters.size() > 2) {
-            return TypeVersionReceiverValidity.INVALID;
-        }
-
-        if (parameters.get(0).asType() instanceof PrimitiveType primitiveType1) {
-            if (primitiveType1.getKind() != TypeKind.BYTE) {
-                return TypeVersionReceiverValidity.INVALID;
-            }
-        } else {
-            return TypeVersionReceiverValidity.INVALID;
-        }
-
-        if (parameters.size() == 2) {
-            if (parameters.get(1).asType() instanceof PrimitiveType primitiveType2) {
-                if (primitiveType2.getKind() != TypeKind.BYTE) {
-                    return TypeVersionReceiverValidity.INVALID;
-                } else {
-                    return TypeVersionReceiverValidity.VERSION_AND_COMPAT;
-                }
-            } else {
-                return TypeVersionReceiverValidity.INVALID;
-            }
-        } else {
-            return TypeVersionReceiverValidity.ONLY_VERSION;
-        }
-    }
-
-    private Map<String, Map<Integer, String>> getFieldMethods(Set<? extends Element> elements, boolean encode) {
-        Map<String, Map<Integer, String>> methods = new HashMap<>();
-        for (Element element : elements) {
-            ExecutableElement executableElement = (ExecutableElement) element;
-            String methodName = executableElement.getSimpleName().toString();
-
-            Element classElement = executableElement.getEnclosingElement();
-            if (classElement instanceof TypeElement typeElement) {
-                String className = typeElement.getQualifiedName().toString();
-                if (!isMethodSignatureValid(executableElement)) {
-                    messager.printMessage(Diagnostic.Kind.ERROR, "Method \"" + className + "." + methodName + "\" must have the signature (ByteBuf, boolean, BitSet).");
-                }
-
-                int order;
-                if (encode) {
-                    CephFieldEncode encodeAnnotation = executableElement.getAnnotation(CephFieldEncode.class);
-                    order = encodeAnnotation.order();
-                } else {
-                    CephFieldDecode decodeAnnotation = executableElement.getAnnotation(CephFieldDecode.class);
-                    order = decodeAnnotation.order();
-                }
-
-                if (!methods.containsKey(className)) {
-                    methods.put(className, new HashMap<>());
-                }
-                methods.get(className).put(order, methodName);
-            }
-        }
-
-        return methods;
-    }
-
-    private boolean isMethodSignatureValid(ExecutableElement executableElement) {
+    private boolean doesMethodRequireVersion(
+            String className,
+            String methodName,
+            ExecutableElement executableElement) throws InvalidMethodSignatureException {
         List<? extends VariableElement> parameters = executableElement.getParameters();
 
+        final String[] validSignatures = {
+                "(io.netty.buffer.ByteBuf, boolean, java.util.BitSet)",
+                "(io.netty.buffer.ByteBuf, boolean, java.util.BitSet, byte)"
+        };
+
         if (executableElement.isVarArgs()) {
-            return false;
+            throw new InvalidMethodSignatureException(className, methodName, validSignatures);
         }
 
-        if (parameters.size() != 3) {
-            return false;
+        if (parameters.size() < 3 || parameters.size() > 4) {
+            throw new InvalidMethodSignatureException(className, methodName, validSignatures);
         }
 
         if (parameters.get(0).asType() instanceof DeclaredType declaredType1) {
             if (declaredType1.getKind() == TypeKind.DECLARED) {
                 TypeElement paramType = (TypeElement) declaredType1.asElement();
                 if (!paramType.getQualifiedName().toString().equals("io.netty.buffer.ByteBuf")) {
-                    return false;
+                    throw new InvalidMethodSignatureException(className, methodName, validSignatures);
                 }
             } else {
-                return false;
+                throw new InvalidMethodSignatureException(className, methodName, validSignatures);
             }
         } else {
-            return false;
+            throw new InvalidMethodSignatureException(className, methodName, validSignatures);
         }
 
         if (parameters.get(1).asType() instanceof PrimitiveType primitiveType2) {
             if (primitiveType2.getKind() != TypeKind.BOOLEAN) {
-                return false;
+                throw new InvalidMethodSignatureException(className, methodName, validSignatures);
             }
         } else {
-            return false;
+            throw new InvalidMethodSignatureException(className, methodName, validSignatures);
         }
 
         if (parameters.get(2).asType() instanceof DeclaredType declaredType3) {
             if (declaredType3.getKind() == TypeKind.DECLARED) {
                 TypeElement paramType = (TypeElement) declaredType3.asElement();
                 if (!paramType.getQualifiedName().toString().equals("java.util.BitSet")) {
-                    return false;
+                    throw new InvalidMethodSignatureException(className, methodName, validSignatures);
                 }
             } else {
-                return false;
+                throw new InvalidMethodSignatureException(className, methodName, validSignatures);
             }
         } else {
-            return false;
+            throw new InvalidMethodSignatureException(className, methodName, validSignatures);
         }
 
-        return true;
+        if (parameters.size() == 4) {
+            if (parameters.get(3).asType() instanceof PrimitiveType primitiveType4) {
+                if (primitiveType4.getKind() != TypeKind.BYTE) {
+                    throw new InvalidMethodSignatureException(className, methodName, validSignatures);
+                }
+            } else {
+                throw new InvalidMethodSignatureException(className, methodName, validSignatures);
+            }
+        }
+
+        return parameters.size() == 4;
     }
 
-    private void addFieldMethodsToClass(
-            ParsedClass parsedClass,
-            Map<Integer, String> encodeMethods,
-            Map<Integer, String> decodeMethods) {
-        if (encodeMethods != null) {
-            Optional<Integer> maxOrder = encodeMethods.keySet().stream().max(Comparator.comparingInt(x -> x));
-            if (maxOrder.isPresent()) {
-                for (int i = 0; i < maxOrder.get(); i++) {
-                    parsedClass.getEncodeMethods().add(encodeMethods.get(i + 1));
+    private void addEncodeMethods(Map<String, ParsedClass> parsedClasses, RoundEnvironment roundEnv) {
+        final Set<String> processedMethods = new HashSet<>();
+
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephFieldEncodes.class)) {
+            if (!(element instanceof ExecutableElement executableElement)) {
+                continue;
+            }
+
+            final Element classElement = executableElement.getEnclosingElement();
+            if (!(classElement instanceof TypeElement typeElement)) {
+                continue;
+            }
+            final String className = typeElement.getQualifiedName().toString();
+
+            if (!parsedClasses.containsKey(className)) {
+                continue;
+            }
+
+            final String methodName = executableElement.getSimpleName().toString();
+
+            processedMethods.add(className + "." + methodName);
+
+            final CephFieldEncodes fieldEncodes = element.getAnnotation(CephFieldEncodes.class);
+            for (CephFieldEncode fieldEncode : fieldEncodes.value()) {
+                try {
+                    final boolean requireVersion = doesMethodRequireVersion(className, methodName, executableElement);
+                    final ParsedFieldMethod parsedFieldMethod = new ParsedFieldMethod(
+                            methodName,
+                            requireVersion
+                    );
+                    parsedClasses.get(className).addFieldMethod(
+                            fieldEncode.minVersion(),
+                            fieldEncode.maxVersion(),
+                            fieldEncode.order(),
+                            parsedFieldMethod,
+                            true
+                    );
+                } catch (InvalidMethodSignatureException imse) {
+                    messager.printMessage(Diagnostic.Kind.ERROR, imse.getMessage());
                 }
             }
         }
 
-        if (decodeMethods != null) {
-            Optional<Integer> maxOrder = decodeMethods.keySet().stream().max(Comparator.comparingInt(x -> x));
-            if (maxOrder.isPresent()) {
-                for (int i = 0; i < maxOrder.get(); i++) {
-                    parsedClass.getDecodeMethods().add(decodeMethods.get(i + 1));
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephFieldEncode.class)) {
+            if (!(element instanceof ExecutableElement executableElement)) {
+                continue;
+            }
+
+            if (element.getAnnotation(CephFieldEncodes.class) != null) {
+                continue;
+            }
+
+            final Element classElement = executableElement.getEnclosingElement();
+            if (!(classElement instanceof TypeElement typeElement)) {
+                continue;
+            }
+            final String className = typeElement.getQualifiedName().toString();
+
+            if (!parsedClasses.containsKey(className)) {
+                continue;
+            }
+
+            final String methodName = executableElement.getSimpleName().toString();
+
+            processedMethods.add(className + "." + methodName);
+
+            final CephFieldEncode fieldEncode = element.getAnnotation(CephFieldEncode.class);
+            try {
+                final boolean requireVersion = doesMethodRequireVersion(className, methodName, executableElement);
+                final ParsedFieldMethod parsedFieldMethod = new ParsedFieldMethod(
+                        methodName,
+                        requireVersion
+                );
+                parsedClasses.get(className).addFieldMethod(
+                        fieldEncode.minVersion(),
+                        fieldEncode.maxVersion(),
+                        fieldEncode.order(),
+                        parsedFieldMethod,
+                        true
+                );
+            } catch (InvalidMethodSignatureException imse) {
+                messager.printMessage(Diagnostic.Kind.ERROR, imse.getMessage());
+            }
+        }
+    }
+
+    private void addDecodeMethods(Map<String, ParsedClass> parsedClasses, RoundEnvironment roundEnv) {
+        final Set<String> processedMethods = new HashSet<>();
+
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephFieldDecodes.class)) {
+            if (!(element instanceof ExecutableElement executableElement)) {
+                continue;
+            }
+
+            final Element classElement = executableElement.getEnclosingElement();
+            if (!(classElement instanceof TypeElement typeElement)) {
+                continue;
+            }
+            final String className = typeElement.getQualifiedName().toString();
+
+            if (!parsedClasses.containsKey(className)) {
+                continue;
+            }
+
+            final String methodName = executableElement.getSimpleName().toString();
+
+            processedMethods.add(className + "." + methodName);
+
+            final CephFieldDecodes fieldDecodes = element.getAnnotation(CephFieldDecodes.class);
+            for (CephFieldDecode fieldDecode : fieldDecodes.value()) {
+                try {
+                    final boolean requireVersion = doesMethodRequireVersion(className, methodName, executableElement);
+                    final ParsedFieldMethod parsedFieldMethod = new ParsedFieldMethod(
+                            methodName,
+                            requireVersion
+                    );
+                    parsedClasses.get(className).addFieldMethod(
+                            fieldDecode.minVersion(),
+                            fieldDecode.maxVersion(),
+                            fieldDecode.order(),
+                            parsedFieldMethod,
+                            false
+                    );
+                } catch (InvalidMethodSignatureException imse) {
+                    messager.printMessage(Diagnostic.Kind.ERROR, imse.getMessage());
                 }
+            }
+        }
+
+        for (Element element : roundEnv.getElementsAnnotatedWith(CephFieldDecode.class)) {
+            if (!(element instanceof ExecutableElement executableElement)) {
+                continue;
+            }
+
+            if (element.getAnnotation(CephFieldDecodes.class) != null) {
+                continue;
+            }
+
+            final Element classElement = executableElement.getEnclosingElement();
+            if (!(classElement instanceof TypeElement typeElement)) {
+                continue;
+            }
+            final String className = typeElement.getQualifiedName().toString();
+
+            if (!parsedClasses.containsKey(className)) {
+                continue;
+            }
+
+            final String methodName = executableElement.getSimpleName().toString();
+
+            processedMethods.add(className + "." + methodName);
+
+            final CephFieldDecode fieldDecode = element.getAnnotation(CephFieldDecode.class);
+            try {
+                final boolean requireVersion = doesMethodRequireVersion(className, methodName, executableElement);
+                final ParsedFieldMethod parsedFieldMethod = new ParsedFieldMethod(
+                        methodName,
+                        requireVersion
+                );
+                parsedClasses.get(className).addFieldMethod(
+                        fieldDecode.minVersion(),
+                        fieldDecode.maxVersion(),
+                        fieldDecode.order(),
+                        parsedFieldMethod,
+                        false
+                );
+            } catch (InvalidMethodSignatureException imse) {
+                messager.printMessage(Diagnostic.Kind.ERROR, imse.getMessage());
             }
         }
     }
@@ -359,42 +469,6 @@ public class EncodingAnnotationProcessor extends AbstractProcessor {
                 if (parsedClassMap.containsKey(className)) {
                     parsedClassMap.get(className).setPostDecodeMethod(methodName);
                 }
-            }
-        }
-    }
-
-    private void addFieldsToClasses(Map<String, Map<String, ParsedField>> classFields,
-                                    Map<String, ParsedClass> parsedClasses,
-                                    Map<String, TypeElement> classElements) {
-        for (Map.Entry<String, ParsedClass> entry : parsedClasses.entrySet()) {
-            TypeElement typeElement = classElements.get(entry.getKey());
-
-            Map<Integer, ParsedField> fieldsForClass = new HashMap<>();
-            addFieldsToClass(classFields, typeElement, fieldsForClass);
-
-            Optional<Integer> lastFieldOrder = fieldsForClass.keySet().stream().max(Comparator.comparingInt(x -> x));
-            if (lastFieldOrder.isPresent()) {
-                for (int i = 0; i < lastFieldOrder.get(); i++) {
-                    entry.getValue().getFields().add(fieldsForClass.get(i + 1));
-                }
-            }
-        }
-    }
-
-    private void addFieldsToClass(Map<String, Map<String, ParsedField>> classFields,
-                                  TypeElement typeElement,
-                                  Map<Integer, ParsedField> fieldsForClass) {
-        TypeMirror superType = typeElement.getSuperclass();
-        if (superType instanceof DeclaredType superDeclaredType) {
-            if (superDeclaredType.asElement() instanceof TypeElement superTypeElement) {
-                addFieldsToClass(classFields, superTypeElement, fieldsForClass);
-            }
-        }
-
-        String className = typeElement.getQualifiedName().toString();
-        if (classFields.containsKey(className)) {
-            for (ParsedField parsedField : classFields.get(className).values()) {
-                fieldsForClass.put(parsedField.getOrder(), parsedField);
             }
         }
     }

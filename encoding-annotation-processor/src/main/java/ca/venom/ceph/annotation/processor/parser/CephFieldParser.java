@@ -9,6 +9,8 @@
  */
 package ca.venom.ceph.annotation.processor.parser;
 
+import ca.venom.ceph.encoding.annotations.CephField;
+
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
@@ -19,7 +21,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.AbstractElementVisitor14;
 import java.util.Set;
 
-public class CephFieldParser extends AbstractElementVisitor14<ParsedField, ParserContext> {
+public class CephFieldParser extends AbstractElementVisitor14<VersionField, CephField> {
     private Set<String> parsedClassNames;
 
     public CephFieldParser(Set<String> parsedClassNames) {
@@ -27,37 +29,37 @@ public class CephFieldParser extends AbstractElementVisitor14<ParsedField, Parse
     }
 
     @Override
-    public ParsedField visitRecordComponent(RecordComponentElement recordComponentElement, ParserContext context) {
+    public VersionField visitRecordComponent(RecordComponentElement recordComponentElement, CephField fieldAnnotation) {
         return null;
     }
 
     @Override
-    public ParsedField visitModule(ModuleElement moduleElement, ParserContext context) {
+    public VersionField visitModule(ModuleElement moduleElement, CephField fieldAnnotation) {
         return null;
     }
 
     @Override
-    public ParsedField visitPackage(PackageElement packageElement, ParserContext context) {
+    public VersionField visitPackage(PackageElement packageElement, CephField fieldAnnotation) {
         return null;
     }
 
     @Override
-    public ParsedField visitType(TypeElement typeElement, ParserContext context) {
+    public VersionField visitType(TypeElement typeElement, CephField fieldAnnotation) {
         return null;
     }
 
     @Override
-    public ParsedField visitVariable(VariableElement variableElement, ParserContext context) {
-        return new ParsedField(variableElement, parsedClassNames);
+    public VersionField visitVariable(VariableElement variableElement, CephField fieldAnnotation) {
+        return new VersionField(variableElement, fieldAnnotation, parsedClassNames);
     }
 
     @Override
-    public ParsedField visitExecutable(ExecutableElement executableElement, ParserContext context) {
+    public VersionField visitExecutable(ExecutableElement executableElement, CephField fieldAnnotation) {
         return null;
     }
 
     @Override
-    public ParsedField visitTypeParameter(TypeParameterElement typeParameterElement, ParserContext context) {
+    public VersionField visitTypeParameter(TypeParameterElement typeParameterElement, CephField fieldAnnotation) {
         return null;
     }
 }

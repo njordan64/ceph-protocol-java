@@ -12,97 +12,90 @@ package ca.venom.ceph.annotation.processor.parser;
 import ca.venom.ceph.encoding.annotations.*;
 import ca.venom.ceph.types.MessageType;
 
+import javax.annotation.processing.Messager;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import javax.lang.model.type.NoType;
+import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ParsedClass {
     private final String className;
+    private boolean isMessagePayload;
     private final Byte marker;
     private final Byte version;
     private final Byte compatVersion;
     private String versionWithCompatGenerator;
-    private String versionWithCompatReceiver;
-    private boolean receiveCompat;
+    private String compatVersionDecider;
     private final boolean includeSize;
     private final Integer typeOffset;
     private final Integer typeSize;
     private final Boolean useParameter;
     private final String zeroPadToSizeOfClass;
     private final MessageType messageType;
-    private final List<ParsedField> fields = new ArrayList<>();
-    private final List<String> encodeMethods = new ArrayList<>();
-    private final List<String> decodeMethods = new ArrayList<>();
+    private final Map<VersionGroup, List<VersionField>> fields = new HashMap<>();
+    private final Map<VersionGroup, List<ParsedFieldMethod>> encodeMethods = new HashMap<>();
+    private final Map<VersionGroup, List<ParsedFieldMethod>> decodeMethods = new HashMap<>();
     private String preEncodeMethod;
     private String postDecodeMethod;
+    private final TypeElement classElement;
 
     public ParsedClass(TypeElement classElement) {
+        this.classElement = classElement;
         this.className = classElement.getQualifiedName().toString();
 
-        AtomicReference<Byte> marker = new AtomicReference<>();
-        AtomicReference<Byte> version = new AtomicReference<>();
-        AtomicReference<Byte> compatVersion = new AtomicReference<>();
-        AtomicReference<Boolean> includeSize = new AtomicReference<>();
-        AtomicReference<Integer> typeOffset = new AtomicReference<>();
-        AtomicReference<Integer> typeSize = new AtomicReference<>();
-        AtomicReference<Boolean> useParameter = new AtomicReference<>();
-        AtomicReference<MessageType> messageType = new AtomicReference<>();
-
-        loadPropertiesFromClassElement(
-                classElement,
-                marker,
-                version,
-                compatVersion,
-                includeSize,
-                typeOffset,
-                typeSize,
-                useParameter,
-                messageType
-        );
-
-        if (marker.get() != null) {
-            this.marker = marker.get();
+        CephMarker markerAnnotation = classElement.getAnnotation(CephMarker.class);
+        if (markerAnnotation != null) {
+            marker = markerAnnotation.value();
         } else {
-            this.marker = null;
+            marker = null;
         }
 
-        if (version.get() != null) {
-            this.version = version.get();
+        CephTypeVersionConstant typeVersionAnnotation = classElement.getAnnotation(CephTypeVersionConstant.class);
+        if (typeVersionAnnotation != null) {
+            version = typeVersionAnnotation.version();
+            if (typeVersionAnnotation.compatVersion() != 0) {
+                compatVersion = typeVersionAnnotation.compatVersion();
+            } else {
+                compatVersion = null;
+            }
         } else {
-            this.version = null;
+            version = null;
+            compatVersion = null;
         }
 
-        if (compatVersion.get() != null) {
-            this.compatVersion = compatVersion.get();
+        CephTypeSize typeSizeAnnotation = classElement.getAnnotation(CephTypeSize.class);
+        if (typeSizeAnnotation != null) {
+            includeSize = true;
         } else {
-            this.compatVersion = null;
+            includeSize = false;
         }
 
-        if (includeSize.get() != null) {
-            this.includeSize = includeSize.get();
+        CephParentType parentTypeAnnotation = classElement.getAnnotation(CephParentType.class);
+        if (parentTypeAnnotation != null) {
+            typeOffset = parentTypeAnnotation.typeOffset();
+            typeSize = parentTypeAnnotation.typeSize();
+            useParameter = parentTypeAnnotation.useParameter();
         } else {
-            this.includeSize = false;
+            typeOffset = null;
+            typeSize = null;
+            useParameter = null;
         }
 
-        if (typeOffset.get() != null) {
-            this.typeOffset = typeOffset.get();
+        CephMessagePayload messagePayload = classElement.getAnnotation(CephMessagePayload.class);
+        if (messagePayload != null) {
+            messageType = messagePayload.value();
         } else {
-            this.typeOffset = null;
-        }
-
-        if (typeSize.get() != null) {
-            this.typeSize = typeSize.get();
-        } else {
-            this.typeSize = null;
-        }
-
-        if (useParameter.get() != null) {
-            this.useParameter = useParameter.get();
-        } else {
-            this.useParameter = null;
+            messageType = null;
         }
 
         CephZeroPadToSizeOf zeroPadToSizeOf = classElement.getAnnotation(CephZeroPadToSizeOf.class);
@@ -117,67 +110,58 @@ public class ParsedClass {
         } else {
             zeroPadToSizeOfClass = null;
         }
-
-        this.messageType = messageType.get();
     }
 
-    private void loadPropertiesFromClassElement(TypeElement classElement,
-                                                AtomicReference<Byte> marker,
-                                                AtomicReference<Byte> version,
-                                                AtomicReference<Byte> compatVersion,
-                                                AtomicReference<Boolean> includeSize,
-                                                AtomicReference<Integer> typeOffset,
-                                                AtomicReference<Integer> typeSize,
-                                                AtomicReference<Boolean> useParameter,
-                                                AtomicReference<MessageType> messageType) {
-        DeclaredType parentType = (DeclaredType) classElement.getSuperclass();
-        TypeElement parentElement = (TypeElement) parentType.asElement();
-        if (parentElement.getAnnotation(CephType.class) != null) {
-            loadPropertiesFromClassElement(
-                    parentElement,
-                    marker,
-                    version,
-                    compatVersion,
-                    includeSize,
-                    typeOffset,
-                    typeSize,
-                    useParameter,
-                    messageType
-            );
+    public void processFields(Map<String, ParsedClass> parsedClassMap) {
+        processFields(classElement, parsedClassMap);
+    }
+
+    private void processFields(TypeElement typeElement, Map<String, ParsedClass> parsedClassMap) {
+        final String currentClassName = typeElement.getQualifiedName().toString();
+        if ("ca.venom.ceph.protocol.messages.MessagePayload".equals(currentClassName)) {
+            isMessagePayload = true;
         }
 
-        CephMarker markerAnnotation = classElement.getAnnotation(CephMarker.class);
-        if (markerAnnotation != null) {
-            marker.set(markerAnnotation.value());
-        }
+        for (Element childElement : typeElement.getEnclosedElements()) {
+            if (!(childElement instanceof VariableElement fieldElement)) {
+                continue;
+            }
 
-        CephTypeVersionConstant typeVersionAnnotation = classElement.getAnnotation(CephTypeVersionConstant.class);
-        if (typeVersionAnnotation != null) {
-            version.set(typeVersionAnnotation.version());
-            if (typeVersionAnnotation.compatVersion() != 0) {
-                compatVersion.set(typeVersionAnnotation.compatVersion());
+            if (fieldElement.getAnnotation(CephFields.class) != null ||
+                    fieldElement.getAnnotation(CephField.class) != null) {
+                processField(fieldElement, parsedClassMap);
             }
         }
 
-        if (classElement.getAnnotation(CephTypeSize.class) != null) {
-            includeSize.set(true);
+        final TypeMirror parentTypeMirror = typeElement.getSuperclass();
+        if (parentTypeMirror instanceof DeclaredType declaredType) {
+            final TypeElement parentElement = (TypeElement) declaredType.asElement();
+            processFields(parentElement, parsedClassMap);
         }
+    }
 
-        CephParentType parentTypeAnnotation = classElement.getAnnotation(CephParentType.class);
-        if (parentTypeAnnotation != null) {
-            typeOffset.set(parentTypeAnnotation.typeOffset());
-            typeSize.set(parentTypeAnnotation.typeSize());
-            useParameter.set(parentTypeAnnotation.useParameter());
-        }
+    private void processField(VariableElement fieldElement, Map<String, ParsedClass> parsedClassMap) {
+        final CephFieldParser fieldParser = new CephFieldParser(parsedClassMap.keySet());
 
-        CephMessagePayload messagePayload = classElement.getAnnotation(CephMessagePayload.class);
-        if (messagePayload != null) {
-            messageType.set(messagePayload.value());
+        final CephFields fieldsAnnotation = fieldElement.getAnnotation(CephFields.class);
+        if (fieldsAnnotation != null) {
+            for (CephField fieldAnnotation : fieldsAnnotation.value()) {
+                addField(fieldElement.accept(fieldParser, fieldAnnotation));
+            }
+        } else {
+            final CephField fieldAnnotation = fieldElement.getAnnotation(CephField.class);
+            if (fieldAnnotation != null) {
+                addField(fieldElement.accept(fieldParser, fieldAnnotation));
+            }
         }
     }
 
     public String getClassName() {
         return className;
+    }
+
+    public boolean isMessagePayload() {
+        return isMessagePayload;
     }
 
     public Byte getMarker() {
@@ -200,20 +184,12 @@ public class ParsedClass {
         this.versionWithCompatGenerator = versionWithCompatGenerator;
     }
 
-    public String getVersionWithCompatReceiver() {
-        return versionWithCompatReceiver;
+    public String getCompatVersionDecider() {
+        return compatVersionDecider;
     }
 
-    public void setVersionWithCompatReceiver(String versionWithCompatReceiver) {
-        this.versionWithCompatReceiver = versionWithCompatReceiver;
-    }
-
-    public boolean isReceiveCompat() {
-        return receiveCompat;
-    }
-
-    public void setReceiveCompat(boolean receiveCompat) {
-        this.receiveCompat = receiveCompat;
+    public void setCompatVersionDecider(String compatVersionDecider) {
+        this.compatVersionDecider = compatVersionDecider;
     }
 
     public boolean isIncludeSize() {
@@ -240,16 +216,93 @@ public class ParsedClass {
         return messageType;
     }
 
-    public List<ParsedField> getFields() {
+    public Map<VersionGroup, List<VersionField>> getFields() {
         return fields;
     }
 
-    public List<String> getEncodeMethods() {
+    public void addField(VersionField versionField) {
+        final VersionGroup versionGroup = new VersionGroup(
+                versionField.getMinVersion(),
+                versionField.getMaxVersion()
+        );
+
+        if (!fields.containsKey(versionGroup)) {
+            fields.put(versionGroup, new ArrayList<>());
+        }
+        final List<VersionField> fieldGroup = fields.get(versionGroup);
+        final int index = versionField.getOrder() - 1;
+        while (index >= fieldGroup.size()) {
+            fieldGroup.add(null);
+        }
+        fieldGroup.set(index, versionField);
+
+        if (!encodeMethods.containsKey(versionGroup)) {
+            encodeMethods.put(versionGroup, new ArrayList<>());
+        }
+        final List<ParsedFieldMethod> encodeMethodsList = encodeMethods.get(versionGroup);
+        while (index >= encodeMethodsList.size()) {
+            encodeMethodsList.add(null);
+        }
+
+        if (!decodeMethods.containsKey(versionGroup)) {
+            decodeMethods.put(versionGroup, new ArrayList<>());
+        }
+        final List<ParsedFieldMethod> decodeMethodsList = decodeMethods.get(versionGroup);
+        while (index >= decodeMethodsList.size()) {
+            decodeMethodsList.add(null);
+        }
+    }
+
+    public Map<VersionGroup, List<ParsedFieldMethod>> getEncodeMethods() {
         return encodeMethods;
     }
 
-    public List<String> getDecodeMethods() {
+    public Map<VersionGroup, List<ParsedFieldMethod>> getDecodeMethods() {
         return decodeMethods;
+    }
+
+    public void addFieldMethod(
+            byte minVersion,
+            byte maxVersion,
+            int order,
+            ParsedFieldMethod fieldMethod,
+            boolean isEncode) {
+        final VersionGroup versionGroup = new VersionGroup(minVersion, maxVersion);
+        if (!fields.containsKey(versionGroup)) {
+            fields.put(versionGroup, new ArrayList<>());
+        }
+        final List<VersionField> fieldGroup = fields.get(versionGroup);
+        int index = order - 1;
+        while (index >= fieldGroup.size()) {
+            fieldGroup.add(null);
+        }
+
+        final Map<VersionGroup, List<ParsedFieldMethod>> targetMap;
+        final Map<VersionGroup, List<ParsedFieldMethod>> otherMap;
+        if (isEncode) {
+            targetMap = encodeMethods;
+            otherMap = decodeMethods;
+        } else {
+            targetMap = decodeMethods;
+            otherMap = encodeMethods;
+        }
+
+        if (!targetMap.containsKey(versionGroup)) {
+            targetMap.put(versionGroup, new ArrayList<>());
+        }
+        final List<ParsedFieldMethod> encodeMethodsList = targetMap.get(versionGroup);
+        while (index >= encodeMethodsList.size()) {
+            encodeMethodsList.add(null);
+        }
+        encodeMethodsList.set(index, fieldMethod);
+
+        if (!otherMap.containsKey(versionGroup)) {
+            otherMap.put(versionGroup, new ArrayList<>());
+        }
+        final List<ParsedFieldMethod> decodeMethodsList = otherMap.get(versionGroup);
+        while (index >= decodeMethodsList.size()) {
+            decodeMethodsList.add(null);
+        }
     }
 
     public String getPreEncodeMethod() {

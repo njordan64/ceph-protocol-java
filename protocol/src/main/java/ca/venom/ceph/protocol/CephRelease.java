@@ -11,6 +11,8 @@ package ca.venom.ceph.protocol;
 
 import ca.venom.ceph.types.EnumWithIntValue;
 
+import java.util.BitSet;
+
 public enum CephRelease implements EnumWithIntValue {
     UNKNOWN(0),
     ARGONAUT(1),
@@ -30,7 +32,10 @@ public enum CephRelease implements EnumWithIntValue {
     OCTOPUS(15),
     PACIFIC(16),
     QINCY(17),
-    MAX(18);
+    REEF(18),
+    SQUID(19),
+    TENTACLE(20),
+    MAX(21);
 
     private int value;
 

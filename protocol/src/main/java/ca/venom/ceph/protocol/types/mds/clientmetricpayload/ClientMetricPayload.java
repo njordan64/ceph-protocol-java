@@ -31,7 +31,7 @@ import lombok.Setter;
 public abstract class ClientMetricPayload {
     @Getter
     @Setter
-    @CephField(order = -1)
+    @CephField
     private ClientMetricType type;
 
     protected ClientMetricPayload(ClientMetricType type) {

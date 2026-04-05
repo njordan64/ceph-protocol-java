@@ -23,5 +23,34 @@ public class AddrVec {
     @Getter
     @Setter
     @CephField
-    private List<AddrBase> addrList;
+    private List<CephAddr> addrList;
+
+    public CephAddr legacyAddr() {
+        if (addrList != null) {
+            for (CephAddr addr : addrList) {
+                if (addr.getType() == CephAddr.AddrType.LEGACY) {
+                    return addr;
+                }
+            }
+        }
+
+        final CephAddr blankAddr = new CephAddr();
+        blankAddr.setSocketAddress(null);
+
+        return blankAddr;
+    }
+
+    public CephAddr legacyOrFrontAddr() {
+        if (addrList == null || addrList.isEmpty()) {
+            return null;
+        }
+
+        for (CephAddr addr : addrList) {
+            if (addr.getType() == CephAddr.AddrType.LEGACY) {
+                return addr;
+            }
+        }
+
+        return addrList.get(0);
+    }
 }

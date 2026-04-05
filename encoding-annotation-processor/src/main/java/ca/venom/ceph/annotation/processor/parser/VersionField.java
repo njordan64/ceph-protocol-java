@@ -1,43 +1,24 @@
-/*
- * Copyright (C) 2023 Norman Jordan <norman.jordan@gmail.com>
- *
- * This is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software
- * Foundation.  See file COPYING.
- *
- */
 package ca.venom.ceph.annotation.processor.parser;
 
 import ca.venom.ceph.annotation.processor.CodeGenContext;
 import ca.venom.ceph.annotation.processor.FieldTypeVisitor;
 import ca.venom.ceph.encoding.annotations.ByteOrderPreference;
-import ca.venom.ceph.encoding.annotations.CephCondition;
 import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephParentTypeValue;
-import ca.venom.ceph.encoding.annotations.ConditonOperator;
 
-import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
-import javax.lang.model.type.UnionType;
-import javax.tools.Diagnostic;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-public class ParsedField {
+public class VersionField {
     public interface FieldType {
-        <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context);
+        <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context);
     }
 
     public static class DeclaredFieldType implements FieldType {
@@ -53,7 +34,7 @@ public class ParsedField {
         }
 
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitDeclaredType(this, field, context);
         }
 
@@ -80,7 +61,7 @@ public class ParsedField {
         }
 
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return switch (typeKind) {
                 case BOOLEAN -> visitor.visitBooleanType(this, field, context);
                 case BYTE -> visitor.visitByteType(this, field, context);
@@ -111,7 +92,7 @@ public class ParsedField {
         }
 
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return switch (typeKind) {
                 case BOOLEAN -> visitor.visitWrappedBooleanType(this, field, context);
                 case BYTE -> visitor.visitWrappedByteType(this, field, context);
@@ -124,21 +105,21 @@ public class ParsedField {
 
     public static class StringFieldType implements FieldType {
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitStringType(this, field, context);
         }
     }
 
     public static class BitSetFieldType implements FieldType {
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitBitSetType(this, field, context);
         }
     }
 
     public static class ByteArrayFieldType implements FieldType {
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitByteArrayType(this, field, context);
         }
     }
@@ -152,7 +133,7 @@ public class ParsedField {
         }
 
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitEnumType(this, field, context);
         }
 
@@ -170,7 +151,7 @@ public class ParsedField {
         }
 
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitListType(this, field, context);
         }
 
@@ -188,7 +169,7 @@ public class ParsedField {
         }
 
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitSetType(this, field, context);
         }
 
@@ -209,7 +190,7 @@ public class ParsedField {
         }
 
         @Override
-        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, ParsedField field, P context) {
+        public <R, P extends CodeGenContext> R accept(FieldTypeVisitor<R, P> visitor, VersionField field, P context) {
             return visitor.visitMapType(this, field, context);
         }
 
@@ -220,120 +201,6 @@ public class ParsedField {
         public FieldType getValueFieldType() {
             return valueFieldType;
         }
-    }
-
-    public static class FieldCondition {
-        private final ConditonOperator operator;
-        private final String property;
-        private final String[] values;
-
-        public FieldCondition(CephCondition condition) {
-            this.operator = condition.operator();
-            this.property = condition.property();
-            this.values = condition.values();
-        }
-
-        public ConditonOperator getOperator() {
-            return operator;
-        }
-
-        public String getProperty() {
-            return property;
-        }
-
-        public String[] getValues() {
-            return values;
-        }
-    }
-
-    private final FieldType fieldType;
-    private final String name;
-    private final int order;
-    private final ByteOrderPreference byteOrderPreference;
-    private final FieldCondition condition;
-    private final Integer encodingSize;
-    private final boolean includeTypeSize;
-    private final int sizeLength;
-    private final String sizeProperty;
-    private final boolean optional;
-    private final String parameterTypeValue;
-
-    public ParsedField(VariableElement element, Set<String> parsedClassNames) {
-        this.fieldType = createFieldType(element, parsedClassNames);
-        this.name = element.getSimpleName().toString();
-
-        CephField cephField = element.getAnnotation(CephField.class);
-        this.order = cephField.order();
-        this.byteOrderPreference = cephField.byteOrderPreference();
-        this.includeTypeSize = cephField.includeSize();
-        this.sizeLength = cephField.sizeLength();
-        this.sizeProperty = cephField.sizeProperty();
-        this.optional = cephField.optional();
-
-        CephCondition condition = element.getAnnotation(CephCondition.class);
-        if (condition != null) {
-            this.condition = new FieldCondition(condition);
-        } else {
-            this.condition = null;
-        }
-
-        CephEncodingSize encodingSize = element.getAnnotation(CephEncodingSize.class);
-        if (encodingSize != null) {
-            this.encodingSize = encodingSize.value();
-        } else {
-            this.encodingSize = null;
-        }
-
-        CephParentTypeValue parentTypeValue = element.getAnnotation(CephParentTypeValue.class);
-        if (parentTypeValue != null) {
-            this.parameterTypeValue = parentTypeValue.value();
-        } else {
-            this.parameterTypeValue = null;
-        }
-    }
-
-    public FieldType getFieldType() {
-        return fieldType;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getOrder() {
-        return order;
-    }
-
-    public ByteOrderPreference getByteOrderPreference() {
-        return byteOrderPreference;
-    }
-
-    public FieldCondition getCondition() {
-        return condition;
-    }
-
-    public Integer getEncodingSize() {
-        return encodingSize;
-    }
-
-    public boolean isIncludeTypeSize() {
-        return includeTypeSize;
-    }
-
-    public int getSizeLength() {
-        return sizeLength;
-    }
-
-    public String getSizeProperty() {
-        return sizeProperty;
-    }
-
-    public boolean isOptional() {
-        return optional;
-    }
-
-    public String getParameterTypeValue() {
-        return parameterTypeValue;
     }
 
     private static FieldType createFieldType(Element element, Set<String> parsedClassNames) {
@@ -388,7 +255,91 @@ public class ParsedField {
                 throw new IllegalArgumentException("Invalid array type: " + arrayType.getComponentType().toString());
             }
         } else {
+            System.out.println(">>> " + elementType.getKind().name());
             return new PrimitiveFieldType(elementType.getKind());
         }
+    }
+
+    private final FieldType fieldType;
+    private final String name;
+    private final int order;
+    private final ByteOrderPreference byteOrderPreference;
+    private final Integer encodingSize;
+    private final boolean includeTypeSize;
+    private final int sizeLength;
+    private final String sizeProperty;
+    private final byte minVersion;
+    private final byte maxVersion;
+    private final String parameterTypeValue;
+
+    public VersionField(VariableElement element, CephField fieldAnnotation, Set<String> parsedClassNames) {
+        this.fieldType = createFieldType(element, parsedClassNames);
+        this.name = element.getSimpleName().toString();
+
+        this.order = fieldAnnotation.order();
+        this.byteOrderPreference = fieldAnnotation.byteOrderPreference();
+        this.includeTypeSize = fieldAnnotation.includeSize();
+        this.sizeLength = fieldAnnotation.sizeLength();
+        this.sizeProperty = fieldAnnotation.sizeProperty();
+        this.minVersion = fieldAnnotation.minVersion();
+        this.maxVersion = fieldAnnotation.maxVersion();
+
+        final CephEncodingSize encodingSize = element.getAnnotation(CephEncodingSize.class);
+        if (encodingSize != null) {
+            this.encodingSize = encodingSize.value();
+        } else {
+            this.encodingSize = null;
+        }
+
+        final CephParentTypeValue parentTypeValue = element.getAnnotation(CephParentTypeValue.class);
+        if (parentTypeValue != null) {
+            this.parameterTypeValue = parentTypeValue.value();
+        } else {
+            this.parameterTypeValue = null;
+        }
+    }
+
+    public FieldType getFieldType() {
+        return fieldType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public ByteOrderPreference getByteOrderPreference() {
+        return byteOrderPreference;
+    }
+
+    public Integer getEncodingSize() {
+        return encodingSize;
+    }
+
+    public boolean isIncludeTypeSize() {
+        return includeTypeSize;
+    }
+
+    public int getSizeLength() {
+        return sizeLength;
+    }
+
+    public String getSizeProperty() {
+        return sizeProperty;
+    }
+
+    public byte getMinVersion() {
+        return minVersion;
+    }
+
+    public byte getMaxVersion() {
+        return maxVersion;
+    }
+
+    public String getParameterTypeValue() {
+        return parameterTypeValue;
     }
 }

@@ -40,6 +40,6 @@ public class AuthRequestMoreAuthorizerPayload extends AuthRequestMorePayload {
 
     @Getter
     @Setter
-    @CephField(order = 6, includeSize = true)
+    @CephField(order = 5, includeSize = true)
     private byte[] encryptedAuthMsg;
 }

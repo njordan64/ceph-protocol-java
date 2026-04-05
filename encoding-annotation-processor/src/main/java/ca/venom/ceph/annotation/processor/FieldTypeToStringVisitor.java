@@ -9,90 +9,90 @@
  */
 package ca.venom.ceph.annotation.processor;
 
-import ca.venom.ceph.annotation.processor.parser.ParsedField;
+import ca.venom.ceph.annotation.processor.parser.VersionField;
 
 class FieldTypeToStringVisitor implements FieldTypeVisitor<String, EncodeCodeGenContext> {
     @Override
-    public String visitDeclaredType(ParsedField.DeclaredFieldType fieldType,
-                                    ParsedField field,
+    public String visitDeclaredType(VersionField.DeclaredFieldType fieldType,
+                                    VersionField field,
                                     EncodeCodeGenContext context) {
         ClassNameSplitter fullClassName = new ClassNameSplitter(fieldType.getClassName());
         return fullClassName.getActualClassName();
     }
 
     @Override
-    public String visitBooleanType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitBooleanType(VersionField.PrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "boolean";
     }
 
     @Override
-    public String visitByteType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitByteType(VersionField.PrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "byte";
     }
 
     @Override
-    public String visitIntType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitIntType(VersionField.PrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "int";
     }
 
     @Override
-    public String visitLongType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitLongType(VersionField.PrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "long";
     }
 
     @Override
-    public String visitShortType(ParsedField.PrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitShortType(VersionField.PrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "short";
     }
 
     @Override
-    public String visitWrappedBooleanType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitWrappedBooleanType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "Boolean";
     }
 
     @Override
-    public String visitWrappedByteType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitWrappedByteType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "Byte";
     }
 
     @Override
-    public String visitWrappedIntType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitWrappedIntType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "Integer";
     }
 
     @Override
-    public String visitWrappedLongType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitWrappedLongType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "Long";
     }
 
     @Override
-    public String visitWrappedShortType(ParsedField.WrappedPrimitiveFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitWrappedShortType(VersionField.WrappedPrimitiveFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "Short";
     }
 
     @Override
-    public String visitStringType(ParsedField.StringFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitStringType(VersionField.StringFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "String";
     }
 
     @Override
-    public String visitBitSetType(ParsedField.BitSetFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitBitSetType(VersionField.BitSetFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "BitSet";
     }
 
     @Override
-    public String visitByteArrayType(ParsedField.ByteArrayFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitByteArrayType(VersionField.ByteArrayFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return "byte[]";
     }
 
     @Override
-    public String visitEnumType(ParsedField.EnumFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitEnumType(VersionField.EnumFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         ClassNameSplitter fullClassName = new ClassNameSplitter(fieldType.getClassName());
         return fullClassName.getActualClassName();
     }
 
     @Override
-    public String visitListType(ParsedField.ListFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitListType(VersionField.ListFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return String.format(
                 "List<%s>",
                 fieldType.getElementFieldType().accept(this, field, context)
@@ -100,7 +100,7 @@ class FieldTypeToStringVisitor implements FieldTypeVisitor<String, EncodeCodeGen
     }
 
     @Override
-    public String visitSetType(ParsedField.SetFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitSetType(VersionField.SetFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return String.format(
                 "Set<%s>",
                 fieldType.getElementFieldType().accept(this, field, context)
@@ -108,7 +108,7 @@ class FieldTypeToStringVisitor implements FieldTypeVisitor<String, EncodeCodeGen
     }
 
     @Override
-    public String visitMapType(ParsedField.MapFieldType fieldType, ParsedField field, EncodeCodeGenContext context) {
+    public String visitMapType(VersionField.MapFieldType fieldType, VersionField field, EncodeCodeGenContext context) {
         return String.format(
                 "Map<%s, %s>",
                 fieldType.getKeyFieldType().accept(this, field, context),

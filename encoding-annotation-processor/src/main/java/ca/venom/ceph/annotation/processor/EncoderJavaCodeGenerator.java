@@ -11,16 +11,21 @@ package ca.venom.ceph.annotation.processor;
 
 import ca.venom.ceph.annotation.processor.parser.ParsedAbstractClass;
 import ca.venom.ceph.annotation.processor.parser.ParsedClass;
-import ca.venom.ceph.annotation.processor.parser.ParsedField;
-import ca.venom.ceph.encoding.annotations.ConditonOperator;
+import ca.venom.ceph.annotation.processor.parser.ParsedFieldMethod;
+import ca.venom.ceph.annotation.processor.parser.VersionField;
+import ca.venom.ceph.annotation.processor.parser.VersionGroup;
+import ca.venom.ceph.types.VersionWithCompat;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.type.TypeKind;
+import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -72,6 +77,7 @@ public class EncoderJavaCodeGenerator {
         imports.add("ca.venom.ceph.protocol.DecodingException");
         imports.add("io.netty.buffer.ByteBuf");
         imports.add("java.util.BitSet");
+        imports.add("ca.venom.ceph.types.VersionWithCompat");
 
         ClassNameSplitter fullClassName = new ClassNameSplitter(parsedClass.getClassName());
 
@@ -88,6 +94,7 @@ public class EncoderJavaCodeGenerator {
             return imports;
         } else if ("ca.venom.ceph.protocol.messages.MessagePayload".equals(parsedClass.getClassName())) {
             imports.add("ca.venom.ceph.types.MessageType");
+            imports.add("ca.venom.ceph.protocol.messages.CephMsgHeader2");
 
             ClassNameSplitter parsedClassName = new ClassNameSplitter(parsedClass.getClassName());
             for (ParsedClass parsedChildClass : parsedClasses) {
@@ -101,46 +108,50 @@ public class EncoderJavaCodeGenerator {
                     }
                 }
             }
+        } else if (parsedClass.isMessagePayload()) {
+            imports.add("ca.venom.ceph.protocol.messages.CephMsgHeader2");
         }
 
         if (parsedClass.getVersionWithCompatGenerator() != null) {
             imports.add("ca.venom.ceph.types.VersionWithCompat");
         }
 
-        for (ParsedField parsedField : parsedClass.getFields()) {
-            if (parsedField != null) {
-                addImportsForFieldType(parsedField.getFieldType(), imports, fullClassName);
+        for (List<VersionField> parsedFieldList : parsedClass.getFields().values()) {
+            for (VersionField parsedField : parsedFieldList) {
+                if (parsedField != null) {
+                    addImportsForFieldType(parsedField.getFieldType(), imports, fullClassName);
+                }
             }
         }
 
         return imports;
     }
 
-    private void addImportsForFieldType(ParsedField.FieldType fieldType,
+    private void addImportsForFieldType(VersionField.FieldType fieldType,
                                         Set<String> imports,
                                         ClassNameSplitter fullClassName) {
-        if (fieldType instanceof ParsedField.DeclaredFieldType declaredFieldType) {
+        if (fieldType instanceof VersionField.DeclaredFieldType declaredFieldType) {
             ClassNameSplitter fieldClassName = new ClassNameSplitter(declaredFieldType.getClassName());
             if (!fullClassName.getPackageName().equals(fieldClassName.getPackageName())) {
                 imports.add(fieldClassName.getPackageName() + "." + fieldClassName.getActualClassName());
                 imports.add(fieldClassName.getPackageName() + "." + fieldClassName.getEncoderClassName());
             }
-        } else if (fieldType instanceof ParsedField.EnumFieldType enumFieldType) {
+        } else if (fieldType instanceof VersionField.EnumFieldType enumFieldType) {
             ClassNameSplitter fieldClassName = new ClassNameSplitter(enumFieldType.getClassName());
             if (!fullClassName.getPackageName().equals(fieldClassName.getPackageName())) {
                 imports.add(fieldClassName.getPackageName() + "." + fieldClassName.getActualClassName());
             }
-        } else if (fieldType instanceof ParsedField.StringFieldType) {
+        } else if (fieldType instanceof VersionField.StringFieldType) {
             imports.add("java.nio.charset.StandardCharsets");
-        } else if (fieldType instanceof ParsedField.ListFieldType listFieldType) {
+        } else if (fieldType instanceof VersionField.ListFieldType listFieldType) {
             imports.add("java.util.List");
             imports.add("java.util.ArrayList");
             addImportsForFieldType(listFieldType.getElementFieldType(), imports, fullClassName);
-        } else if (fieldType instanceof ParsedField.SetFieldType setFieldType) {
+        } else if (fieldType instanceof VersionField.SetFieldType setFieldType) {
             imports.add("java.util.Set");
             imports.add("java.util.HashSet");
             addImportsForFieldType(setFieldType.getElementFieldType(), imports, fullClassName);
-        } else if (fieldType instanceof ParsedField.MapFieldType mapFieldType) {
+        } else if (fieldType instanceof VersionField.MapFieldType mapFieldType) {
             imports.add("java.util.Map");
             imports.add("java.util.HashMap");
             addImportsForFieldType(mapFieldType.getKeyFieldType(), imports, fullClassName);
@@ -217,22 +228,58 @@ public class EncoderJavaCodeGenerator {
         }
     }
 
+    private String getGetterName(VersionField field) {
+        String getter;
+        if (field.getFieldType() instanceof VersionField.PrimitiveFieldType primitiveFieldType) {
+            if (primitiveFieldType.getTypeKind() == TypeKind.BOOLEAN) {
+                getter = "is";
+            } else {
+                getter = "get";
+            }
+        } else {
+            getter = "get";
+        }
+        getter += field.getName().substring(0, 1).toUpperCase(Locale.ROOT) + field.getName().substring(1) + "()";
+
+        return getter;
+    }
+
+    private String getSetterName(VersionField field) {
+        return "set" + field.getName().substring(0, 1).toUpperCase(Locale.ROOT) + field.getName().substring(1);
+    }
+
     private void writeStandardEncodeMethodBody(PrintWriter out) {
         if (parsedClass.getMarker() != null) {
             out.printf("        byteBuf.writeByte((byte) %d);%n", parsedClass.getMarker());
         }
 
+        boolean includeVersion = false;
         if (parsedClass.getVersionWithCompatGenerator() != null) {
-            out.printf("        VersionWithCompat versionWithCompat = toEncode.%s();%n", parsedClass.getVersionWithCompatGenerator());
+            includeVersion = true;
+            out.printf("        VersionWithCompat versionWithCompat = toEncode.%s(features);%n", parsedClass.getVersionWithCompatGenerator());
             out.println("        byteBuf.writeByte(versionWithCompat.getVersion());");
             out.println("        if (versionWithCompat.getCompat() != null) {");
-            out.printf("            byteBuf.writeByte(versionWithComapt.getCompat());");
+            out.println("            byteBuf.writeByte(versionWithCompat.getCompat());");
             out.println("        }");
         } else if (parsedClass.getVersion() != null) {
-            out.printf("        byteBuf.writeByte((byte) %d);%n", parsedClass.getVersion());
+            includeVersion = true;
             if (parsedClass.getCompatVersion() != null) {
-                out.printf("        byteBuf.writeByte((byte) %d);%n", parsedClass.getCompatVersion());
+                out.printf(
+                        "        VersionWithCompat versionWithCompat = new VersionWithCompat((byte) %d, (byte) %d);%n",
+                        parsedClass.getVersion(),
+                        parsedClass.getCompatVersion()
+                );
+                out.println("        byteBuf.writeByte(versionWithCompat.getVersion());");
+                out.println("        byteBuf.writeByte(versionWithCompat.getCompat());");
+            } else {
+                out.printf(
+                        "        VersionWithCompat versionWithCompat = new VersionWithCompat((byte) %d, (byte) -1);%n",
+                        parsedClass.getVersion()
+                );
+                out.println("        byteBuf.writeByte(versionWithCompat.getVersion());");
             }
+        } else {
+            out.println("        VersionWithCompat versionWithCompat = null;");
         }
 
         if (parsedClass.isIncludeSize()) {
@@ -244,59 +291,55 @@ public class EncoderJavaCodeGenerator {
             out.printf("        toEncode.%s();%n", parsedClass.getPreEncodeMethod());
         }
 
-        EncodeFieldTypeVisitor fieldTypeVisitor = new EncodeFieldTypeVisitor();
-        int fieldsCount = Math.max(parsedClass.getFields().size(), parsedClass.getEncodeMethods().size());
-        for (int i = 0; i < fieldsCount; i++) {
-            int indentation = 2;
+        final EncodeFieldTypeVisitor fieldTypeVisitor = new EncodeFieldTypeVisitor();
+        final Set<VersionGroup> allVersionGroups = new HashSet<>(parsedClass.getFields().keySet());
+        allVersionGroups.addAll(parsedClass.getEncodeMethods().keySet());
 
-            if (i < parsedClass.getEncodeMethods().size() && parsedClass.getEncodeMethods().get(i) != null) {
-                out.printf("        toEncode.%s(byteBuf, le, features);%n", parsedClass.getEncodeMethods().get(i));
-                continue;
-            }
+        for (VersionGroup versionGroup : allVersionGroups) {
+            final List<VersionField> fields = parsedClass.getFields().getOrDefault(versionGroup, Collections.emptyList());
+            final List<ParsedFieldMethod> methods = parsedClass.getEncodeMethods().getOrDefault(versionGroup, Collections.emptyList());
 
-            if (i >= parsedClass.getFields().size()) {
-                continue;
-            }
+            for (int i = 0; i < fields.size(); i++) {
+                final VersionField field = fields.get(i);
+                final ParsedFieldMethod method = methods.get(i);
+                int indentation = 2;
 
-            ParsedField field = parsedClass.getFields().get(i);
-            if (field == null) {
-                continue;
-            }
+                if (method != null) {
+                    out.printf("        toEncode.%s(byteBuf, le, features", method.getMethodName());
+                    if (method.isIncludeVersion()) {
+                        if (includeVersion) {
+                            out.print(", versionWithCompat.getVersion()");
+                        } else {
+                            messager.printMessage(
+                                    Diagnostic.Kind.ERROR,
+                                    String.format("Method %s.%s expects version, but it is not available", parsedClass.getClassName(), method.getMethodName())
+                            );
+                        }
+                    }
+                    out.println(");");
+                } else if (field != null) {
+                    final String getter = "toEncode." + getGetterName(field);
+                    EncodeCodeGenContext context = new EncodeCodeGenContext(indentation, getter, parsedClasses);
+                    List<CodeLine> codeLines = field.getFieldType().accept(fieldTypeVisitor, field, context);
 
-            if (field.getCondition() != null) {
-                indentation++;
-                out.printf(
-                        "        if (toEncode.%s %s %s) {%n",
-                        field.getCondition().getProperty(),
-                        field.getCondition().getOperator() == ConditonOperator.EQUAL ? "==" : "!=",
-                        field.getCondition().getValues()[0]
-                );
-            }
-
-            String getter = "toEncode.";
-            if (field.getFieldType() instanceof ParsedField.PrimitiveFieldType primitiveFieldType) {
-                if (primitiveFieldType.getTypeKind() == TypeKind.BOOLEAN) {
-                    getter += "is";
+                    for (CodeLine codeLine : codeLines) {
+                        out.printf(
+                                "%s%s%n",
+                                " ".repeat(4 * codeLine.getIndentation()),
+                                codeLine.getText()
+                        );
+                    }
                 } else {
-                    getter += "get";
+                    messager.printMessage(
+                            Diagnostic.Kind.ERROR,
+                            String.format(
+                                    "Missing field/method [%d] (%d, %d) for class: %s",
+                                    i + 1,
+                                    versionGroup.getMinVersion(),
+                                    versionGroup.getMaxVersion(),
+                                    parsedClass.getClassName())
+                    );
                 }
-            } else {
-                getter += "get";
-            }
-            getter += field.getName().substring(0, 1).toUpperCase(Locale.ROOT) + field.getName().substring(1) + "()";
-            EncodeCodeGenContext context = new EncodeCodeGenContext(indentation, getter, parsedClasses);
-            List<CodeLine> codeLines = field.getFieldType().accept(fieldTypeVisitor, field, context);
-
-            for (CodeLine codeLine : codeLines) {
-                out.printf(
-                        "%s%s%n",
-                        " ".repeat(4 * codeLine.getIndentation()),
-                        codeLine.getText()
-                );
-            }
-
-            if (field.getCondition() != null) {
-                out.println("        }");
             }
         }
 
@@ -314,10 +357,10 @@ public class EncoderJavaCodeGenerator {
                 EncodeCodeGenContext context = new EncodeCodeGenContext(0, "", parsedClasses);
                 FixedSizeTypeVisitor sizeVisitor = new FixedSizeTypeVisitor();
 
-                ParsedField.DeclaredFieldType currentFieldType = new ParsedField.DeclaredFieldType(
+                VersionField.DeclaredFieldType currentFieldType = new VersionField.DeclaredFieldType(
                         parsedClass.getClassName()
                 );
-                ParsedField.DeclaredFieldType otherFieldType = new ParsedField.DeclaredFieldType(
+                VersionField.DeclaredFieldType otherFieldType = new VersionField.DeclaredFieldType(
                         otherParsedClass.getClassName()
                 );
 
@@ -341,12 +384,13 @@ public class EncoderJavaCodeGenerator {
                     Boolean.TRUE.equals(parsedAbstractClass.getUseParameter()) ? ", int typeCode" : "");
             writeAbstractDecodeMethodBody(out, parsedAbstractClass);
         } else if ("ca.venom.ceph.protocol.messages.MessagePayload".equals(parsedClass.getClassName())) {
-            out.println("    public static MessagePayload decode(ByteBuf byteBuf, boolean le, BitSet features, int typeCode) throws DecodingException {");
+            out.println("    public static MessagePayload decode(ByteBuf byteBuf, boolean le, BitSet features, CephMsgHeader2 header) throws DecodingException {");
             writeMessagePayloadDecodeMethodBody(out, parsedClasses);
         } else {
             out.printf(
-                    "    public static %s decode(ByteBuf byteBuf, boolean le, BitSet features) throws DecodingException {%n",
-                    fullClassName.getActualClassName());
+                    "    public static %s decode(ByteBuf byteBuf, boolean le, BitSet features%s) throws DecodingException {%n",
+                    fullClassName.getActualClassName(),
+                    parsedClass.isMessagePayload() ? ", CephMsgHeader2 header" : "");
             out.printf(
                     "        %s decoded = new %s();%n",
                     fullClassName.getActualClassName(),
@@ -381,6 +425,13 @@ public class EncoderJavaCodeGenerator {
 
         out.println("        switch (typeCode) {");
 
+        final String versionString;
+        if ("ca.venom.ceph.protocol.messages.MessagePayload".equals(parsedAbstractClass.getClassName())) {
+            versionString = ", version";
+        } else {
+            versionString = "";
+        }
+
         String defaultClassName = null;
         for (ParsedAbstractClass.ImplementationClass implementation : parsedAbstractClass.getImplementations()) {
             if (implementation.isDefault()) {
@@ -391,14 +442,14 @@ public class EncoderJavaCodeGenerator {
             out.printf("            case %d:%n", implementation.getTypeCode());
             int lastDotIndex = implementation.getClassName().lastIndexOf('.');
             String simpleClassName = implementation.getClassName().substring(lastDotIndex + 1);
-            out.printf("                return %sEncoder.decode(byteBuf, le, features);%n", simpleClassName);
+            out.printf("                return %sEncoder.decode(byteBuf, le, features%s);%n", simpleClassName, versionString);
         }
 
         if (defaultClassName != null) {
             out.println("            default:");
             int lastDotIndex = defaultClassName.lastIndexOf('.');
             String simpleClassName = defaultClassName.substring(lastDotIndex + 1);
-            out.printf("                return %sEncoder.decode(byteBuf, le, features);%n", simpleClassName);
+            out.printf("                return %sEncoder.decode(byteBuf, le, features%s);%n", simpleClassName, versionString);
             out.println("        }");
         } else {
             out.println("        }");
@@ -407,7 +458,7 @@ public class EncoderJavaCodeGenerator {
     }
 
     public void writeMessagePayloadDecodeMethodBody(PrintWriter out, Collection<ParsedClass> parsedClasses) {
-        out.println("        switch (MessageType.getFromCode(typeCode)) {");
+        out.println("        switch (MessageType.getFromCode(header.getType())) {");
 
         for (ParsedClass parsedChildClass : parsedClasses) {
             if (parsedChildClass.getMessageType() != null) {
@@ -415,13 +466,88 @@ public class EncoderJavaCodeGenerator {
 
                 out.printf("            case %s:%n", parsedChildClass.getMessageType().name());
                 out.printf(
-                        "                return %s.decode(byteBuf, le, features);%n",
+                        "                return %s.decode(byteBuf, le, features, header);%n",
                         parsedChildClassName.getEncoderClassName());
             }
         }
 
         out.println("        }");
         out.println("        return null;");
+    }
+
+    private VersionWithCompat getVersionRange(ParsedClass parsedClass) {
+        byte maxVersion = (byte) -1;
+        if (parsedClass.getVersion() != null) {
+            maxVersion = parsedClass.getVersion();
+        }
+
+        byte minVersion = (byte) -1;
+        for (VersionGroup versionGroup : parsedClass.getFields().keySet()) {
+            if (versionGroup.getMaxVersion() > maxVersion) {
+                maxVersion = versionGroup.getMaxVersion();
+            }
+
+            if (versionGroup.getMinVersion() >= 0 && (minVersion == (byte) -1 ||
+                    versionGroup.getMinVersion() < minVersion)) {
+                minVersion = versionGroup.getMinVersion();
+            }
+        }
+
+        for (VersionGroup versionGroup : parsedClass.getEncodeMethods().keySet()) {
+            if (versionGroup.getMaxVersion() > maxVersion) {
+                maxVersion = versionGroup.getMaxVersion();
+            }
+
+            if (versionGroup.getMinVersion() >= 0 && (minVersion == (byte) -1 ||
+                    versionGroup.getMinVersion() < minVersion)) {
+                minVersion = versionGroup.getMinVersion();
+            }
+        }
+
+        return new VersionWithCompat(maxVersion, minVersion == (byte) -1 ? null : minVersion);
+    }
+
+    private void writeDecodeForVersionGroup(
+            PrintWriter out,
+            int indentation,
+            VersionGroup versionGroup,
+            DecodeFieldTypeVisitor fieldTypeVisitor) {
+        final List<VersionField> fields = parsedClass.getFields().get(versionGroup);
+        final List<ParsedFieldMethod> methods = parsedClass.getDecodeMethods().get(versionGroup);
+        final int fieldsCount = Math.max(fields.size(), methods.size());
+
+        for (int i = 0; i < fieldsCount; i++) {
+            VersionField field = fields.get(i);
+            ParsedFieldMethod method = methods.get(i);
+            if (field != null) {
+                String getter = "decoded." + getGetterName(field);
+                String setter = "decoded." + getSetterName(field);
+
+                DecodeCodeGenContext fieldContext = new DecodeCodeGenContext(
+                        indentation,
+                        String.format("decoded.%s", getter),
+                        setter,
+                        true,
+                        parsedClasses,
+                        messager
+                );
+                List<CodeLine> codeLines = field.getFieldType().accept(fieldTypeVisitor, field, fieldContext);
+
+                for (CodeLine codeLine : codeLines) {
+                    out.printf(
+                            "%s%s%n",
+                            " ".repeat(4 * codeLine.getIndentation()),
+                            codeLine.getText()
+                    );
+                }
+            } else if (method != null) {
+                out.printf(
+                        "        decoded.%s(byteBuf, le, features%s);%n",
+                        method.getMethodName(),
+                        method.isIncludeVersion() ? ", version" : ""
+                );
+            }
+        }
     }
 
     private void writeStandardDecodeMethodBody(PrintWriter out, ParsedClass parsedClass) {
@@ -433,22 +559,39 @@ public class EncoderJavaCodeGenerator {
             out.println("        }");
         }
 
-        if (parsedClass.getVersionWithCompatReceiver() != null) {
-            if (parsedClass.isReceiveCompat()) {
-                out.printf("        decoded.%s(byteBuf.readByte(), byteBuf.readByte());%n", parsedClass.getVersionWithCompatReceiver());
-            } else {
-                out.printf("        decoded.%s(byteBuf.readByte());%n", parsedClass.getVersionWithCompatReceiver());
-            }
-        } else if (parsedClass.getVersion() != null) {
-            out.printf("        if ((byte) %d != byteBuf.readByte()) {%n", parsedClass.getVersion());
-            out.println("            throw new DecodingException(\"Unsupported version\");");
-            out.println("        }");
+        final boolean haveVersion;
+        if (parsedClass.getVersion() != null || parsedClass.getVersionWithCompatGenerator() != null) {
+            haveVersion = true;
 
-            if (parsedClass.getCompatVersion() != null) {
-                out.printf("        if ((byte) %d != byteBuf.readByte()) {%n", parsedClass.getCompatVersion());
-                out.println("            throw new DecodingException(\"Unsupported compat version\");");
+            out.println("        byte version = byteBuf.readByte();");
+
+            final VersionWithCompat versionRange = getVersionRange(parsedClass);
+            if (versionRange.getVersion() != (byte) -1 && versionRange.getCompat() != null) {
+                out.printf(
+                        "        if (version > (byte) %d || version < %d) {%n",
+                        versionRange.getVersion(),
+                        versionRange.getCompat()
+                );
+                out.println("            throw new DecodingException(\"Unsupported version\");");
+                out.println("        }");
+            } else if (versionRange.getVersion() != (byte) -1) {
+                out.printf("        if (version > (byte) %d) {%n", versionRange.getVersion());
+                out.println("            throw new DecodingException(\"Unsupported version\");");
                 out.println("        }");
             }
+
+            if (parsedClass.getCompatVersionDecider() != null) {
+                out.printf("        if (decoded.%s(version)) {%n", parsedClass.getCompatVersionDecider());
+                out.println("            byteBuf.readByte();");
+                out.println("        }");
+            } else if (parsedClass.getCompatVersion() != null) {
+                out.println("        byteBuf.readByte();");
+            }
+        } else if (parsedClass.isMessagePayload()) {
+            out.println("        short version = header.getVersion();");
+            haveVersion = true;
+        } else {
+            haveVersion = false;
         }
 
         if (parsedClass.isIncludeSize()) {
@@ -463,75 +606,65 @@ public class EncoderJavaCodeGenerator {
             out.println("        }");
         }
 
-        int fieldsCount = Math.max(parsedClass.getFields().size(), parsedClass.getEncodeMethods().size());
-        for (int i = 0; i < fieldsCount; i++) {
-            int indentation = 2;
+        final List<VersionGroup> versionGroups = new ArrayList<>(parsedClass.getFields().keySet());
+        versionGroups.addAll(parsedClass.getDecodeMethods().keySet());
 
-            if (i < parsedClass.getDecodeMethods().size() && parsedClass.getDecodeMethods().get(i ) != null) {
-                out.printf("        decoded.%s(byteBuf, le, features);%n", parsedClass.getDecodeMethods().get(i));
-            }
-
-            if (i >= parsedClass.getFields().size()) {
-                continue;
-            }
-
-            ParsedField field = parsedClass.getFields().get(i);
-            if (field == null) {
-                continue;
-            }
-
-            if (field.getCondition() != null) {
-                indentation++;
-
-                out.printf(
-                        "        if (decoded.%s %s %s) {%n",
-                        field.getCondition().getProperty(),
-                        field.getCondition().getOperator() == ConditonOperator.EQUAL ? "==" : "!=",
-                        field.getCondition().getValues()[0]
-                );
-            }
-
-            String getter = "decoded.";
-            String setter = "decoded.set";
-            if (field.getFieldType() instanceof ParsedField.PrimitiveFieldType primitiveFieldType) {
-                if (primitiveFieldType.getTypeKind() == TypeKind.BOOLEAN) {
-                    getter += "is";
-                } else {
-                    getter += "get";
+        if (haveVersion) {
+            if (versionGroups.size() == 1) {
+                final VersionGroup versionGroup = versionGroups.get(0);
+                boolean needCloseBlock = false;
+                if (versionGroup.getMinVersion() != -1 && versionGroup.getMaxVersion() != -1) {
+                    needCloseBlock = true;
+                    out.printf(
+                            "        if (version >= %d && version <= %d) {%n",
+                            versionGroup.getMinVersion(),
+                            versionGroup.getMaxVersion()
+                    );
+                } else if (versionGroup.getMinVersion() != -1) {
+                    needCloseBlock = true;
+                    out.printf("        if (version >= %d) {%n", versionGroup.getMinVersion());
+                }
+                writeDecodeForVersionGroup(out, needCloseBlock ? 3 : 2, versionGroup, fieldTypeVisitor);
+                if (needCloseBlock) {
+                    out.println("        }");
                 }
             } else {
-                getter = "get";
-            }
-            String capitalizedField = field.getName().substring(0, 1).toUpperCase(Locale.ROOT) +
-                    field.getName().substring(1);
-            getter += capitalizedField;
-            setter += capitalizedField;
+                boolean isFirst = true;
+                for (VersionGroup versionGroup : versionGroups) {
+                    if (versionGroup.getMaxVersion() != (byte) -1) {
+                        out.printf(
+                                "        %sif (version <= (byte) %d && version >= (byte) %d) {%n",
+                                isFirst ? "" : "} else ",
+                                versionGroup.getMaxVersion(),
+                                versionGroup.getMinVersion()
+                        );
+                    } else {
+                        out.printf(
+                                "        %sif (version >= (byte) %d) {%n",
+                                isFirst ? "" : "} else ",
+                                versionGroup.getMinVersion()
+                        );
+                    }
 
-            DecodeCodeGenContext fieldContext = new DecodeCodeGenContext(
-                    indentation,
-                    String.format("decoded.%s", getter),
-                    setter,
-                    true,
-                    parsedClasses,
-                    messager
-            );
-            List<CodeLine> codeLines = field.getFieldType().accept(fieldTypeVisitor, field, fieldContext);
+                    if (isFirst) {
+                        isFirst = false;
+                    }
 
-            for (CodeLine codeLine : codeLines) {
-                out.printf(
-                        "%s%s%n",
-                        " ".repeat(4 * codeLine.getIndentation()),
-                        codeLine.getText()
-                );
-            }
-
-            if (field.getCondition() != null) {
+                    writeDecodeForVersionGroup(out, 3, versionGroup, fieldTypeVisitor);
+                }
                 out.println("        }");
             }
+        } else {
+            final VersionGroup versionGroup = versionGroups.get(0);
+            writeDecodeForVersionGroup(out, 2, versionGroup, fieldTypeVisitor);
         }
 
         if (parsedClass.getPostDecodeMethod() != null) {
-            out.printf("        decoded.%s();%n", parsedClass.getPostDecodeMethod());
+            out.printf(
+                    "        decoded.%s(%s);%n",
+                    parsedClass.getPostDecodeMethod(),
+                    haveVersion ? "version" : ""
+            );
         }
     }
 }

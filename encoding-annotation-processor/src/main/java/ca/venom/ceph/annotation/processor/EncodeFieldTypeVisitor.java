@@ -9,7 +9,7 @@
  */
 package ca.venom.ceph.annotation.processor;
 
-import ca.venom.ceph.annotation.processor.parser.ParsedField;
+import ca.venom.ceph.annotation.processor.parser.VersionField;
 import ca.venom.ceph.encoding.annotations.ByteOrderPreference;
 
 import java.util.ArrayList;
@@ -19,8 +19,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     private FieldTypeToStringVisitor typeParamVisitor = new FieldTypeToStringVisitor();
 
     @Override
-    public List<CodeLine> visitDeclaredType(ParsedField.DeclaredFieldType fieldType,
-                                            ParsedField field,
+    public List<CodeLine> visitDeclaredType(VersionField.DeclaredFieldType fieldType,
+                                            VersionField field,
                                             EncodeCodeGenContext context) {
         ClassNameSplitter fullClassName = new ClassNameSplitter(fieldType.getClassName());
         return List.of(new CodeLine(context.getIndentation(), String.format(
@@ -31,8 +31,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitBooleanType(ParsedField.PrimitiveFieldType fieldType,
-                                           ParsedField field,
+    public List<CodeLine> visitBooleanType(VersionField.PrimitiveFieldType fieldType,
+                                           VersionField field,
                                            EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         return List.of(
@@ -44,8 +44,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitByteType(ParsedField.PrimitiveFieldType fieldType,
-                                        ParsedField field,
+    public List<CodeLine> visitByteType(VersionField.PrimitiveFieldType fieldType,
+                                        VersionField field,
                                         EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         return List.of(
@@ -57,8 +57,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitIntType(ParsedField.PrimitiveFieldType fieldType,
-                                       ParsedField field,
+    public List<CodeLine> visitIntType(VersionField.PrimitiveFieldType fieldType,
+                                       VersionField field,
                                        EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         if (field.getByteOrderPreference() == ByteOrderPreference.NONE) {
@@ -88,8 +88,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitLongType(ParsedField.PrimitiveFieldType fieldType,
-                                        ParsedField field,
+    public List<CodeLine> visitLongType(VersionField.PrimitiveFieldType fieldType,
+                                        VersionField field,
                                         EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         if (field.getByteOrderPreference() == ByteOrderPreference.NONE) {
@@ -119,8 +119,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitShortType(ParsedField.PrimitiveFieldType fieldType,
-                                         ParsedField field,
+    public List<CodeLine> visitShortType(VersionField.PrimitiveFieldType fieldType,
+                                         VersionField field,
                                          EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         if (field.getByteOrderPreference() == ByteOrderPreference.NONE) {
@@ -150,8 +150,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitWrappedBooleanType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                                  ParsedField field,
+    public List<CodeLine> visitWrappedBooleanType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                                  VersionField field,
                                                   EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         return List.of(
@@ -163,8 +163,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitWrappedByteType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                               ParsedField field,
+    public List<CodeLine> visitWrappedByteType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                               VersionField field,
                                                EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         return List.of(
@@ -183,8 +183,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitWrappedIntType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                              ParsedField field,
+    public List<CodeLine> visitWrappedIntType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                              VersionField field,
                                               EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         if (field.getByteOrderPreference() == ByteOrderPreference.NONE) {
@@ -217,8 +217,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitWrappedLongType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                               ParsedField field,
+    public List<CodeLine> visitWrappedLongType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                               VersionField field,
                                                EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         if (field.getByteOrderPreference() == ByteOrderPreference.NONE) {
@@ -251,8 +251,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitWrappedShortType(ParsedField.WrappedPrimitiveFieldType fieldType,
-                                                ParsedField field,
+    public List<CodeLine> visitWrappedShortType(VersionField.WrappedPrimitiveFieldType fieldType,
+                                                VersionField field,
                                                 EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         if (field.getByteOrderPreference() == ByteOrderPreference.NONE) {
@@ -285,8 +285,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitStringType(ParsedField.StringFieldType fieldType,
-                                          ParsedField field,
+    public List<CodeLine> visitStringType(VersionField.StringFieldType fieldType,
+                                          VersionField field,
                                           EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         return List.of(
@@ -311,8 +311,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitBitSetType(ParsedField.BitSetFieldType fieldType,
-                                          ParsedField field,
+    public List<CodeLine> visitBitSetType(VersionField.BitSetFieldType fieldType,
+                                          VersionField field,
                                           EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
 
@@ -380,8 +380,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitByteArrayType(ParsedField.ByteArrayFieldType fieldType,
-                                             ParsedField field,
+    public List<CodeLine> visitByteArrayType(VersionField.ByteArrayFieldType fieldType,
+                                             VersionField field,
                                              EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
@@ -500,8 +500,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitEnumType(ParsedField.EnumFieldType fieldType,
-                                        ParsedField field,
+    public List<CodeLine> visitEnumType(VersionField.EnumFieldType fieldType,
+                                        VersionField field,
                                         EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
@@ -536,8 +536,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitListType(ParsedField.ListFieldType fieldType,
-                                        ParsedField field,
+    public List<CodeLine> visitListType(VersionField.ListFieldType fieldType,
+                                        VersionField field,
                                         EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
@@ -577,8 +577,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitSetType(ParsedField.SetFieldType fieldType,
-                                       ParsedField field,
+    public List<CodeLine> visitSetType(VersionField.SetFieldType fieldType,
+                                       VersionField field,
                                        EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();
@@ -618,8 +618,8 @@ public class EncodeFieldTypeVisitor implements FieldTypeVisitor<List<CodeLine>, 
     }
 
     @Override
-    public List<CodeLine> visitMapType(ParsedField.MapFieldType fieldType,
-                                       ParsedField field,
+    public List<CodeLine> visitMapType(VersionField.MapFieldType fieldType,
+                                       VersionField field,
                                        EncodeCodeGenContext context) {
         int indentation = context.getIndentation();
         List<CodeLine> codeLines = new ArrayList<>();

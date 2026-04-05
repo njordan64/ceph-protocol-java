@@ -9,9 +9,10 @@
  */
 package ca.venom.ceph.protocol.frames;
 
+import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.CephProtocolContext;
 import ca.venom.ceph.protocol.NodeType;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.CephAddr;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.net.Inet4Address;
+import java.net.InetSocketAddress;
 import java.util.BitSet;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -49,13 +51,13 @@ public class TestHelloFrame {
 
         assertEquals(NodeType.MON, parsedMessage.getSegment1().getNodeType());
 
-        Addr addr = (Addr) parsedMessage.getSegment1().getAddr();
+        CephAddr addr = parsedMessage.getSegment1().getAddr();
         assertEquals(0, addr.getNonce());
 
-        assertEquals(60832, addr.getPort() & 0xffff);
+        assertEquals(60832, addr.getPort());
         assertArrayEquals(
                 new byte[] {(byte) 192, (byte) 168, (byte) 122, (byte) 227},
-                addr.getAddress().getAddress()
+                addr.getSocketAddress().getAddress().getAddress()
         );
     }
 
@@ -66,7 +68,7 @@ public class TestHelloFrame {
 
         helloFrame.getSegment1().setNodeType(NodeType.MON);
 
-        Addr addr = new Addr();
+        CephAddr addr = new CephAddr();
         addr.setNonce(0);
         Inet4Address inet4Address = (Inet4Address) Inet4Address.getByAddress(
                 new byte[] {
@@ -76,14 +78,16 @@ public class TestHelloFrame {
                         (byte) 227
                 }
         );
-        addr.setIPv4AddrWithPort(inet4Address, (short) 60832);
+        addr.setSocketAddress(new InetSocketAddress(inet4Address, 60832));
 
         helloFrame.getSegment1().setAddr(addr);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);
         ByteBuf byteBuf = Unpooled.buffer();
-        helloFrame.encodeSegment1(byteBuf, true, new BitSet(64));
+        BitSet features = new BitSet(64);
+        CephFeatures.MSG_ADDR2.enable(features);
+        helloFrame.encodeSegment1(byteBuf, true, features);
 
         byte[] actualSegment = new byte[byteBuf.writerIndex()];
         System.arraycopy(byteBuf.array(), 0, actualSegment, 0, byteBuf.writerIndex());

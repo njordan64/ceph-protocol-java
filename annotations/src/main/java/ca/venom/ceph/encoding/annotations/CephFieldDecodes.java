@@ -10,18 +10,12 @@
 package ca.venom.ceph.encoding.annotations;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(CephFieldEncodes.class)
-public @interface CephFieldEncode {
-    int order() default 1;
-
-    byte minVersion() default (byte) -1;
-
-    byte maxVersion() default (byte) -1;
+public @interface CephFieldDecodes {
+    CephFieldDecode[] value();
 }

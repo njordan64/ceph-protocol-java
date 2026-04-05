@@ -17,6 +17,7 @@ import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
 import ca.venom.ceph.protocol.messages.CephMsgHeader2;
+import ca.venom.ceph.protocol.messages.MMonCommand;
 import ca.venom.ceph.protocol.messages.MMonGetMap;
 import ca.venom.ceph.protocol.messages.MMonMap;
 import ca.venom.ceph.protocol.messages.MessagePayload;
@@ -97,7 +98,7 @@ public class MessageFrame extends ControlFrame {
     @Override
     public void decodeSegment2(ByteBuf byteBuf, boolean le, BitSet features) throws DecodingException {
         if (byteBuf.readableBytes() > 0) {
-            payload = CephDecoder.decode(byteBuf, le, features, MessagePayload.class, head.getType());
+            payload = CephDecoder.decodeMessagePayload(byteBuf, le, features, head);
         }
     }
 
@@ -122,6 +123,8 @@ public class MessageFrame extends ControlFrame {
                 return (short) MessageType.MSG_MON_MAP.getValueInt();
             } else if (payload instanceof MMonGetMap) {
                 return (short) MessageType.MSG_MON_GET_MAP.getValueInt();
+            } else if (payload instanceof MMonCommand) {
+                return (short) MessageType.MSG_MON_COMMAND.getValueInt();
             }
         }
 

@@ -13,7 +13,8 @@ import ca.venom.ceph.client.AttributeKeys;
 import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.frames.ClientIdentFrame;
 import ca.venom.ceph.protocol.frames.ServerIdentFrame;
-import ca.venom.ceph.protocol.types.Addr;
+import ca.venom.ceph.protocol.types.AddrVec;
+import ca.venom.ceph.protocol.types.CephAddr;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
@@ -55,22 +56,20 @@ public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> 
         int addrNonce = random.nextInt();
         channel.attr(AttributeKeys.ADDR_NONCE).set(addrNonce);
 
-        Addr myAddr = new Addr();
+        CephAddr myAddr = new CephAddr();
         myAddr.setNonce(addrNonce);
         InetSocketAddress inetSocketAddress = (InetSocketAddress) channel.localAddress();
-        if (inetSocketAddress.getAddress() instanceof Inet4Address inet4Address) {
-            myAddr.setIPv4AddrWithPort(inet4Address, (short) inetSocketAddress.getPort());
-        } else if (inetSocketAddress.getAddress() instanceof Inet6Address inet6Address) {
-            myAddr.setIPv6AddrWithPort(inet6Address, (short) inetSocketAddress.getPort(), 0);
-        }
-        clientIdentFrame.getSegment1().setMyAddresses(Collections.singletonList(myAddr));
+        myAddr.setSocketAddress(inetSocketAddress);
+        AddrVec addrVec = new AddrVec();
+        addrVec.setAddrList(Collections.singletonList(myAddr));
+        clientIdentFrame.getSegment1().setMyAddresses(addrVec);
 
-        Addr targetAddr = new Addr();
+        CephAddr targetAddr = new CephAddr();
         targetAddr.setNonce(0);
         inetSocketAddress = (InetSocketAddress) channel.remoteAddress();
         String overrideServerPort = System.getenv("OVERRIDE_SERVER_PORT");
         String overrideServerHost = System.getenv("OVERRIDE_SERVER_HOST");
-        short targetPort = (short) inetSocketAddress.getPort();
+        short targetPort;
         if (overrideServerPort != null) {
             targetPort = (short) Integer.parseInt(overrideServerPort);
         } else {
@@ -88,11 +87,11 @@ public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> 
             } catch (UnknownHostException uhe) {
                 inet4Address = (Inet4Address) Inet4Address.getLoopbackAddress();
             }
-            targetAddr.setIPv4AddrWithPort(inet4Address, targetPort);
+            targetAddr.setSocketAddress(new InetSocketAddress(inet4Address, targetPort));
         } else if (inetSocketAddress.getAddress() instanceof Inet4Address inet4Address) {
-            targetAddr.setIPv4AddrWithPort(inet4Address, targetPort);
+            targetAddr.setSocketAddress(new InetSocketAddress(inet4Address, targetPort));
         } else if (inetSocketAddress.getAddress() instanceof Inet6Address inet6Address) {
-            targetAddr.setIPv6AddrWithPort(inet6Address, targetPort, 0);
+            targetAddr.setSocketAddress(new InetSocketAddress(inet6Address, targetPort));
         }
         clientIdentFrame.getSegment1().setTargetAddress(targetAddr);
 
