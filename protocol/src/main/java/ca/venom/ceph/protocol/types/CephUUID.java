@@ -20,6 +20,9 @@ import lombok.Setter;
 
 import java.util.UUID;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/uuid.h#L26
+ */
 @CephType()
 public class CephUUID {
     @Getter

@@ -12,15 +12,16 @@ package ca.venom.ceph.protocol.messages;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.protocol.types.mds.clientmetricpayload.ClientMetricPayload;
+import ca.venom.ceph.protocol.types.mds.clientmetricpayload.ClientMetricMessage;
 import ca.venom.ceph.types.MessageType;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.BitSet;
 import java.util.List;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MClientMetrics.h#L12
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MClientMetrics.h#L12
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_CLIENT_METRICS)
@@ -28,5 +29,10 @@ public class MClientMetrics extends MessagePayload {
     @Getter
     @Setter
     @CephField
-    private List<ClientMetricPayload> updates;
+    private List<ClientMetricMessage> updates;
+
+    @Override
+    public short getHeadCompatVersion(BitSet features) {
+        return 1;
+    }
 }

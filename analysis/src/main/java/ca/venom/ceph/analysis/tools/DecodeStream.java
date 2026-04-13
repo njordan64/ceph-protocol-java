@@ -122,7 +122,7 @@ public class DecodeStream {
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(authRequestFrame));
 
-        if (authRequestFrame.getSegment1().getPayload() instanceof AuthRequestAuthorizerPayload payload) {
+        if (authRequestFrame.getSegment1().getAuthPayload() instanceof AuthRequestAuthorizerPayload payload) {
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, authKey, new IvParameterSpec(PROOF_IV.getBytes()));
             byte[] unencryptedBytes = cipher.doFinal(payload.getTicket().getBlob());
@@ -151,7 +151,7 @@ public class DecodeStream {
         if (sessionKey != null) {
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, sessionKey, new IvParameterSpec(PROOF_IV.getBytes()));
-            byte[] decryptedBytes = cipher.doFinal(authReplyMoreFrame.getPayload().getPayload());
+            byte[] decryptedBytes = cipher.doFinal(authReplyMoreFrame.getPayload().getAuthPayload());
             byte[] serverChallenge = new byte[8];
             System.arraycopy(decryptedBytes, 9, serverChallenge, 0, 8);
 
@@ -159,7 +159,7 @@ public class DecodeStream {
             HexFunctions.printHexString(serverChallenge);
             System.out.println("****************************************************");
         } else {
-            ByteBuf byteBuf = Unpooled.wrappedBuffer(authReplyMoreFrame.getPayload().getPayload());
+            ByteBuf byteBuf = Unpooled.wrappedBuffer(authReplyMoreFrame.getPayload().getAuthPayload());
             CephXServerChallenge serverChallenge = CephDecoder.decode(byteBuf, true, features, CephXServerChallenge.class);
             System.out.println("** Server Challenge ********************************");
             System.out.println(objectMapper
@@ -176,7 +176,7 @@ public class DecodeStream {
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(authRequestMoreFrame));
         if (sessionKey != null) {
-            AuthRequestMoreAuthorizerPayload payload = (AuthRequestMoreAuthorizerPayload) authRequestMoreFrame.getPayload();
+            AuthRequestMoreAuthorizerPayload payload = (AuthRequestMoreAuthorizerPayload) authRequestMoreFrame.getAuthPayload();
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, authKey, new IvParameterSpec(PROOF_IV.getBytes()));
             byte[] decryptedBytes = cipher.doFinal(payload.getTicket().getBlob());
@@ -210,7 +210,7 @@ public class DecodeStream {
         int decryptedSecretOffset = 0;
         if (sessionKey == null) {
             AuthDoneMonPayload payload = CephDecoder.decode(
-                    Unpooled.wrappedBuffer(authDoneFrame.getSegment1().getPayload()),
+                    Unpooled.wrappedBuffer(authDoneFrame.getSegment1().getAuthPayload()),
                     true,
                     features,
                     AuthDoneMonPayload.class
@@ -238,9 +238,9 @@ public class DecodeStream {
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, sessionKey, new IvParameterSpec(PROOF_IV.getBytes()));
             byte[] decryptedBytes = cipher.doFinal(
-                    authDoneFrame.getSegment1().getPayload(),
+                    authDoneFrame.getSegment1().getAuthPayload(),
                     4,
-                    authDoneFrame.getSegment1().getPayload().length - 4
+                    authDoneFrame.getSegment1().getAuthPayload().length - 4
             );
 
             CephXAuthorizeReplyV2 authorizeReply = CephDecoder.decode(

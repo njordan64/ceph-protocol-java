@@ -11,17 +11,19 @@ package ca.venom.ceph.protocol.types.mds;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeSize;
 import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/mds/mdstypes.h#L307
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/types.h#L330
  */
 @Getter
 @Setter
 @CephType
 @CephTypeVersionConstant(version = 1, compatVersion = 1)
+@CephTypeSize
 public class QuotaInfo {
     @CephField
     private long maxBytes = 0;

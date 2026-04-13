@@ -1038,7 +1038,7 @@ public class AESTest {
         byte[] bar = new byte[8];
         ByteBuf foo = Unpooled.wrappedBuffer(bar);
         foo.writerIndex(0);
-        foo.writeLongLE(clientIdentFrame.getSegment1().getClientCookie());
+        foo.writeLongLE(clientIdentFrame.getSegment1().getCookie());
         System.out.println("--------------------------------------------------------");
         HexFunctions.printHexString(bar);
 

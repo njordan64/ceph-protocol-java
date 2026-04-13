@@ -24,13 +24,13 @@ public abstract class MessagePayload {
         return 0;
     }
 
-    public void prepareForEncode() {
+    public void prepareForEncode(ByteBuf byteBuf, boolean le, BitSet features) {
     }
 
     public void prepareForDecode(CephMsgHeader2 header) {
     }
 
-    public void finishDecode() {
+    public void finishDecode(BitSet features, short version) {
     }
 
     public void encodeMiddle(ByteBuf byteBuf, boolean le, BitSet features) {

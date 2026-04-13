@@ -9,30 +9,14 @@
  */
 package ca.venom.ceph.protocol.messages;
 
-import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.protocol.types.mon.MonSubscribeItem;
 import ca.venom.ceph.types.MessageType;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MMonSubscribe.h#L32
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MMonGetMap.h#L23
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_MON_GET_MAP)
 public class MMonGetMap extends MessagePayload {
-    @Getter
-    @Setter
-    @CephField
-    private Map<String, MonSubscribeItem> what = new HashMap<>();
-
-    @Getter
-    @Setter
-    @CephField(order = 2)
-    private String hostname;
 }

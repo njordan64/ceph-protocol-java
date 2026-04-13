@@ -10,16 +10,23 @@
 package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephFieldDecode;
+import ca.venom.ceph.encoding.annotations.CephFieldEncode;
 import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.protocol.CephDecoder;
+import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.types.UTime;
 import ca.venom.ceph.types.EnumWithIntValue;
 import ca.venom.ceph.types.MessageType;
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.BitSet;
+
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MMonPing.h#L21
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MMonPing.h
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_MON_PING)
@@ -57,6 +64,12 @@ public class MMonPing extends MessagePayload {
 
     @Getter
     @Setter
+    private int minSize;
+
+    private int startIndex;
+
+    @Getter
+    @Setter
     @CephField
     private PingOp op;
 
@@ -70,8 +83,30 @@ public class MMonPing extends MessagePayload {
     @CephField(order = 3, includeSize = true)
     private byte[] tracker;
 
-    @Getter
-    @Setter
-    @CephField(order = 4, includeSize = true)
-    private byte[] zeroes;
+    @Override
+    public short getHeadCompatVersion(BitSet features) {
+        return 1;
+    }
+
+    @Override
+    public void prepareForEncode(ByteBuf byteBuf, boolean le, BitSet features) {
+        startIndex = byteBuf.writerIndex();
+    }
+
+    @CephFieldEncode(order = 4)
+    public void encodeZeroes(ByteBuf byteBuf, boolean le, BitSet features) {
+        int currentSize = byteBuf.writerIndex() - startIndex;
+        if (minSize > currentSize) {
+            CephEncoder.encode(minSize - currentSize, byteBuf, le);
+            byteBuf.writeZero(minSize - currentSize);
+        }
+    }
+
+    @CephFieldDecode(order = 4)
+    public void decodeZeroes(ByteBuf byteBuf, boolean le, BitSet features) {
+        int zeroesCount = CephDecoder.decodeInt(byteBuf, le);
+        if (zeroesCount > 0) {
+            byteBuf.writerIndex(byteBuf.writerIndex() + zeroesCount);
+        }
+    }
 }

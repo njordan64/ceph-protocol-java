@@ -62,7 +62,7 @@ public class TestAuthReplyMoreFrame {
                 (byte) 0x91, (byte) 0xd0, (byte) 0x47, (byte) 0xbc,
                 (byte) 0xad
         };
-        assertArrayEquals(serverChallenge, parsedMessage.getPayload().getPayload());
+        assertArrayEquals(serverChallenge, parsedMessage.getPayload().getAuthPayload());
     }
 
     @Test
@@ -79,7 +79,7 @@ public class TestAuthReplyMoreFrame {
         CephEncoder.encode(serverChallenge, serverChallengeByteBuf, true, new BitSet(64));
         byte[] encodedBytes = new byte[serverChallengeByteBuf.writerIndex()];
         serverChallengeByteBuf.getBytes(0, encodedBytes);
-        authReplyMore.getPayload().setPayload(encodedBytes);
+        authReplyMore.getPayload().setAuthPayload(encodedBytes);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);

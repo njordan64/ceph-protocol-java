@@ -18,16 +18,32 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/include/cephfs/metrics/Types.h#L153
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L158
  */
-@Getter
-@Setter
 @CephType
-@CephTypeVersionConstant(version = 1, compatVersion = 1)
+@CephTypeVersionConstant(version = 2, compatVersion = 1)
 @CephTypeSize
 public class ReadLatencyPayload extends ClientMetricPayload {
-    @CephField(order = 2)
+    @Getter
+    @Setter
+    @CephField(minVersion = 1, maxVersion = 1)
+    @CephField(minVersion = 2, maxVersion = 2)
     private UTime lat;
+
+    @Getter
+    @Setter
+    @CephField(order = 2, minVersion = 2, maxVersion = 2)
+    private UTime mean;
+
+    @Getter
+    @Setter
+    @CephField(order = 3, minVersion = 2, maxVersion = 2)
+    private long sqSum;
+
+    @Getter
+    @Setter
+    @CephField(order = 4, minVersion = 2, maxVersion = 2)
+    private long count;
 
     public ReadLatencyPayload() {
         super(ClientMetricType.READ_LATENCY);

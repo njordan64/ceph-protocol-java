@@ -17,23 +17,23 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L353
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L464
  */
 @CephType
 @CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize
-public class OpenedFilesPayload extends ClientMetricPayload {
+public class ReadIOSizesPayload extends ClientMetricPayload {
     @Getter
     @Setter
     @CephField
-    private long openedFiles = 0;
+    private long totalOps;
 
     @Getter
     @Setter
     @CephField(order = 2)
-    private long totalInodes = 0;
+    private long totalSize;
 
-    public OpenedFilesPayload() {
-        super(ClientMetricType.OPENED_FILES);
+    public ReadIOSizesPayload() {
+        super(ClientMetricType.READ_IO_SIZES);
     }
 }

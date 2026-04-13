@@ -11,92 +11,160 @@ package ca.venom.ceph.protocol.messages;
 
 import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
+import ca.venom.ceph.encoding.annotations.CephFieldDecode;
+import ca.venom.ceph.encoding.annotations.CephFieldEncode;
 import ca.venom.ceph.encoding.annotations.CephMessagePayload;
 import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.protocol.CephEncoder;
+import ca.venom.ceph.protocol.CephFeatures;
 import ca.venom.ceph.protocol.CephRelease;
 import ca.venom.ceph.protocol.types.CephUUID;
 import ca.venom.ceph.protocol.types.mon.MonFeature;
+import ca.venom.ceph.protocol.types.mon.MonFeatureValues;
+import ca.venom.ceph.protocol.types.mon.MonMap;
 import ca.venom.ceph.types.MessageType;
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MMonElection.h#L24
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MMonElection.h#L25
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_MON_ELECTION)
 public class MMonElection extends MessagePayload {
     @Getter
     @Setter
-    @CephField
+    @CephField(minVersion = 5, maxVersion = 5)
+    @CephField(minVersion = 6, maxVersion = 6)
+    @CephField(minVersion = 7, maxVersion = 7)
+    @CephField(minVersion = 8, maxVersion = 8)
+    @CephField(minVersion = 9, maxVersion = 9)
     private CephUUID fsid;
 
     @Getter
     @Setter
-    @CephField(order = 2)
+    @CephField(order = 2, minVersion = 5, maxVersion = 5)
+    @CephField(order = 2, minVersion = 6, maxVersion = 6)
+    @CephField(order = 2, minVersion = 7, maxVersion = 7)
+    @CephField(order = 2, minVersion = 8, maxVersion = 8)
+    @CephField(order = 2, minVersion = 9, maxVersion = 9)
     private int op;
 
     @Getter
     @Setter
-    @CephField(order = 3)
+    @CephField(order = 3, minVersion = 5, maxVersion = 5)
+    @CephField(order = 3, minVersion = 6, maxVersion = 6)
+    @CephField(order = 3, minVersion = 7, maxVersion = 7)
+    @CephField(order = 3, minVersion = 8, maxVersion = 8)
+    @CephField(order = 3, minVersion = 9, maxVersion = 9)
     private int epoch;
 
     @Getter
     @Setter
-    @CephField(order = 4, includeSize = true)
-    private byte[] monMap;
+    @CephField(order = 4, minVersion = 5, maxVersion = 5)
+    @CephField(order = 4, minVersion = 6, maxVersion = 6)
+    @CephField(order = 4, minVersion = 7, maxVersion = 7)
+    @CephField(order = 4, minVersion = 8, maxVersion = 8)
+    @CephField(order = 4, minVersion = 9, maxVersion = 9)
+    private MonMap monMap;
 
     @Getter
     @Setter
-    @CephField(order = 5)
+    @CephField(order = 5, minVersion = 5, maxVersion = 5)
+    @CephField(order = 5, minVersion = 6, maxVersion = 6)
+    @CephField(order = 5, minVersion = 7, maxVersion = 7)
+    @CephField(order = 5, minVersion = 8, maxVersion = 8)
+    @CephField(order = 5, minVersion = 9, maxVersion = 9)
     private List<Integer> quorum;
 
     @Getter
     @Setter
-    @CephField(order = 6)
+    @CephField(order = 6, minVersion = 5, maxVersion = 5)
+    @CephField(order = 6, minVersion = 6, maxVersion = 6)
+    @CephField(order = 6, minVersion = 7, maxVersion = 7)
+    @CephField(order = 6, minVersion = 8, maxVersion = 8)
+    @CephField(order = 6, minVersion = 9, maxVersion = 9)
     private long quorumFeatures;
 
     @Getter
     @Setter
-    @CephField(order = 7)
+    @CephField(order = 7, minVersion = 5, maxVersion = 5)
+    @CephField(order = 7, minVersion = 6, maxVersion = 6)
+    @CephField(order = 7, minVersion = 7, maxVersion = 7)
+    @CephField(order = 7, minVersion = 8, maxVersion = 8)
+    @CephField(order = 7, minVersion = 9, maxVersion = 9)
     private long defunctField1;
 
     @Getter
     @Setter
-    @CephField(order = 8)
+    @CephField(order = 8, minVersion = 5, maxVersion = 5)
+    @CephField(order = 8, minVersion = 6, maxVersion = 6)
+    @CephField(order = 8, minVersion = 7, maxVersion = 7)
+    @CephField(order = 8, minVersion = 8, maxVersion = 8)
+    @CephField(order = 8, minVersion = 9, maxVersion = 9)
     private long defunctField2;
 
     @Getter
     @Setter
-    @CephField(order = 9, includeSize = true)
+    @CephField(order = 9, includeSize = true, minVersion = 5, maxVersion = 5)
+    @CephField(order = 9, includeSize = true, minVersion = 6, maxVersion = 6)
+    @CephField(order = 9, includeSize = true, minVersion = 7, maxVersion = 7)
+    @CephField(order = 9, includeSize = true, minVersion = 8, maxVersion = 8)
+    @CephField(order = 9, includeSize = true, minVersion = 9, maxVersion = 9)
     private byte[] sharing;
 
     @Getter
     @Setter
-    @CephField(order = 10)
+    @CephField(order = 10, minVersion = 6, maxVersion = 6)
+    @CephField(order = 10, minVersion = 7, maxVersion = 7)
+    @CephField(order = 10, minVersion = 8, maxVersion = 8)
+    @CephField(order = 10, minVersion = 9, maxVersion = 9)
     private MonFeature monFeatures;
 
     @Getter
     @Setter
-    @CephField(order = 11)
+    @CephField(order = 11, minVersion = 7, maxVersion = 7)
+    @CephField(order = 11, minVersion = 8, maxVersion = 8)
+    @CephField(order = 11, minVersion = 9, maxVersion = 9)
     private Map<String, String> metadata;
 
     @Getter
     @Setter
-    @CephField(order = 12)
+    @CephField(order = 12, minVersion = 8, maxVersion = 8)
+    @CephField(order = 12, minVersion = 9, maxVersion = 9)
     @CephEncodingSize
     private CephRelease monRelease = CephRelease.UNKNOWN;
 
     @Getter
     @Setter
-    @CephField(order = 13, includeSize = true)
+    @CephField(order = 13, includeSize = true, minVersion = 9, maxVersion = 9)
     private byte[] scoring;
 
     @Getter
     @Setter
-    @CephField(order = 14)
-    private byte strategy;
+    @CephField(order = 14, minVersion = 9, maxVersion = 9)
+    @CephEncodingSize
+    private MonMap.ElectionStrategy strategy = MonMap.ElectionStrategy.CLASSIC;
+
+    @Override
+    public short getHeadVersion(BitSet features) {
+        return 9;
+    }
+
+    @Override
+    public short getHeadCompatVersion(BitSet features) {
+        return 5;
+    }
+
+    @Override
+    public void finishDecode(BitSet features, short version) {
+        if (monRelease == CephRelease.UNKNOWN) {
+            monRelease = MonFeatureValues.inferFromMonFeatures(features);
+        }
+    }
 }

@@ -17,10 +17,11 @@ import ca.venom.ceph.types.MessageType;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.BitSet;
 import java.util.List;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MClientCapRelease.h#L21
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MClientCapRelease.h#L22
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_CLIENT_CAPRELEASE)
@@ -34,4 +35,14 @@ public class MClientCapRelease extends MessagePayload {
     @Setter
     @CephField(order = 2)
     private int osdEpochBarrier = 0;
+
+    @Override
+    public short getHeadVersion(BitSet features) {
+        return 2;
+    }
+
+    @Override
+    public short getHeadCompatVersion(BitSet features) {
+        return 1;
+    }
 }

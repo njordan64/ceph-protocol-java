@@ -119,10 +119,10 @@ public class AuthTest {
     private static void sendHello(Socket socket) throws IOException {
         HelloFrame helloFrame = new HelloFrame();
         helloFrame.setSegment1(new HelloFrame.Segment1());
-        helloFrame.getSegment1().setNodeType(NodeType.CLIENT);
+        helloFrame.getSegment1().setEntityType(NodeType.CLIENT);
         CephAddr addr = new CephAddr();
         addr.setSocketAddress((InetSocketAddress) socket.getLocalSocketAddress());
-        helloFrame.getSegment1().setAddr(addr);
+        helloFrame.getSegment1().setPeerAddr(addr);
 
         //socket.getOutputStream().write(helloFrame.encode(ctx));
     }
@@ -139,7 +139,7 @@ public class AuthTest {
 
     private static void sendAuthRequest(Socket socket, String username) throws IOException {
         AuthRequestFrame authRequestFrame = new AuthRequestFrame();
-        authRequestFrame.getSegment1().setAuthMethod(2);
+        authRequestFrame.getSegment1().setMethod(2);
         List<Integer> preferredModes = new ArrayList<>();
         preferredModes.add(2);
         preferredModes.add(1);
@@ -151,7 +151,7 @@ public class AuthTest {
         authRequestPayload.getEntityName().setType(8);
         authRequestPayload.getEntityName().setEntityName(username);
         authRequestPayload.setGlobalId(0L);
-        authRequestFrame.getSegment1().setPayload(authRequestPayload);
+        authRequestFrame.getSegment1().setAuthPayload(authRequestPayload);
 
         //socket.getOutputStream().write(authRequestFrame.encode(ctx));
     }
@@ -196,7 +196,7 @@ public class AuthTest {
 
         AuthRequestMoreFrame requestMore = new AuthRequestMoreFrame();
         AuthRequestMoreMonPayload requestMorePayload = new AuthRequestMoreMonPayload();
-        requestMore.setPayload(requestMorePayload);
+        requestMore.setAuthPayload(requestMorePayload);
         CephXRequestHeader requestHeader = new CephXRequestHeader();
         requestHeader.setRequestType((short) 0x100);
         requestMorePayload.setRequestHeader(requestHeader);
@@ -229,7 +229,7 @@ public class AuthTest {
         //authDone.decode(socket.getInputStream(), ctx);
         AuthDoneMonPayload payload = null;
         System.out.println(">>> Global ID: " + authDone.getSegment1().getGlobalId());
-        System.out.println(">>> Connection Mode: " + authDone.getSegment1().getConnectionMode());
+        System.out.println(">>> Connection Mode: " + authDone.getSegment1().getConMode());
         System.out.println(">>> Response Type: " + payload.getResponseHeader().getResponseType());
         System.out.println(">>> Status: " + payload.getResponseHeader().getStatus());
 

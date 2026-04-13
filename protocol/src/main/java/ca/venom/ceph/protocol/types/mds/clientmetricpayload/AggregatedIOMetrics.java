@@ -7,64 +7,59 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.protocol.types.mds;
+package ca.venom.ceph.protocol.types.mds.clientmetricpayload;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
-import ca.venom.ceph.encoding.annotations.CephZeroPadToSizeOf;
-import ca.venom.ceph.protocol.types.CephFileLayout;
-import ca.venom.ceph.protocol.types.TimeSpec;
+import ca.venom.ceph.encoding.annotations.CephTypeSize;
+import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/ceph_fs.h#L948
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L643
  */
 @CephType
-@CephZeroPadToSizeOf(CapsExportBody.class)
-public class CapsNonExportBody extends CapsBody {
+@CephTypeVersionConstant(version = 1, compatVersion = 1)
+@CephTypeSize
+public class AggregatedIOMetrics {
     @Getter
     @Setter
     @CephField
-    private long size;
+    private long subvolumeId;
 
     @Getter
     @Setter
     @CephField(order = 2)
-    private long maxSize;
+    private int readCount;
 
     @Getter
     @Setter
     @CephField(order = 3)
-    private long truncateSize;
+    private int writeCount;
 
     @Getter
     @Setter
     @CephField(order = 4)
-    private int truncateSeq;
+    private long readBytes;
 
     @Getter
     @Setter
     @CephField(order = 5)
-    private TimeSpec mTime;
+    private long writeBytes;
 
     @Getter
     @Setter
     @CephField(order = 6)
-    private TimeSpec aTime;
+    private long readLatencyUs;
 
     @Getter
     @Setter
     @CephField(order = 7)
-    private TimeSpec cTime;
+    private long writeLatencyUs;
 
     @Getter
     @Setter
     @CephField(order = 8)
-    private CephFileLayout layout;
-
-    @Getter
-    @Setter
-    @CephField(order = 9)
-    private int timeWarpSeq;
+    private long timeStamp;
 }

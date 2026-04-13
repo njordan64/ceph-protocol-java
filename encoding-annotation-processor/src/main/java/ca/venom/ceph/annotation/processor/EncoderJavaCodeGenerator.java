@@ -628,7 +628,7 @@ public class EncoderJavaCodeGenerator {
                 if (needCloseBlock) {
                     out.println("        }");
                 }
-            } else {
+            } else if (versionGroups.size() > 1) {
                 boolean isFirst = true;
                 for (VersionGroup versionGroup : versionGroups) {
                     if (versionGroup.getMaxVersion() != (byte) -1) {

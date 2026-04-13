@@ -16,11 +16,14 @@ import ca.venom.ceph.protocol.types.UTime;
 import ca.venom.ceph.protocol.types.mds.NestInfo;
 import ca.venom.ceph.protocol.types.mds.QuotaInfo;
 import ca.venom.ceph.types.MessageType;
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.BitSet;
+
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MClientQuota.h#L6
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MClientQuota.h#L7
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_CLIENT_QUOTA)
@@ -60,7 +63,7 @@ public class MClientQuota extends MessagePayload {
     private QuotaInfo quota;
 
     @Override
-    public void prepareForEncode() {
+    public void prepareForEncode(ByteBuf byteBuf, boolean le, BitSet features) {
         rcTime = rstat.getRcTime();
         rBytes = rstat.getRBytes();
         rFiles = rstat.getRFiles();
@@ -68,7 +71,7 @@ public class MClientQuota extends MessagePayload {
     }
 
     @Override
-    public void finishDecode() {
+    public void finishDecode(BitSet features, short version) {
         rstat = new NestInfo();
         rstat.setRcTime(rcTime);
         rstat.setRBytes(rBytes);

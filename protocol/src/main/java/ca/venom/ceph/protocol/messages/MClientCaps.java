@@ -31,7 +31,7 @@ import lombok.Setter;
 import java.util.BitSet;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MClientCaps.h#L22
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MClientCaps.h#L23
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_CLIENT_CAPS)
@@ -290,7 +290,7 @@ public class MClientCaps extends MessagePayload {
     }
 
     @Override
-    public void prepareForEncode() {
+    public void prepareForEncode(ByteBuf byteBuf, boolean le, BitSet features) {
         head.setSnapTraceLen(snap.length);
         head.setXattrLen(xattr.length);
     }

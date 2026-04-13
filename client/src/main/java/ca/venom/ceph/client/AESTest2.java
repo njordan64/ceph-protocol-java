@@ -355,7 +355,7 @@ public class AESTest2 {
         authDoneFrame.decodeSegment1(byteBuf, true, new BitSet(64));
 
         AuthDoneMonPayload payload = CephDecoder.decode(
-                Unpooled.wrappedBuffer(authDoneFrame.getSegment1().getPayload()),
+                Unpooled.wrappedBuffer(authDoneFrame.getSegment1().getAuthPayload()),
                 true,
                 new BitSet(64),
                 AuthDoneMonPayload.class

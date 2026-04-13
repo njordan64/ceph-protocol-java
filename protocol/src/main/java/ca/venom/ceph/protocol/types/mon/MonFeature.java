@@ -19,6 +19,9 @@ import lombok.Setter;
 
 import java.util.BitSet;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/mon/mon_types.h#L342
+ */
 @CephType
 @CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize

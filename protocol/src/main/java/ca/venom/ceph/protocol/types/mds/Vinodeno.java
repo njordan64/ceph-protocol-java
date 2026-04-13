@@ -16,18 +16,16 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/mds/mdstypes.h#L275C8-L275C13
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/types.h#L203
  */
+@Getter
+@Setter
 @EqualsAndHashCode
 @CephType
 public class Vinodeno {
-    @Getter
-    @Setter
     @CephField
     private long inodeNo;
 
-    @Getter
-    @Setter
     @CephField(order = 2)
     private long snapId;
 }

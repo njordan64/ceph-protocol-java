@@ -71,10 +71,10 @@ public class TestAuthDoneFrame {
 
         assertEquals(ControlFrameType.AUTH_DONE, parsedMessage.getTag());
         assertEquals(154220L, parsedMessage.getSegment1().getGlobalId());
-        assertEquals(2, parsedMessage.getSegment1().getConnectionMode());
+        assertEquals(2, parsedMessage.getSegment1().getConMode());
 
         AuthDoneMonPayload payload = CephDecoder.decode(
-                Unpooled.wrappedBuffer(parsedMessage.getSegment1().getPayload()),
+                Unpooled.wrappedBuffer(parsedMessage.getSegment1().getAuthPayload()),
                 true,
                 new BitSet(64),
                 AuthDoneMonPayload.class
@@ -96,7 +96,7 @@ public class TestAuthDoneFrame {
         AuthDoneFrame authDoneFrame = new AuthDoneFrame();
         authDoneFrame.setSegment1(new AuthDoneFrame.Segment1());
         authDoneFrame.getSegment1().setGlobalId(154220L);
-        authDoneFrame.getSegment1().setConnectionMode(2);
+        authDoneFrame.getSegment1().setConMode(2);
 
         AuthDoneMonPayload payload = new AuthDoneMonPayload();
         CephXResponseHeader responseHeader = new CephXResponseHeader();
@@ -120,7 +120,7 @@ public class TestAuthDoneFrame {
 
         byte[] payloadBytes = new byte[payloadByteBuf.writerIndex()];
         payloadByteBuf.readBytes(payloadBytes);
-        authDoneFrame.getSegment1().setPayload(payloadBytes);
+        authDoneFrame.getSegment1().setAuthPayload(payloadBytes);
 
         byte[] expectedPayload = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedPayload, 0, message1Bytes.length - 36);

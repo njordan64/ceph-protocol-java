@@ -81,7 +81,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
 
         AuthRequestFrame request = new AuthRequestFrame();
         request.setSegment1(new AuthRequestFrame.Segment1());
-        request.getSegment1().setAuthMethod(2);
+        request.getSegment1().setMethod(2);
 
         List<Integer> preferredModes = new ArrayList<>(2);
         preferredModes.add(2);
@@ -94,7 +94,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         authRequestPayload.getEntityName().setType(8);
         authRequestPayload.getEntityName().setEntityName(username);
         authRequestPayload.setGlobalId(0L);
-        request.getSegment1().setPayload(authRequestPayload);
+        request.getSegment1().setAuthPayload(authRequestPayload);
 
         state = State.INITIATED;
 
@@ -130,7 +130,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         random.nextBytes(clientChallenge);
 
         CephXServerChallenge serverChallenge = CephDecoder.decode(
-                Unpooled.wrappedBuffer(request.getPayload().getPayload()),
+                Unpooled.wrappedBuffer(request.getPayload().getAuthPayload()),
                 true,
                 features,
                 CephXServerChallenge.class
@@ -158,7 +158,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
 
         AuthRequestMoreFrame requestMore = new AuthRequestMoreFrame();
         AuthRequestMoreMonPayload requestMorePayload = new AuthRequestMoreMonPayload();
-        requestMore.setPayload(requestMorePayload);
+        requestMore.setAuthPayload(requestMorePayload);
         CephXRequestHeader requestHeader = new CephXRequestHeader();
         requestHeader.setRequestType((short) 0x100);
         requestMorePayload.setRequestHeader(requestHeader);
@@ -180,7 +180,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
 
     private void handleAuthDone(ChannelHandlerContext ctx, AuthDoneFrame request, BitSet features) throws Exception {
         AuthDoneMonPayload payload = CephDecoder.decode(
-                Unpooled.wrappedBuffer(request.getSegment1().getPayload()),
+                Unpooled.wrappedBuffer(request.getSegment1().getAuthPayload()),
                 true,
                 features,
                 AuthDoneMonPayload.class
@@ -217,7 +217,7 @@ public class AuthHandler extends InitializationHandler<AuthFrameBase> {
         state = State.COMPLETE;
 
         CephPreParsedFrameCodec preParsedFrameCodec = ctx.pipeline().get(CephPreParsedFrameCodec.class);
-        if (request.getSegment1().getConnectionMode() == 2) {
+        if (request.getSegment1().getConMode() == 2) {
             preParsedFrameCodec.enableSecureMode(streamKey, rxNonceBytes, txNonceBytes);
         }
 

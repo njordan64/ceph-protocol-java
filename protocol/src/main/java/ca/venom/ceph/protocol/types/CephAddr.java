@@ -32,6 +32,9 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.BitSet;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/msg_types.h#L240
+ */
 @EqualsAndHashCode
 @CephType
 public class CephAddr implements Comparable<CephAddr> {
@@ -292,5 +295,15 @@ public class CephAddr implements Comparable<CephAddr> {
     @Override
     public String toString() {
         return getSocketAddress().toString();
+    }
+
+    public CephAddr duplicate() {
+        final CephAddr toReturn = new CephAddr();
+        toReturn.type = type;
+        toReturn.nonce = nonce;
+        toReturn.data = data;
+        toReturn.isLegacy = isLegacy;
+
+        return toReturn;
     }
 }

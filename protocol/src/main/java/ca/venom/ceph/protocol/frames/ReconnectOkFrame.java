@@ -23,7 +23,7 @@ import lombok.Setter;
 import java.util.BitSet;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L739
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/async/frames_v2.h#L740
  */
 public class ReconnectOkFrame extends ControlFrame {
     @CephType
@@ -31,7 +31,7 @@ public class ReconnectOkFrame extends ControlFrame {
         @Getter
         @Setter
         @CephField
-        private long messageSeq;
+        private long msgSeq;
     }
 
     @Getter

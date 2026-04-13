@@ -22,21 +22,21 @@ import lombok.Setter;
 import java.util.BitSet;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L578
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/async/frames_v2.h#L579
  */
 public class AuthRequestMoreFrame extends AuthFrameBase {
     @Getter
     @Setter
-    private AuthRequestMorePayload payload;
+    private AuthRequestMorePayload authPayload;
 
     @Override
     public void encodeSegment1(ByteBuf byteBuf, boolean le, BitSet features) throws EncodingException {
-        CephEncoder.encode(payload, byteBuf, le, features);
+        CephEncoder.encode(authPayload, byteBuf, le, features);
     }
 
     @Override
     public void decodeSegment1(ByteBuf byteBuf, boolean le, BitSet features) throws DecodingException {
-        payload = CephDecoder.decode(byteBuf, le, features, AuthRequestMorePayload.class);
+        authPayload = CephDecoder.decode(byteBuf, le, features, AuthRequestMorePayload.class);
     }
 
     @Override

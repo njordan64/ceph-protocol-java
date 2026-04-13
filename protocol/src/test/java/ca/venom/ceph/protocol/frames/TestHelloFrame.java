@@ -49,9 +49,9 @@ public class TestHelloFrame {
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true, new BitSet(64));
 
-        assertEquals(NodeType.MON, parsedMessage.getSegment1().getNodeType());
+        assertEquals(NodeType.MON, parsedMessage.getSegment1().getEntityType());
 
-        CephAddr addr = parsedMessage.getSegment1().getAddr();
+        CephAddr addr = parsedMessage.getSegment1().getPeerAddr();
         assertEquals(0, addr.getNonce());
 
         assertEquals(60832, addr.getPort());
@@ -66,7 +66,7 @@ public class TestHelloFrame {
         HelloFrame helloFrame = new HelloFrame();
         helloFrame.setSegment1(new HelloFrame.Segment1());
 
-        helloFrame.getSegment1().setNodeType(NodeType.MON);
+        helloFrame.getSegment1().setEntityType(NodeType.MON);
 
         CephAddr addr = new CephAddr();
         addr.setNonce(0);
@@ -80,7 +80,7 @@ public class TestHelloFrame {
         );
         addr.setSocketAddress(new InetSocketAddress(inet4Address, 60832));
 
-        helloFrame.getSegment1().setAddr(addr);
+        helloFrame.getSegment1().setPeerAddr(addr);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);

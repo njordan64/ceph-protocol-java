@@ -9,30 +9,14 @@
  */
 package ca.venom.ceph.protocol.types.mds.clientmetricpayload;
 
-import ca.venom.ceph.encoding.annotations.CephChildType;
-import ca.venom.ceph.encoding.annotations.CephField;
-import ca.venom.ceph.encoding.annotations.CephParentType;
-import ca.venom.ceph.encoding.annotations.CephType;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/include/cephfs/metrics/Types.h#L95
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L100
  */
-@CephType
-@CephParentType(typeSize = 6)
-@CephChildType(typeValue = 0, typeClass = CapInfoPayload.class)
-@CephChildType(typeValue = 1, typeClass = ReadLatencyPayload.class)
-@CephChildType(typeValue = 2, typeClass = WriteLatencyPayload.class)
-@CephChildType(typeValue = 3, typeClass = MetadataLatencyPayload.class)
-@CephChildType(typeValue = 4, typeClass = OpenedFilesPayload.class)
-@CephChildType(typeValue = 5, typeClass = PinnedIcapsPayload.class)
-@CephChildType(typeValue = 6, typeClass = OpenedInodesPayload.class)
 public abstract class ClientMetricPayload {
     @Getter
-    @Setter
-    @CephField
-    private ClientMetricType type;
+    protected ClientMetricType type;
 
     protected ClientMetricPayload(ClientMetricType type) {
         this.type = type;

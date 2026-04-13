@@ -26,7 +26,7 @@ import lombok.Setter;
 import java.util.BitSet;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L518
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/async/frames_v2.h#L519
  */
 public class HelloFrame extends ControlFrame {
     @CephType
@@ -35,13 +35,13 @@ public class HelloFrame extends ControlFrame {
         @Setter
         @CephField
         @CephEncodingSize
-        private NodeType nodeType;
+        private NodeType entityType;
 
         @Getter
         @Setter
         @CephField(order = 2)
         @CephEncodingSize
-        private CephAddr addr;
+        private CephAddr peerAddr;
     }
 
     @Getter

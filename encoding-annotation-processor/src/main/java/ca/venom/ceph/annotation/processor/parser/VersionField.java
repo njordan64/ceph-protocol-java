@@ -255,7 +255,6 @@ public class VersionField {
                 throw new IllegalArgumentException("Invalid array type: " + arrayType.getComponentType().toString());
             }
         } else {
-            System.out.println(">>> " + elementType.getKind().name());
             return new PrimitiveFieldType(elementType.getKind());
         }
     }

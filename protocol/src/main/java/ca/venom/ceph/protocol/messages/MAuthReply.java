@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MAuthReply.h#L21
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MAuthReply.h#L22
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_AUTH_REPLY)

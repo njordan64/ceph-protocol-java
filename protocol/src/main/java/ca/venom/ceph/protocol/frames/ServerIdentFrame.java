@@ -33,12 +33,12 @@ public class ServerIdentFrame extends ControlFrame {
         @Getter
         @Setter
         @CephField
-        private AddrVec myAddresses;
+        private AddrVec addrs;
 
         @Getter
         @Setter
         @CephField(order = 2)
-        private long globalId;
+        private long gid;
 
         @Getter
         @Setter
@@ -66,7 +66,7 @@ public class ServerIdentFrame extends ControlFrame {
         @Getter
         @Setter
         @CephField(order = 7)
-        private long clientCookie;
+        private long cookie;
     }
 
     @Getter

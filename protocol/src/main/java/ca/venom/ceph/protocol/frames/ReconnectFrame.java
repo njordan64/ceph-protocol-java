@@ -16,16 +16,15 @@ import ca.venom.ceph.protocol.CephEncoder;
 import ca.venom.ceph.protocol.ControlFrameType;
 import ca.venom.ceph.protocol.DecodingException;
 import ca.venom.ceph.protocol.EncodingException;
-import ca.venom.ceph.protocol.types.CephAddr;
+import ca.venom.ceph.protocol.types.AddrVec;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.BitSet;
-import java.util.List;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L671
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/async/frames_v2.h#L672
  */
 public class ReconnectFrame extends ControlFrame {
     @CephType
@@ -33,7 +32,7 @@ public class ReconnectFrame extends ControlFrame {
         @Getter
         @Setter
         @CephField
-        private List<CephAddr> myAddresses;
+        private AddrVec addrs;
 
         @Getter
         @Setter
@@ -58,7 +57,7 @@ public class ReconnectFrame extends ControlFrame {
         @Getter
         @Setter
         @CephField(order = 6)
-        private long messageSeq;
+        private long msgSeq;
     }
 
     @Getter

@@ -32,11 +32,11 @@ public class HelloFrameHandler extends InitializationHandler<HelloFrame> {
 
         HelloFrame reply = new HelloFrame();
         reply.setSegment1(new HelloFrame.Segment1());
-        reply.getSegment1().setNodeType(NodeType.CLIENT);
+        reply.getSegment1().setEntityType(NodeType.CLIENT);
 
         CephAddr addr = new CephAddr();
         addr.setSocketAddress((InetSocketAddress) ctx.channel().localAddress());
-        reply.getSegment1().setAddr(addr);
+        reply.getSegment1().setPeerAddr(addr);
 
         ctx.writeAndFlush(reply).sync();
 

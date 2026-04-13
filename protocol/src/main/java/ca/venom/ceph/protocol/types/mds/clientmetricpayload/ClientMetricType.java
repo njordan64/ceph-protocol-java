@@ -9,9 +9,11 @@
  */
 package ca.venom.ceph.protocol.types.mds.clientmetricpayload;
 
-import ca.venom.ceph.protocol.CephRelease;
 import ca.venom.ceph.types.EnumWithIntValue;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L20
+ */
 public enum ClientMetricType implements EnumWithIntValue {
     CAP_INFO(0),
     READ_LATENCY(1),
@@ -20,7 +22,17 @@ public enum ClientMetricType implements EnumWithIntValue {
     DENTRY_LEASE(4),
     OPENED_FILES(5),
     PINNED_ICAPS(6),
-    OPENED_INODES(7);
+    OPENED_INODES(7),
+    READ_IO_SIZES(8),
+    WRITE_IO_SIZES(9),
+    AVG_READ_LATENCY(10),
+    STDEV_READ_LATENCY(11),
+    AVG_WRITE_LATENCY(12),
+    STDEV_WRITE_LATENCY(13),
+    AVG_METADATA_LATENCY(14),
+    STDEV_METADATA_LATENCY(15),
+    SUBVOLUME_METRICS(16),
+    UNKNOWN(-1);
 
     private int valueInt;
 

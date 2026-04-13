@@ -14,6 +14,9 @@ import ca.venom.ceph.encoding.annotations.CephType;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/rados.h#L42
+ */
 @CephType
 public class UTime {
     @Getter

@@ -12,6 +12,7 @@ package ca.venom.ceph.protocol.types.mds;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephFieldEncode;
 import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeSize;
 import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import ca.venom.ceph.protocol.types.UTime;
 import io.netty.buffer.ByteBuf;
@@ -21,10 +22,11 @@ import lombok.Setter;
 import java.util.BitSet;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/mds/mdstypes.h#L214
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/types.h#L142
  */
 @CephType
 @CephTypeVersionConstant(version = 3, compatVersion = 2)
+@CephTypeSize
 public class NestInfo {
     @Getter
     @Setter

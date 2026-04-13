@@ -41,11 +41,11 @@ public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> 
     public void start(Channel channel) {
         ClientIdentFrame clientIdentFrame = new ClientIdentFrame();
         clientIdentFrame.setSegment1(new ClientIdentFrame.Segment1());
-        clientIdentFrame.getSegment1().setGlobalId(-1);
+        clientIdentFrame.getSegment1().setGid(-1);
         clientIdentFrame.getSegment1().setGlobalSeq(1);
 
         SecureRandom random = new SecureRandom();
-        clientIdentFrame.getSegment1().setClientCookie(random.nextLong());
+        clientIdentFrame.getSegment1().setCookie(random.nextLong());
 
         clientIdentFrame.getSegment1().setSupportedFeatures(CephFeatures.ALL);
         BitSet requiredFeatures = new BitSet();
@@ -62,7 +62,7 @@ public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> 
         myAddr.setSocketAddress(inetSocketAddress);
         AddrVec addrVec = new AddrVec();
         addrVec.setAddrList(Collections.singletonList(myAddr));
-        clientIdentFrame.getSegment1().setMyAddresses(addrVec);
+        clientIdentFrame.getSegment1().setAddrs(addrVec);
 
         CephAddr targetAddr = new CephAddr();
         targetAddr.setNonce(0);
@@ -93,7 +93,7 @@ public class ServerIdentHandler extends InitializationHandler<ServerIdentFrame> 
         } else if (inetSocketAddress.getAddress() instanceof Inet6Address inet6Address) {
             targetAddr.setSocketAddress(new InetSocketAddress(inet6Address, targetPort));
         }
-        clientIdentFrame.getSegment1().setTargetAddress(targetAddr);
+        clientIdentFrame.getSegment1().setTargetAddr(targetAddr);
 
         channel.writeAndFlush(clientIdentFrame);
     }

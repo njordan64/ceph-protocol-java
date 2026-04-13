@@ -17,18 +17,20 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/include/cephfs/metrics/Types.h#L422
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L427
  */
-@Getter
-@Setter
 @CephType
 @CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize
 public class OpenedInodesPayload extends ClientMetricPayload {
-    @CephField(order = 2)
+    @Getter
+    @Setter
+    @CephField
     private long openedInodes = 0;
 
-    @CephField(order = 3)
+    @Getter
+    @Setter
+    @CephField(order = 2)
     private long totalInodes;
 
     public OpenedInodesPayload() {

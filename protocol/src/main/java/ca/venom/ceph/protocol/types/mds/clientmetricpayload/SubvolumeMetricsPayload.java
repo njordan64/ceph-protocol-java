@@ -16,24 +16,21 @@ import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L353
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L747
  */
 @CephType
 @CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize
-public class OpenedFilesPayload extends ClientMetricPayload {
+public class SubvolumeMetricsPayload extends ClientMetricPayload {
     @Getter
     @Setter
     @CephField
-    private long openedFiles = 0;
+    private List<AggregatedIOMetrics> totalOps;
 
-    @Getter
-    @Setter
-    @CephField(order = 2)
-    private long totalInodes = 0;
-
-    public OpenedFilesPayload() {
-        super(ClientMetricType.OPENED_FILES);
+    public SubvolumeMetricsPayload() {
+        super(ClientMetricType.SUBVOLUME_METRICS);
     }
 }

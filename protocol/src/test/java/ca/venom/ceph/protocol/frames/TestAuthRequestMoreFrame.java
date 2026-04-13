@@ -59,7 +59,7 @@ public class TestAuthRequestMoreFrame {
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true, new BitSet(64));
 
-        AuthRequestMoreMonPayload payload = (AuthRequestMoreMonPayload) parsedMessage.getPayload();
+        AuthRequestMoreMonPayload payload = (AuthRequestMoreMonPayload) parsedMessage.getAuthPayload();
         assertEquals(0x100, payload.getRequestHeader().getRequestType());
         byte[] clientChallenge = new byte[] {
                 (byte) 0x27, (byte) 0x44, (byte) 0x58, (byte) 0xbc,
@@ -80,7 +80,7 @@ public class TestAuthRequestMoreFrame {
     public void testEncodeMessage1() throws Exception {
         AuthRequestMoreFrame authRequest = new AuthRequestMoreFrame();
         AuthRequestMoreMonPayload payload = new AuthRequestMoreMonPayload();
-        authRequest.setPayload(payload);
+        authRequest.setAuthPayload(payload);
         CephXRequestHeader header = new CephXRequestHeader();
         header.setRequestType((short) 0x100);
         payload.setRequestHeader(header);

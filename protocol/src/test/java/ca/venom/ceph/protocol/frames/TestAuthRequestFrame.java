@@ -60,14 +60,14 @@ public class TestAuthRequestFrame {
         byteBuf.skipBytes(32);
         parsedMessage.decodeSegment1(byteBuf, true, new BitSet(64));
 
-        assertEquals(2L, parsedMessage.getSegment1().getAuthMethod());
+        assertEquals(2L, parsedMessage.getSegment1().getMethod());
 
         assertEquals(2, parsedMessage.getSegment1().getPreferredModes().size());
         assertEquals(2, parsedMessage.getSegment1().getPreferredModes().get(0));
         assertEquals(1, parsedMessage.getSegment1().getPreferredModes().get(1));
 
-        assertInstanceOf(AuthRequestMonPayload.class, parsedMessage.getSegment1().getPayload());
-        AuthRequestMonPayload payload = (AuthRequestMonPayload) parsedMessage.getSegment1().getPayload();
+        assertInstanceOf(AuthRequestMonPayload.class, parsedMessage.getSegment1().getAuthPayload());
+        AuthRequestMonPayload payload = (AuthRequestMonPayload) parsedMessage.getSegment1().getAuthPayload();
 
         assertEquals(8L, payload.getEntityName().getType());
         assertEquals("admin", payload.getEntityName().getEntityName());
@@ -79,7 +79,7 @@ public class TestAuthRequestFrame {
         AuthRequestFrame authRequestFrame = new AuthRequestFrame();
         authRequestFrame.setSegment1(new AuthRequestFrame.Segment1());
 
-        authRequestFrame.getSegment1().setAuthMethod(2);
+        authRequestFrame.getSegment1().setMethod(2);
 
         List<Integer> preferredModes = new ArrayList<>();
         preferredModes.add(2);
@@ -92,7 +92,7 @@ public class TestAuthRequestFrame {
         entityName.setEntityName("admin");
         payload.setEntityName(entityName);
         payload.setGlobalId(0);
-        authRequestFrame.getSegment1().setPayload(payload);
+        authRequestFrame.getSegment1().setAuthPayload(payload);
 
         byte[] expectedSegment = new byte[message1Bytes.length - 36];
         System.arraycopy(message1Bytes, 32, expectedSegment, 0, message1Bytes.length - 36);

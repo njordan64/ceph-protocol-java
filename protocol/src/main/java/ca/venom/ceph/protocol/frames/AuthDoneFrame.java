@@ -24,7 +24,7 @@ import lombok.Setter;
 import java.util.BitSet;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/msg/async/frames_v2.h#L590
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/async/frames_v2.h#L591
  */
 public class AuthDoneFrame extends AuthFrameBase {
     @CephType
@@ -37,12 +37,12 @@ public class AuthDoneFrame extends AuthFrameBase {
         @Getter
         @Setter
         @CephField(order = 2)
-        private int connectionMode;
+        private int conMode;
 
         @Getter
         @Setter
         @CephField(order = 3, includeSize = true)
-        private byte[] payload;
+        private byte[] authPayload;
     }
 
     @Getter

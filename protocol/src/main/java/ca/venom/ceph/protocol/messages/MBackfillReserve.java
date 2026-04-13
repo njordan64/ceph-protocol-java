@@ -21,7 +21,7 @@ import lombok.Setter;
 import java.util.BitSet;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/messages/MBackfillReserve.h#L22
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MBackfillReserve.h#L23
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_OSD_BACKFILL_RESERVE)

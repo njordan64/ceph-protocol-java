@@ -7,24 +7,33 @@
  * Foundation.  See file COPYING.
  *
  */
-package ca.venom.ceph.protocol.types;
+package ca.venom.ceph.protocol.types.mds.clientmetricpayload;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
+import ca.venom.ceph.encoding.annotations.CephTypeSize;
 import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L500
+ */
 @CephType
-@CephTypeVersionConstant(version = 1)
-public class DecryptedBuffer {
+@CephTypeVersionConstant(version = 1, compatVersion = 1)
+@CephTypeSize
+public class WriteIOSizesPayload extends ClientMetricPayload {
     @Getter
     @Setter
     @CephField
-    private long magic;
+    private long totalOps;
 
     @Getter
     @Setter
-    @CephField(order = 2, includeSize = true)
-    private byte[] buffer;
+    @CephField(order = 2)
+    private long totalSize;
+
+    public WriteIOSizesPayload() {
+        super(ClientMetricType.WRITE_IO_SIZES);
+    }
 }

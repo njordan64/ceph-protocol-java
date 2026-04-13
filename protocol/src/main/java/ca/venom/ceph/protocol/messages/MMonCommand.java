@@ -19,6 +19,10 @@ import lombok.Setter;
 
 import java.util.List;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MMonCommand.h#L29
+ */
+
 @CephType
 @CephMessagePayload(MessageType.MSG_MON_COMMAND)
 public class MMonCommand extends PaxosMessage {
@@ -31,4 +35,9 @@ public class MMonCommand extends PaxosMessage {
     @Setter
     @CephField(order = 5)
     private List<String> cmd;
+
+    @Override
+    public long getVersion() {
+        return 0;
+    }
 }

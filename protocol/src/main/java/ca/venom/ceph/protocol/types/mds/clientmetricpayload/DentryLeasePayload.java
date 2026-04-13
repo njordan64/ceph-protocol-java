@@ -17,21 +17,25 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/include/cephfs/metrics/Types.h#L306
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L311
  */
-@Getter
-@Setter
 @CephType
 @CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize
 public class DentryLeasePayload extends ClientMetricPayload {
-    @CephField(order = 2)
+    @Getter
+    @Setter
+    @CephField
     private long dleaseHits = 0;
 
-    @CephField(order = 3)
+    @Getter
+    @Setter
+    @CephField(order = 2)
     private long dleaseMisses = 0;
 
-    @CephField(order = 4)
+    @Getter
+    @Setter
+    @CephField(order = 3)
     private long nrDentries;
 
     public DentryLeasePayload() {

@@ -17,21 +17,25 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/include/cephfs/metrics/Types.h#L95
+ * [Ceph URL] hhttps://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/cephfs/metrics/Types.h#L115
  */
-@Getter
-@Setter
 @CephType
 @CephTypeVersionConstant(version = 1, compatVersion = 1)
 @CephTypeSize
 public class CapInfoPayload extends ClientMetricPayload {
-    @CephField(order = 2)
+    @Getter
+    @Setter
+    @CephField
     private long capHits = 0;
 
-    @CephField(order = 3)
+    @Getter
+    @Setter
+    @CephField(order = 2)
     private long capMisses = 0;
 
-    @CephField(order = 4)
+    @Getter
+    @Setter
+    @CephField(order = 3)
     private long nrCaps = 0;
 
     public CapInfoPayload() {

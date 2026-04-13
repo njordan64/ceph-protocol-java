@@ -32,6 +32,4 @@ public @interface CephField {
     int sizeLength() default 4;
 
     String sizeProperty() default "";
-
-    boolean optional() default false;
 }

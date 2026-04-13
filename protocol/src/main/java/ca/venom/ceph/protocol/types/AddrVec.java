@@ -17,6 +17,9 @@ import lombok.Setter;
 
 import java.util.List;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/msg_types.h#L580
+ */
 @CephType
 @CephTypeVersionConstant(version = 2)
 public class AddrVec {
@@ -38,6 +41,26 @@ public class AddrVec {
         blankAddr.setSocketAddress(null);
 
         return blankAddr;
+    }
+
+    public CephAddr asLegacyAddr() {
+        if (addrList != null && !addrList.isEmpty()) {
+            for (CephAddr addr : addrList) {
+                if (addr.getType() == CephAddr.AddrType.LEGACY) {
+                    return addr;
+                } else if (addr.getType() == CephAddr.AddrType.ANY) {
+                    final CephAddr toReturn = addr.duplicate();
+                    toReturn.setType(CephAddr.AddrType.LEGACY);
+                    return toReturn;
+                }
+            }
+
+            final CephAddr toReturn = addrList.getFirst().duplicate();
+            toReturn.setType(CephAddr.AddrType.LEGACY);
+            return toReturn;
+        }
+
+        return null;
     }
 
     public CephAddr legacyOrFrontAddr() {
