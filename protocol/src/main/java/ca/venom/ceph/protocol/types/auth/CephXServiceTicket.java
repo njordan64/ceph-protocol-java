@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/v17.2.6/src/auth/cephx/CephxProtocol.h#L338
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/auth/cephx/CephxProtocol.h#L437
  */
 @CephType
 @CephTypeVersionConstant(version = 1)

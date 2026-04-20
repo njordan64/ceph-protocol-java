@@ -24,7 +24,7 @@ import java.util.BitSet;
 import java.util.List;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MMonProbe.h
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/MMonProbe.h#L25
  */
 @CephType
 @CephMessagePayload(MessageType.MSG_MON_PROBE)

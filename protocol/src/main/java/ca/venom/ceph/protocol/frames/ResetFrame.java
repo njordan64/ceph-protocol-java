@@ -22,10 +22,10 @@ import lombok.Setter;
 
 import java.util.BitSet;
 
-/**
- * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/async/frames_v2.h#L695
- */
 public class ResetFrame extends ControlFrame {
+    /**
+     * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/msg/async/frames_v2.h#L695
+     */
     @CephType
     public static class Segment1 {
         @Getter

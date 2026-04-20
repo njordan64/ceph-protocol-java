@@ -292,13 +292,13 @@ public class CephDecoder {
     }
 
     public static <T> T decode(ByteBuf byteBuf, boolean le, BitSet features, Class<T> valueClass) throws DecodingException {
-        ClassNameSplitter parsedClassName = new ClassNameSplitter(valueClass.getName());
-        String packageName = parsedClassName.getPackageName();
-        String className = parsedClassName.getEncoderClassName();
+        final ClassNameSplitter parsedClassName = new ClassNameSplitter(valueClass.getName());
+        final String packageName = parsedClassName.getPackageName();
+        final String className = parsedClassName.getEncoderClassName();
 
         try {
-            Class<?> decodingClass = valueClass.getClassLoader().loadClass(packageName + "." + className);
-            Method decodeMethod = decodingClass.getMethod("decode", ByteBuf.class, Boolean.TYPE, BitSet.class);
+            final Class<?> decodingClass = valueClass.getClassLoader().loadClass(packageName + "." + className);
+            final Method decodeMethod = decodingClass.getMethod("decode", ByteBuf.class, Boolean.TYPE, BitSet.class);
             return (T) decodeMethod.invoke(null, byteBuf, le, features);
         } catch (Exception e) {
             e.printStackTrace();
@@ -311,13 +311,13 @@ public class CephDecoder {
     }
 
     public static <T> T decode(ByteBuf byteBuf, boolean le, BitSet features, Class<T> valueClass, int typeCode) throws DecodingException {
-        ClassNameSplitter parsedClassName = new ClassNameSplitter(valueClass.getName());
-        String packageName = parsedClassName.getPackageName();
-        String className = parsedClassName.getEncoderClassName();
+        final ClassNameSplitter parsedClassName = new ClassNameSplitter(valueClass.getName());
+        final String packageName = parsedClassName.getPackageName();
+        final String className = parsedClassName.getEncoderClassName();
 
         try {
-            Class<?> decodingClass = valueClass.getClassLoader().loadClass(packageName + "." + className);
-            Method decodeMethod = decodingClass.getMethod("decode", ByteBuf.class, Boolean.TYPE, BitSet.class, Integer.TYPE);
+            final Class<?> decodingClass = valueClass.getClassLoader().loadClass(packageName + "." + className);
+            final Method decodeMethod = decodingClass.getMethod("decode", ByteBuf.class, Boolean.TYPE, BitSet.class, Integer.TYPE);
             return (T) decodeMethod.invoke(null, byteBuf, le, features, typeCode);
         } catch (Exception e) {
             e.printStackTrace();

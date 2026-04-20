@@ -13,6 +13,9 @@ import ca.venom.ceph.encoding.annotations.CephChildType;
 import ca.venom.ceph.encoding.annotations.CephParentType;
 import ca.venom.ceph.encoding.annotations.CephType;
 
+/**
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/auth/cephx/CephxProtocol.h#L315
+ */
 @CephType
 @CephParentType(typeSize = 1, typeOffset = 0)
 @CephChildType(typeValue = 1, typeClass = CephXAuthorizeReplyV1.class)

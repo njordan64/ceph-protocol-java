@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * [Ceph URL] https://github.com/ceph/ceph/blob/3b600d625b30c5b8f7864c13307e67bba2ed815e/src/messages/MAuth.h#L26
+ * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/messages/PaxosServiceMessage.h#L14
  */
 public class PaxosMessage extends MessagePayload {
     @Getter
@@ -25,7 +25,7 @@ public class PaxosMessage extends MessagePayload {
     @Getter
     @Setter
     @CephField(order = 2)
-    private short deprecatedSessionMon;
+    private short deprecatedSessionMon = -1;
 
     @Getter
     @Setter

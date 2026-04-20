@@ -9,6 +9,7 @@
  */
 package ca.venom.ceph.protocol.messages;
 
+import ca.venom.ceph.encoding.annotations.ByteOrderPreference;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
 import lombok.Getter;
@@ -22,42 +23,42 @@ import lombok.Setter;
 public class CephMsgHeader2 {
     @Getter
     @Setter
-    @CephField
+    @CephField(byteOrderPreference = ByteOrderPreference.LE)
     private long seq;
 
     @Getter
     @Setter
-    @CephField(order = 2)
+    @CephField(order = 2, byteOrderPreference = ByteOrderPreference.LE)
     private long tid;
 
     @Getter
     @Setter
-    @CephField(order = 3)
+    @CephField(order = 3, byteOrderPreference = ByteOrderPreference.LE)
     private short type;
 
     @Getter
     @Setter
-    @CephField(order = 4)
+    @CephField(order = 4, byteOrderPreference = ByteOrderPreference.LE)
     private short priority;
 
     @Getter
     @Setter
-    @CephField(order = 5)
+    @CephField(order = 5, byteOrderPreference = ByteOrderPreference.LE)
     private short version;
 
     @Getter
     @Setter
-    @CephField(order = 6)
+    @CephField(order = 6, byteOrderPreference = ByteOrderPreference.LE)
     private int dataPrePaddingLen;
 
     @Getter
     @Setter
-    @CephField(order = 7)
+    @CephField(order = 7, byteOrderPreference = ByteOrderPreference.LE)
     private short dataOff;
 
     @Getter
     @Setter
-    @CephField(order = 8)
+    @CephField(order = 8, byteOrderPreference = ByteOrderPreference.LE)
     private long ackSeq;
 
     @Getter
@@ -67,11 +68,11 @@ public class CephMsgHeader2 {
 
     @Getter
     @Setter
-    @CephField(order = 10)
+    @CephField(order = 10, byteOrderPreference = ByteOrderPreference.LE)
     private short compatVersion;
 
     @Getter
     @Setter
-    @CephField(order = 11)
+    @CephField(order = 11, byteOrderPreference = ByteOrderPreference.LE)
     private short reserved;
 }

@@ -1,0 +1,13 @@
+{
+    "seq": 62562272,
+    "tid": 55004518,
+    "type": 90,
+    "priority": 6,
+    "version": 8,
+    "dataPrePaddingLen": 7,
+    "dataOff": 33,
+    "ackSeq": 998925962,
+    "flags": 27,
+    "compatVersion": 9,
+    "reserved": 59
+}
