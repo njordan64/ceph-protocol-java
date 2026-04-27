@@ -254,7 +254,12 @@ public class EncoderJavaCodeGenerator {
         }
 
         boolean includeVersion = false;
-        if (parsedClass.getVersionWithCompatGenerator() != null) {
+        if (parsedClass.isMessagePayload()) {
+            includeVersion = true;
+            out.println(
+                    "        VersionWithCompat versionWithCompat = new VersionWithCompat((byte) toEncode.getHeadVersion(features), (byte) toEncode.getHeadCompatVersion(features));"
+            );
+        } else if (parsedClass.getVersionWithCompatGenerator() != null) {
             includeVersion = true;
             out.printf("        VersionWithCompat versionWithCompat = toEncode.%s(features);%n", parsedClass.getVersionWithCompatGenerator());
             out.println("        byteBuf.writeByte(versionWithCompat.getVersion());");
@@ -295,9 +300,28 @@ public class EncoderJavaCodeGenerator {
         final Set<VersionGroup> allVersionGroups = new HashSet<>(parsedClass.getFields().keySet());
         allVersionGroups.addAll(parsedClass.getEncodeMethods().keySet());
 
+        boolean checkVersion = allVersionGroups.size() > 1;
+        boolean isFirstVersionGroup = true;
         for (VersionGroup versionGroup : allVersionGroups) {
             final List<VersionField> fields = parsedClass.getFields().getOrDefault(versionGroup, Collections.emptyList());
             final List<ParsedFieldMethod> methods = parsedClass.getEncodeMethods().getOrDefault(versionGroup, Collections.emptyList());
+
+            String prefix = "";
+            if (checkVersion) {
+                String elsePrefix = isFirstVersionGroup ? "" : "} else ";
+                isFirstVersionGroup = false;
+                if (versionGroup.getMinVersion() > -1 && versionGroup.getMinVersion() != versionGroup.getMaxVersion()) {
+                    out.printf(
+                            "        %sif (versionWithCompat.getVersion() <= (byte) %d && versionWithCompat.getVersion() >= (byte) %d) {%n",
+                            elsePrefix,
+                            versionGroup.getMaxVersion(),
+                            versionGroup.getMinVersion()
+                    );
+                } else {
+                    out.printf("        %sif (versionWithCompat.getVersion() == (byte) %d) {%n", elsePrefix, versionGroup.getMaxVersion());
+                }
+                prefix = "    ";
+            }
 
             for (int i = 0; i < fields.size(); i++) {
                 final VersionField field = fields.get(i);
@@ -305,7 +329,7 @@ public class EncoderJavaCodeGenerator {
                 int indentation = 2;
 
                 if (method != null) {
-                    out.printf("        toEncode.%s(byteBuf, le, features", method.getMethodName());
+                    out.printf("%s        toEncode.%s(byteBuf, le, features", prefix, method.getMethodName());
                     if (method.isIncludeVersion()) {
                         if (includeVersion) {
                             out.print(", versionWithCompat.getVersion()");
@@ -324,7 +348,8 @@ public class EncoderJavaCodeGenerator {
 
                     for (CodeLine codeLine : codeLines) {
                         out.printf(
-                                "%s%s%n",
+                                "%s%s%s%n",
+                                prefix,
                                 " ".repeat(4 * codeLine.getIndentation()),
                                 codeLine.getText()
                         );
@@ -341,6 +366,10 @@ public class EncoderJavaCodeGenerator {
                     );
                 }
             }
+        }
+
+        if (checkVersion) {
+            out.println("        }");
         }
 
         if (parsedClass.isIncludeSize()) {
@@ -542,7 +571,8 @@ public class EncoderJavaCodeGenerator {
                 }
             } else if (method != null) {
                 out.printf(
-                        "        decoded.%s(byteBuf, le, features%s);%n",
+                        "%sdecoded.%s(byteBuf, le, features%s);%n",
+                        " ".repeat(4 * indentation),
                         method.getMethodName(),
                         method.isIncludeVersion() ? ", version" : ""
                 );

@@ -1,0 +1,14 @@
+{
+    "pgid": {
+        "pgid": {
+            "mPool": 1,
+            "mSeed": 26
+        },
+        "shard": -1
+    },
+    "queryEpoch": 550,
+    "type": 1,
+    "priority": 3,
+    "primaryNumBytes": 10000000,
+    "shardNumBytes": 5000000
+}
