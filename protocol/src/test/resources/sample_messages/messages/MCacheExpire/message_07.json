@@ -1,0 +1,48 @@
+{
+    "from": -1,
+    "realms": [
+        {
+            "key": {
+                "ino": 9,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 400,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 50
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 15,
+                            "frag": 0
+                        },
+                        "value": 51
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 15,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "cache",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 52
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

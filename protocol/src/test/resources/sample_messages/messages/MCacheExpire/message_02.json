@@ -1,0 +1,96 @@
+{
+    "from": 1,
+    "realms": [
+        {
+            "key": {
+                "ino": 3,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 100,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 10
+                    },
+                    {
+                        "key": {
+                            "ino": 101,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 11
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 3,
+                            "frag": 0
+                        },
+                        "value": 13
+                    },
+                    {
+                        "key": {
+                            "ino": 4,
+                            "frag": 0
+                        },
+                        "value": 14
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 3,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "docs",
+                                    "snapid": 0
+                                },
+                                "value": 17
+                            },
+                            {
+                                "key": {
+                                    "name": "docs",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 16
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "key": {
+                "ino": 4,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 102,
+                            "snapid": 64
+                        },
+                        "value": 12
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 5,
+                            "frag": 0
+                        },
+                        "value": 15
+                    }
+                ],
+                "dentries": []
+            }
+        }
+    ]
+}

@@ -1,0 +1,177 @@
+{
+    "from": 4,
+    "realms": [
+        {
+            "key": {
+                "ino": 15,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 900,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 95
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 40,
+                            "frag": 0
+                        },
+                        "value": 99
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 40,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "pages",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 103
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "key": {
+                "ino": 16,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 901,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 96
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 41,
+                            "frag": 0
+                        },
+                        "value": 100
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 41,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "pages",
+                                    "snapid": 0
+                                },
+                                "value": 104
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "key": {
+                "ino": 17,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 902,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 97
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 42,
+                            "frag": 0
+                        },
+                        "value": 101
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 42,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "pages",
+                                    "snapid": 0
+                                },
+                                "value": 105
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "key": {
+                "ino": 18,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 903,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 98
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 43,
+                            "frag": 0
+                        },
+                        "value": 102
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 43,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "pages",
+                                    "snapid": 0
+                                },
+                                "value": 106
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

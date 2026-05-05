@@ -1,0 +1,62 @@
+{
+    "from": 7,
+    "realms": [
+        {
+            "key": {
+                "ino": 25,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 1500,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 150
+                    },
+                    {
+                        "key": {
+                            "ino": 1501,
+                            "snapid": 16640
+                        },
+                        "value": 151
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 70,
+                            "frag": 0
+                        },
+                        "value": 152
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 70,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "config",
+                                    "snapid": 0
+                                },
+                                "value": 155
+                            },
+                            {
+                                "key": {
+                                    "name": "config",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 153
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

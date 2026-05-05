@@ -1,0 +1,128 @@
+{
+    "from": 0,
+    "realms": [
+        {
+            "key": {
+                "ino": 19,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 1000,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 107
+                    },
+                    {
+                        "key": {
+                            "ino": 1001,
+                            "snapid": 4096
+                        },
+                        "value": 108
+                    },
+                    {
+                        "key": {
+                            "ino": 1002,
+                            "snapid": 8192
+                        },
+                        "value": 109
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 45,
+                            "frag": 0
+                        },
+                        "value": 110
+                    },
+                    {
+                        "key": {
+                            "ino": 46,
+                            "frag": 0
+                        },
+                        "value": 111
+                    },
+                    {
+                        "key": {
+                            "ino": 47,
+                            "frag": 0
+                        },
+                        "value": 112
+                    },
+                    {
+                        "key": {
+                            "ino": 48,
+                            "frag": 0
+                        },
+                        "value": 113
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 45,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "data",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 114
+                            }
+                        ]
+                    },
+                    {
+                        "key": {
+                            "ino": 46,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "data",
+                                    "snapid": 0
+                                },
+                                "value": 115
+                            }
+                        ]
+                    },
+                    {
+                        "key": {
+                            "ino": 47,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "data",
+                                    "snapid": 0
+                                },
+                                "value": 116
+                            }
+                        ]
+                    },
+                    {
+                        "key": {
+                            "ino": 48,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "data",
+                                    "snapid": 0
+                                },
+                                "value": 117
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,48 @@
+{
+    "from": 5,
+    "realms": [
+        {
+            "key": {
+                "ino": 20,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 1100,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 118
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 50,
+                            "frag": 0
+                        },
+                        "value": 119
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 50,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "tmp",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 120
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

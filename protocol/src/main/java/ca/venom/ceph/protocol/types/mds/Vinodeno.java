@@ -24,8 +24,8 @@ import lombok.Setter;
 @CephType
 public class Vinodeno {
     @CephField
-    private long inodeNo;
+    private long ino;
 
     @CephField(order = 2)
-    private long snapId;
+    private long snapid;
 }

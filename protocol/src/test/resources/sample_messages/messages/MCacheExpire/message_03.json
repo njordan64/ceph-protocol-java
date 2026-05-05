@@ -1,0 +1,77 @@
+{
+    "from": 2,
+    "realms": [
+        {
+            "key": {
+                "ino": 5,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 200,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 20
+                    },
+                    {
+                        "key": {
+                            "ino": 201,
+                            "snapid": 80
+                        },
+                        "value": 21
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 6,
+                            "frag": 0
+                        },
+                        "value": 22
+                    },
+                    {
+                        "key": {
+                            "ino": 7,
+                            "frag": 0
+                        },
+                        "value": 23
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 6,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "images",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 24
+                            }
+                        ]
+                    },
+                    {
+                        "key": {
+                            "ino": 7,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "images",
+                                    "snapid": 0
+                                },
+                                "value": 25
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 public class TestMBackfillReserve {
     @Getter
     @Setter
-    public class MessageDto {
+    public static class MessageDto {
         @JsonProperty("pgid")
         private ShardPlacementGroupIdDto pgid;
 

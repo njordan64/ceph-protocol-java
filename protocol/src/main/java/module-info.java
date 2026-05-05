@@ -22,5 +22,6 @@ module ca.venom.ceph.protocol.protocol {
     exports ca.venom.ceph.protocol.messages;
     exports ca.venom.ceph.protocol.types;
     exports ca.venom.ceph.protocol.types.auth;
+    exports ca.venom.ceph.protocol.types.mds;
     exports ca.venom.ceph.protocol.types.mon;
 }

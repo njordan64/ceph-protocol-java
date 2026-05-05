@@ -1,0 +1,62 @@
+{
+    "from": 1,
+    "realms": [
+        {
+            "key": {
+                "ino": 11,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 600,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 72
+                    },
+                    {
+                        "key": {
+                            "ino": 601,
+                            "snapid": 18446744073709551615
+                        },
+                        "value": 73
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 25,
+                            "frag": 0
+                        },
+                        "value": 74
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 25,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "media",
+                                    "snapid": 0
+                                },
+                                "value": 76
+                            },
+                            {
+                                "key": {
+                                    "name": "media",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 75
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

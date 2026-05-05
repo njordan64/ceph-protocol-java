@@ -1,0 +1,98 @@
+{
+    "from": 2,
+    "realms": [
+        {
+            "key": {
+                "ino": 12,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 700,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 77
+                    },
+                    {
+                        "key": {
+                            "ino": 701,
+                            "snapid": 768
+                        },
+                        "value": 78
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 30,
+                            "frag": 0
+                        },
+                        "value": 80
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 30,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "videos",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 82
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "key": {
+                "ino": 13,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 702,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 79
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 31,
+                            "frag": 0
+                        },
+                        "value": 81
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 31,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "videos",
+                                    "snapid": 0
+                                },
+                                "value": 83
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

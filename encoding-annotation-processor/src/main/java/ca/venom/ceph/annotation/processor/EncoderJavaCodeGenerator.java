@@ -637,7 +637,19 @@ public class EncoderJavaCodeGenerator {
         }
 
         final List<VersionGroup> versionGroups = new ArrayList<>(parsedClass.getFields().keySet());
-        versionGroups.addAll(parsedClass.getDecodeMethods().keySet());
+        for (VersionGroup versionGroup : parsedClass.getDecodeMethods().keySet()) {
+            boolean found = false;
+            for (VersionGroup fieldVersionGroup : versionGroups) {
+                if (versionGroup.equals(fieldVersionGroup)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                versionGroups.add(versionGroup);
+            }
+        }
 
         if (haveVersion) {
             if (versionGroups.size() == 1) {

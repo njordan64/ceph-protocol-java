@@ -1,0 +1,76 @@
+{
+    "from": 0,
+    "realms": [
+        {
+            "key": {
+                "ino": 26,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 1600,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 156
+                    },
+                    {
+                        "key": {
+                            "ino": 1601,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 157
+                    },
+                    {
+                        "key": {
+                            "ino": 1602,
+                            "snapid": 28928
+                        },
+                        "value": 158
+                    },
+                    {
+                        "key": {
+                            "ino": 1603,
+                            "snapid": 33024
+                        },
+                        "value": 159
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 75,
+                            "frag": 0
+                        },
+                        "value": 161
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 75,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "test",
+                                    "snapid": 0
+                                },
+                                "value": 163
+                            },
+                            {
+                                "key": {
+                                    "name": "test",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 162
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

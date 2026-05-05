@@ -1,0 +1,106 @@
+{
+    "from": 6,
+    "realms": [
+        {
+            "key": {
+                "ino": 23,
+                "frag": 0
+            },
+            "value": {
+                "inodes": [
+                    {
+                        "key": {
+                            "ino": 1300,
+                            "snapid": 18446744073709551614
+                        },
+                        "value": 129
+                    },
+                    {
+                        "key": {
+                            "ino": 1301,
+                            "snapid": 18446744073709551615
+                        },
+                        "value": 130
+                    },
+                    {
+                        "key": {
+                            "ino": 1302,
+                            "snapid": 3328
+                        },
+                        "value": 131
+                    }
+                ],
+                "dirs": [
+                    {
+                        "key": {
+                            "ino": 60,
+                            "frag": 0
+                        },
+                        "value": 132
+                    },
+                    {
+                        "key": {
+                            "ino": 61,
+                            "frag": 0
+                        },
+                        "value": 133
+                    },
+                    {
+                        "key": {
+                            "ino": 62,
+                            "frag": 0
+                        },
+                        "value": 134
+                    }
+                ],
+                "dentries": [
+                    {
+                        "key": {
+                            "ino": 60,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "models",
+                                    "snapid": 18446744073709551614
+                                },
+                                "value": 135
+                            }
+                        ]
+                    },
+                    {
+                        "key": {
+                            "ino": 61,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "models",
+                                    "snapid": 0
+                                },
+                                "value": 136
+                            }
+                        ]
+                    },
+                    {
+                        "key": {
+                            "ino": 62,
+                            "frag": 0
+                        },
+                        "value": [
+                            {
+                                "key": {
+                                    "name": "models",
+                                    "snapid": 0
+                                },
+                                "value": 137
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
