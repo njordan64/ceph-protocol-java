@@ -37,5 +37,5 @@ public class CapItem {
     @Getter
     @Setter
     @CephField(order = 4)
-    private int seq;
+    private int issueSeq;
 }
