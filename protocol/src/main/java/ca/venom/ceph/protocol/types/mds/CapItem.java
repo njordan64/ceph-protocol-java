@@ -11,12 +11,14 @@ package ca.venom.ceph.protocol.types.mds;
 
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * [Ceph URL] https://github.com/ceph/ceph/blob/1d146b4afffae5eb9031693f85cd9eabfc308679/src/include/ceph_fs.h#L968
  */
+@EqualsAndHashCode
 @CephType
 public class CapItem {
     @Getter

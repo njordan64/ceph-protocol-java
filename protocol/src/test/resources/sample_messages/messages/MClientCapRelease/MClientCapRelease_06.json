@@ -1,0 +1,11 @@
+{
+    "osdEpochBarrier": 300,
+    "caps": [
+        {
+            "ino": 600,
+            "capId": 1200,
+            "migrateSeq": 60,
+            "issueSeq": 30
+        }
+    ]
+}
