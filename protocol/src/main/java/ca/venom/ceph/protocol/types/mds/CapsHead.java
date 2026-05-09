@@ -9,6 +9,7 @@
  */
 package ca.venom.ceph.protocol.types.mds;
 
+import ca.venom.ceph.encoding.annotations.CephEncodingSize;
 import ca.venom.ceph.encoding.annotations.CephField;
 import ca.venom.ceph.encoding.annotations.CephType;
 import ca.venom.ceph.protocol.NodeType;
@@ -61,6 +62,7 @@ public class CapsHead {
     @Getter
     @Setter
     @CephField
+    @CephEncodingSize(4)
     private OpValue op;
 
     @Getter

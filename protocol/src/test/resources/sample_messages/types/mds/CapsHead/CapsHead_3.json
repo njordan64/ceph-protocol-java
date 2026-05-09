@@ -1,0 +1,20 @@
+{
+    "op": 3,
+    "ino": 3298534883329,
+    "realm": 3298534883328,
+    "capId": 13510798882111489,
+    "seq": 12,
+    "issueSeq": 10,
+    "caps": 31,
+    "wanted": 15,
+    "dirty": 5,
+    "migrateSeq": 0,
+    "snapFollows": 0,
+    "snapTraceLen": 0,
+    "uid": 0,
+    "gid": 0,
+    "mode": 33261,
+    "nlink": 10,
+    "xattrLen": 128,
+    "xattrVersion": 500
+}
