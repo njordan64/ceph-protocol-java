@@ -27,12 +27,12 @@ public class CapPeer {
     @Getter
     @Setter
     @CephField(order = 2)
-    private int seq;
+    private int issueSeq;
 
     @Getter
     @Setter
     @CephField(order = 3)
-    private int mSeq;
+    private int mseq;
 
     @Getter
     @Setter
