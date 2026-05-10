@@ -1,0 +1,7 @@
+{
+    "flStripeUnit": 262144,
+    "flStripeCount": 8,
+    "flObjectSize": 134217728,
+    "flObjectStripeUnit": 262144,
+    "flPgPool": 3
+}

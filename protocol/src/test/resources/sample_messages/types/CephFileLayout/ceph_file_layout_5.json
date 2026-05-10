@@ -1,0 +1,6 @@
+{
+    "flStripeUnit": 4096,
+    "flStripeCount": 3,
+    "flObjectSize": 65536,
+    "flPgPool": 100
+}
