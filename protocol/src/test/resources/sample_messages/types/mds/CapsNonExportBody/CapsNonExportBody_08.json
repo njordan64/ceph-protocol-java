@@ -1,0 +1,28 @@
+{
+    "size": 1000,
+    "maxSize": 1600,
+    "truncateSize": 500,
+    "truncateSeq": 99,
+    "mtime": {
+        "tvSec": 1700700000,
+        "tvNSec": 800000000
+    },
+    "atime": {
+        "tvSec": 1700700000,
+        "tvNSec": 800000000
+    },
+    "ctime": {
+        "tvSec": 1700699999,
+        "tvNSec": 799000000
+    },
+    "layout": {
+        "flStripeUnit": 65536,
+        "flStripeCount": 2,
+        "flObjectSize": 2097152,
+        "flCasHash": 0,
+        "flObjectStripeUnit": 0,
+        "flUnused": 0,
+        "flPgPool": 5005
+    },
+    "timeWarpSeq": 7
+}

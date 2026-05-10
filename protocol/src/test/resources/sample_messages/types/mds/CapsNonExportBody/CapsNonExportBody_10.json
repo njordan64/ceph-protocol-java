@@ -1,0 +1,28 @@
+{
+    "size": 4294967295,
+    "maxSize": 4294967295,
+    "truncateSize": 2147483647,
+    "truncateSeq": 4294967295,
+    "mtime": {
+        "tvSec": 4294967295,
+        "tvNSec": 4294967295
+    },
+    "atime": {
+        "tvSec": 4294967295,
+        "tvNSec": 4294967295
+    },
+    "ctime": {
+        "tvSec": 4294967295,
+        "tvNSec": 4294967295
+    },
+    "layout": {
+        "flStripeUnit": 4294967295,
+        "flStripeCount": 4294967295,
+        "flObjectSize": 4294967295,
+        "flCasHash": 4294967295,
+        "flObjectStripeUnit": 4294967295,
+        "flUnused": 4294967295,
+        "flPgPool": 4294967295
+    },
+    "timeWarpSeq": 4294967295
+}
