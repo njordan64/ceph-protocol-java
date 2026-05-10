@@ -17,9 +17,6 @@ import ca.venom.ceph.encoding.annotations.CephTypeSize;
 import ca.venom.ceph.encoding.annotations.CephTypeVersionConstant;
 
 @CephType
-@CephMarker(1)
-@CephTypeVersionConstant(version = 1, compatVersion = 1)
-@CephTypeSize
 @CephParentType(useParameter = true)
 @CephChildType(typeValue = 3, typeClass = CapsExportBody.class)
 @CephChildType(isDefault = true, typeValue = -1, typeClass = CapsNonExportBody.class)
